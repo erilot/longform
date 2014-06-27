@@ -3701,22 +3701,22 @@ function technet_views_views_default_views() {
 <p class="panel-body">This page contains links to all of the LSG documentation, organized by type. These are being added and updated constantly, so if you don\'t see something you\'re looking for, check back soon.</p>';
   $handler->display->display_options['header']['area']['format'] = '2';
   /* Relationship: Content: Relation: is a record in (node → relation) */
-  $handler->display->display_options['relationships']['relation_base_left_is_a_record_in']['id'] = 'relation_base_left_is_a_record_in';
-  $handler->display->display_options['relationships']['relation_base_left_is_a_record_in']['table'] = 'node';
-  $handler->display->display_options['relationships']['relation_base_left_is_a_record_in']['field'] = 'relation_base_left_is_a_record_in';
-  $handler->display->display_options['relationships']['relation_base_left_is_a_record_in']['entity_deduplication_left'] = 1;
+  $handler->display->display_options['relationships']['relation_base_left_ticket_controls_nodes']['id'] = 'relation_base_left_ticket_controls_nodes';
+  $handler->display->display_options['relationships']['relation_base_left_ticket_controls_nodes']['table'] = 'node';
+  $handler->display->display_options['relationships']['relation_base_left_ticket_controls_nodes']['field'] = 'relation_base_left_ticket_controls_nodes';
+  $handler->display->display_options['relationships']['relation_base_left_ticket_controls_nodes']['entity_deduplication_left'] = 1;
   /* Relationship: Relation: Relation: is a record in (relation → node) */
-  $handler->display->display_options['relationships']['relation_base_is_a_record_in_node']['id'] = 'relation_base_is_a_record_in_node';
-  $handler->display->display_options['relationships']['relation_base_is_a_record_in_node']['table'] = 'relation';
-  $handler->display->display_options['relationships']['relation_base_is_a_record_in_node']['field'] = 'relation_base_is_a_record_in_node';
-  $handler->display->display_options['relationships']['relation_base_is_a_record_in_node']['relationship'] = 'relation_base_left_is_a_record_in';
-  $handler->display->display_options['relationships']['relation_base_is_a_record_in_node']['label'] = 'is a record in (rel -> node)';
-  $handler->display->display_options['relationships']['relation_base_is_a_record_in_node']['entity_deduplication_right'] = 1;
+  $handler->display->display_options['relationships']['relation_base_ticket_controls_nodes_node']['id'] = 'relation_base_ticket_controls_nodes_node';
+  $handler->display->display_options['relationships']['relation_base_ticket_controls_nodes_node']['table'] = 'relation';
+  $handler->display->display_options['relationships']['relation_base_ticket_controls_nodes_node']['field'] = 'relation_base_ticket_controls_nodes_node';
+  $handler->display->display_options['relationships']['relation_base_ticket_controls_nodes_node']['relationship'] = 'relation_base_left_ticket_controls_nodes';
+  $handler->display->display_options['relationships']['relation_base_ticket_controls_nodes_node']['label'] = 'is a record in (rel -> node)';
+  $handler->display->display_options['relationships']['relation_base_ticket_controls_nodes_node']['entity_deduplication_right'] = 1;
   /* Field: Content: Nid */
   $handler->display->display_options['fields']['nid']['id'] = 'nid';
   $handler->display->display_options['fields']['nid']['table'] = 'node';
   $handler->display->display_options['fields']['nid']['field'] = 'nid';
-  $handler->display->display_options['fields']['nid']['relationship'] = 'relation_base_is_a_record_in_node';
+  $handler->display->display_options['fields']['nid']['relationship'] = 'relation_base_ticket_controls_nodes_node';
   $handler->display->display_options['fields']['nid']['label'] = '';
   $handler->display->display_options['fields']['nid']['exclude'] = TRUE;
   $handler->display->display_options['fields']['nid']['element_label_colon'] = FALSE;
@@ -3741,7 +3741,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';
   $handler->display->display_options['fields']['title']['field'] = 'title';
-  $handler->display->display_options['fields']['title']['relationship'] = 'relation_base_is_a_record_in_node';
+  $handler->display->display_options['fields']['title']['relationship'] = 'relation_base_ticket_controls_nodes_node';
   $handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
   $handler->display->display_options['fields']['title']['alter']['text'] = '<a class="btn btn-default justify toc-aggregated nid-[nid] collapsed" data-toggle="collapse" data-target="#nid-[nid]">
  <span class="glyphicon glyphicon-chevron-down"></span>
@@ -3786,7 +3786,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['filters']['depth']['id'] = 'depth';
   $handler->display->display_options['filters']['depth']['table'] = 'book_menu_links';
   $handler->display->display_options['filters']['depth']['field'] = 'depth';
-  $handler->display->display_options['filters']['depth']['relationship'] = 'relation_base_is_a_record_in_node';
+  $handler->display->display_options['filters']['depth']['relationship'] = 'relation_base_ticket_controls_nodes_node';
   $handler->display->display_options['filters']['depth']['value']['value'] = '1';
 
   /* Display: Content pane */

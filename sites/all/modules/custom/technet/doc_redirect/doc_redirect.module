@@ -106,7 +106,7 @@ function doc_redirect_get_adaptive_permalink(){
       $override = FALSE;
     }
     
-    $relation = doc_manage_relation_query('is_a_record_in', $node);
+    $relation = doc_manage_relation_query('ticket_controls_nodes', $node);
 
     //Build canonical link, or display a note if the book has not been imported yet.
     if($relation){

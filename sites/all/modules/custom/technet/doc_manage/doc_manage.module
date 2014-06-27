@@ -380,7 +380,7 @@ function doc_manage_bulk_publish($node = NULL,$action = "flag") {
   
   module_load_include('inc', 'doc_manage', 'doc_manage.relation');
   //pick up the entities referenced by this controller, then drop the first element (which is the controller).
-  $endpoints = doc_manage_relation_query('is_a_record_in',$node);
+  $endpoints = doc_manage_relation_query('ticket_controls_nodes',$node);
   $cover = array_shift($endpoints);
   if (!$endpoints) return FALSE;
   //array_shift($endpoints);

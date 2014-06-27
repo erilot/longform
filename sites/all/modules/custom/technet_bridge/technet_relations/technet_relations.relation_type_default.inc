@@ -14,7 +14,7 @@ function technet_relations_relation_default_relation_types() {
   $relation_type = new stdClass();
   $relation_type->disabled = FALSE; /* Edit this to true to make a default relation_type disabled initially */
   $relation_type->api_version = 1;
-  $relation_type->relation_type = 'is_a_record_in';
+  $relation_type->relation_type = 'ticket_controls_nodes';
   $relation_type->label = 'is a record in';
   $relation_type->reverse_label = 'is a record in';
   $relation_type->directional = 0;
@@ -27,7 +27,7 @@ function technet_relations_relation_default_relation_types() {
     1 => 'node:import_ticket',
   );
   $relation_type->target_bundles = array();
-  $relation_types['is_a_record_in'] = $relation_type;
+  $relation_types['ticket_controls_nodes'] = $relation_type;
 
   $relation_type = new stdClass();
   $relation_type->disabled = FALSE; /* Edit this to true to make a default relation_type disabled initially */

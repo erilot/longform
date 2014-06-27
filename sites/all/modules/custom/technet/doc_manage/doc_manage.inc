@@ -1731,7 +1731,7 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
   }
   $type = $ticket->type;  
 
-  $book = doc_manage_relation_query('is_a_record_in', $ticket);
+  $book = doc_manage_relation_query('ticket_controls_nodes', $ticket);
   $parent = array_shift($book);
   $cover = array_shift($book);
     
@@ -1879,7 +1879,7 @@ function _doc_manage_toolbar_button_jump_to($node) {
     // For import tickets, this icon links to the cover page of the document. It's only available after postprocessing.
     
     // Get full book relation
-    $endpoints =  doc_manage_relation_query('is_a_record_in', $node);
+    $endpoints =  doc_manage_relation_query('ticket_controls_nodes', $node);
     $ticket = array_shift($endpoints);
     $cover = array_shift($endpoints);
     $stages = _doc_manage_get_all_accordion_states($node);
@@ -3358,7 +3358,7 @@ function _doc_manage_get_import_state($controller = NULL){
 
   // Get page relation
   $new_query = relation_query('node', $controller->nid);
-  $new_query->entityCondition('bundle','is_a_record_in');
+  $new_query->entityCondition('bundle','ticket_controls_nodes');
   
   $page_relation = $new_query->execute();
   $page_relation = array_shift($page_relation);
@@ -3684,7 +3684,7 @@ function _doc_manage_batch_unconvert_finished($success, $results, $operations){
  */
 function doc_manage_undo_save($form, &$form_state) {
   //pick up the entities referenced by this controller, then drop the first element (which is the controller).
-  $endpoints = doc_manage_relation_query('is_a_record_in',$ticket);
+  $endpoints = doc_manage_relation_query('ticket_controls_nodes',$ticket);
   $dump = array_shift($endpoints);
 
   $operations = array();
@@ -3742,7 +3742,7 @@ function _doc_manage_batch_delete_nodes_op($endpoints, $controller, &$context){
 
 function _doc_manage_batch_delete_nodes_finished($success, $results, $operations){
   if($success){
-  //$query = relation_query('node', $results['controller']['entity_id'], 'is_a_record_in');
+  //$query = relation_query('node', $results['controller']['entity_id'], 'ticket_controls_nodes');
   //$topic_relation = $query->execute();
   //$topic_relation = array_shift($topic_relation);
   //relation_delete($topic_relation->rid);
@@ -3763,7 +3763,7 @@ function _doc_manage_batch_delete_nodes_finished($success, $results, $operations
 function doc_manage_undo_postprocess($form, &$form_state) {
   $ticket = menu_get_object();
   //pick up the entities referenced by this controller, then drop the first element (which is the controller).
-  $endpoints = doc_manage_relation_query('is_a_record_in',$ticket);
+  $endpoints = doc_manage_relation_query('ticket_controls_nodes',$ticket);
   $parent_tmp = array_shift($endpoints);
   $cover_tmp = array_shift($endpoints);
 

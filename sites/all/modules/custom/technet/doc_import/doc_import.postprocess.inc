@@ -17,7 +17,7 @@ function doc_import_postprocess(){
     module_load_include('inc', 'doc_import', 'doc_import.links');
     
     //pick up the entities referenced by this controller, then drop the first element (which is the controller).
-    $endpoints = doc_manage_relation_query('is_a_record_in',$node);
+    $endpoints = doc_manage_relation_query('ticket_controls_nodes',$node);
     $parent_tmp = array_shift($endpoints);
     $cover_tmp = array_shift($endpoints);
   
@@ -214,7 +214,7 @@ function doc_import_create_toc($parent, $sub_toc = NULL){
     if(!$sub_toc){
 	//pick up the entities referenced by this controller, then split off the first two elements (controller & cover page).
 	module_load_include('inc', 'doc_manage', 'doc_manage.relation');
-	$endpoints = doc_manage_relation_query('is_a_record_in',$parent);
+	$endpoints = doc_manage_relation_query('ticket_controls_nodes',$parent);
 	$parent_tmp = array_shift($endpoints);
 	$cover_tmp = array_shift($endpoints);
 	

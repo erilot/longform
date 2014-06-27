@@ -194,7 +194,7 @@ function doc_import_save_nodes($ticket_node, &$meta, &$log, &$content_array){
     }//section foreach 
   
     //create relations
-    $new_relation = relation_create('is_a_record_in',$relation_endpoints);
+    $new_relation = relation_create('ticket_controls_nodes',$relation_endpoints);
     $new_relation_id = relation_save($new_relation);
     
     //set top-level node workflow state to Approved (it has no content to edit) -- hardcoded ID#14 -- and assign relation:

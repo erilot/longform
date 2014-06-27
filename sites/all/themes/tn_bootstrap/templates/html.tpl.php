@@ -49,9 +49,6 @@
 <head profile="<?php print $grddl_profile; ?>">
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="google-translate-customization" content="9161ef487d999f7a-a6525d572139116b-g4ef2ceb22dcf5c18-f"></meta>
-  <script type="text/javascript" src="//use.typekit.net/kat3gbh.js"></script>
-  <script type="text/javascript">try{Typekit.load();}catch(e){}</script>
   <?php print $head; ?>
   <title><?php print $head_title; ?></title>
   <?php print $styles; ?>

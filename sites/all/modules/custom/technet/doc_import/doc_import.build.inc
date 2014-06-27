@@ -229,7 +229,7 @@ function doc_import_get_page_index($node){
     module_load_include('inc', 'doc_manage', 'doc_manage.relation');
 
     //pick up the entities referenced by this controller, then split off the first two elements (controller & cover page).
-    $endpoints = doc_manage_relation_query('is_a_record_in',$node);
+    $endpoints = doc_manage_relation_query('ticket_controls_nodes',$node);
     $parent_tmp = array_shift($endpoints);
     $cover_tmp = array_shift($endpoints);
   

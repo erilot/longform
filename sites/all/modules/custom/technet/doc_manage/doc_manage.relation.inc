@@ -53,7 +53,7 @@ function doc_manage_relation_query($relation_type, $controller = NULL){
  */
 function doc_manage_get_book_pages($ticket, $full = FALSE){
 
-  $relation = doc_manage_relation_query('is_a_record_in', $ticket);
+  $relation = doc_manage_relation_query('ticket_controls_nodes', $ticket);
   if($full) {
     return $relation;
   }
@@ -223,7 +223,7 @@ function _doc_manage_get_orphaned_topics($relation_type = NULL){
 function doc_manage_get_ticket_from_page($page) {
 
   $wrap = entity_metadata_wrapper('node', $page);
-  // Get the book relation ID. Confusingly, this is the relation named 'is_a_record_in', and the field is 'field_document_relation'.
+  // Get the book relation ID. Confusingly, this is the relation named 'ticket_controls_nodes', and the field is 'field_document_relation'.
   try {
     $rid = $wrap->field_document_relation->value();
     $relation = relation_load($rid);
