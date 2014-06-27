@@ -1,0 +1,6 @@
+; $Id: devel.info,v 1.11 2010/01/27 23:45:52 weitzman Exp $
+name = Polycom Book Navigation
+description = Custom book navigation elements for browsing Polycom sites
+core = 7.x
+files[] = book_nav.module
+package = Polycom

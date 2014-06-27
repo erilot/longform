@@ -1,0 +1,18 @@
+;$Id: doc_import.info $
+name = "Document Manager"
+description = "Controls creation and workflow functions for managed documents"
+package = "Polycom"
+dependencies[] = polycom_basic
+;dependencies[] = querypath
+dependencies[] = relation
+dependencies[] = workflow
+
+files[] = doc_import.process.inc
+files[] = doc_import.process.lib.inc
+files[] = doc_import.process_book.inc
+
+stylesheets[all][] = doc-import.css
+core = 7.x
+php = 5
+version = 7.x-1.0
+; updated on April 18, 2012

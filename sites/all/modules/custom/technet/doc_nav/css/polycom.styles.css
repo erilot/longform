@@ -1,0 +1,1123 @@
+/* Document Stylesheet for PLCMTECHNET.
+ * Styles in this file apply to content within the document content area only
+ * (that is, they are DOCUMENT styles, not site styles. Those are in global.styles.css and global.base.css)
+ */
+
+/* HTML elements */
+
+.document,
+body#doc-content {
+    font-family: "proxima-nova", arial, sans-serif;
+}
+
+#doc-content {
+    overflow: hidden;
+}
+
+body#doc-content {
+    padding: 0;
+    overflow: auto;
+}
+
+#document
+/* images */
+
+#doc-content img{
+    margin: 0 0 1em 0;
+}
+
+/*images inside <p> tags*/
+#doc-content p img{
+    vertical-align: middle;
+}
+
+/*images inside p.body-text tags*/
+#doc-content p.body-text img{
+    margin: 0;
+    padding: 0;
+}
+
+/* Reset images inside lists */
+#doc-content p[class *="list"]>img{
+    margin: 0;
+    padding: 0;
+}
+
+#doc-content p span.image-container img{
+    margin: 0;
+}
+
+#doc-content p.graphic {
+    text-align: left;
+}
+
+#doc-content p.graphic img{
+    margin-left: 20px;
+}
+
+#doc-content table p.graphic {
+    text-align: center;
+}
+#doc-content table p.graphic img {
+    margin: 0;
+    display: inline-block;
+}
+
+#doc-content li img{
+    vertical-align: middle;
+    /*margin-left: 1.5em;*/
+}
+
+span.italic img,
+p > img {
+    margin: 0;
+}
+
+#doc-content *:not(p) img, p[class^="graphic"] {
+    margin-bottom: 1.5em;
+}
+
+
+.book-top .book-node-title{
+    border-bottom: 0 none;
+    border-top: 2px solid #CCCCCC;
+    float: none;
+    margin-top: 10px;
+    padding-top: 100px;
+}
+
+h2.document, h3.document, h4.document, h5.document, h6.document, p.sidebar-heading{
+    color: #000;
+    margin: 1em 0 .5em 0;
+    font-weight: bold;
+}
+
+h2.document{
+    font-size: 1.6em;
+}
+
+h3.document{
+    font-size: 1.4em;
+}
+
+h4.document,
+p.sidebar-heading {
+    font-size: 1.2em;
+}
+
+h5.document{
+    font-size: 1.1em;
+}
+
+.IconNote{
+    display:none;
+}
+.task-one-step{
+   /* font-size: 1em;*/
+}
+
+.Emphasis,
+.emphasis {
+    font-style: italic;
+}
+
+/* <p> tags */
+
+/* DIVs with an initial <p> tag get a 20px top pad */
+#doc-content div:not(.alert)>p:first-child {
+    padding-top: 20px;
+}
+
+p.body-text{
+    font-size: 1em;
+    padding-bottom: 1em;
+    margin: 0;
+}
+
+p.body-heading, p.BodyHeading{
+    font-weight: bold;
+}
+
+/* Links */
+p>a{
+    display:inline;
+    /*color: #4A698F;*/ /*#1122CC (darker) is used on some links in the Polycom.com website*/
+}
+
+/* Task introductions */
+.bulleted-task-introduction,
+.task-introduction,
+.numbered-task-introduction{
+ font-weight: bold;
+}
+
+.task-introduction{}
+
+.numbered-task-introduction{}
+
+/* In-Document Lists */
+
+#doc-content ul,
+#doc-content ol {
+    padding-left: 0;    
+}
+
+#doc-content ul {
+    list-style: none;
+}
+
+#doc-content li p{
+    margin: 0 0 .5em 0;
+}
+
+#doc-content #link-list ul,
+#in-section ul{
+    list-style: disc;
+    margin-left: 3em;
+}
+
+.book-ui #in-section ul li{
+    list-style: disc;
+    margin-left: 20px;
+    color: #000;
+}
+
+.print-content li.comment-add{
+    display:none;
+}
+
+/*table list overrides*/
+#doc-content table td ul{
+    margin-left: 2em;
+}
+
+#doc-content table td ol,
+.print-content table td ol{
+    margin-left: 2em;
+}
+
+#doc-content .note td ol,
+.print-content .note td ol{
+    padding-left: 0;
+}
+
+#doc-content .note td ul,
+.print-content .note td ul{
+    padding-left: 0;
+}
+
+/* Lists */
+
+#doc-content ul:not(.nav),
+#doc-content ol:not(.nav){
+    margin-left: 1.5em; 
+}
+
+#doc-content .document-content>ul,
+#doc-content .document-content>ol,
+.print-content .document-content>ul,
+.print-content .document-content>ol{
+    margin-left: 1em;
+    margin-bottom: 2em; 
+    padding-left: 0;
+}
+
+.document-content > ul,
+.document-content > ol{
+    margin-bottom: 2em;
+}
+
+#doc-content ul:not(.nav) li{
+    padding-bottom: .5em;
+    /*list-style: inherit;*/
+}
+
+#doc-content ul li:last-child {
+    /*padding-bottom: 0;*/
+}
+
+#doc-content li>p+ul{
+    /*padding-top: 1em;*/
+}
+
+.list-bullet-1,
+.list-bullet-2,
+.list-bullet-3,
+.task-one-step,
+.task-one-ste-2,
+.TaskOneStep2{
+    /*background: #FFF;*/
+}
+.list-bullet-1 a,
+.list-bullet-2 a,
+.list-bullet-3 a,
+.task-one-step a,
+.task-one-ste-2 a,
+.TaskOneStep2 a{
+    background: transparent;
+}
+
+.list-continue-1,
+.list-continue-2,
+.list-continue-3{
+ list-style: none;
+ padding-left: 0px;
+}
+
+p.graphic-indented-0,
+p.graphic-indented-1,
+p.graphic-indented-2,
+.level-2-container,
+.level-3-container{
+    padding-bottom: 1em; 
+}
+
+.table-heading{
+    list-style: none;
+    padding-left: 0px;
+}
+.legal-text{
+ font-size: .8em;
+}
+
+.code, .Code, .Code1, .courier, .Courier, .table-courier{
+ font-family: courier, monospace;
+ font-size: .9em;
+}
+
+.table-hyperlink {
+    color: blue;
+}
+.bold{
+ font-weight: bold;
+}
+
+.caption{
+ font-size: 1em;
+ font-weight: bold;
+}
+
+/* Table Classes
+ * (not including note tables)
+ */
+
+/* Undefined table: Make same as "standard" */
+#doc-content table {
+    border-top: 1px solid #999;
+    border-bottom: 1px solid #999;
+    width: 98%;
+    margin: 0 auto;
+}
+
+#doc-content ol table,
+#doc-content ul table {}
+
+#doc-content table.fixed{
+    table-layout: fixed;
+}
+
+p.table-heading,
+p.TableHeading,
+thead tr:first-child p,
+table p.body-heading{
+    font-weight: bold;
+    vertical-align: middle;
+    margin: .7em 0 0 0;
+}
+
+.WideGrayHeader thead+tbody>tr:first-child{
+    background: transparent;
+    font-weight: normal;
+}
+
+.WideGrayHeader thead+tbody>tr:first-child p{
+    font-weight: normal;
+}
+
+
+/*tr:nth-child(2n+2) {
+ background-color: transparent;
+}
+*/
+
+/* FM "Format A No Title" style */
+table.format-a-no-title{}
+
+table.format-a-no-title tr td:first-child{
+    width: 25%;
+}
+
+/* Column sizing */
+
+/* ==2-column== */
+
+/* 15-85 */
+table.column-2-20-80 tr > td:first-child {
+    width: 20%;
+}
+
+/* 33-66 */
+table.column-2-33-66 tr > td:first-child {
+    width: 33%;
+}
+
+/* 50-50 */
+table.column-2-50-50 tr > td {
+    width: 50%;
+}
+
+/* ===3-column=== */
+
+/* 15-15-70 */
+table.column-3-20-20-60 tr > td:nth-child(1),
+table.column-3-20-20-60 tr > td:nth-child(2){
+    width: 20%;
+}
+
+/* 70-15-15 */
+table.column-3-70-15-15 tr > td:nth-child(2),
+table.column-3-70-15-15 tr > td:nth-child(3){
+    width: 15%;
+}
+
+/* 20-40-40 */
+table.column-3-20-40-40 tr > td:nth-child(1) {
+    width: 20%;
+}
+table.column-3-20-40-40 tr > td:nth-child(2) {
+    width: 40%;
+}
+
+/* 33-33-33 */
+table.column-3-33-33-33 tr > td:first-child,
+table.column-3-33-33-33 tr > td:nth-child(2){
+    width: 32%;
+}
+
+/* ====4-column==== */
+table.column-4 tr > td {
+    width: 24%;
+}
+
+table.column-4-55-15-15-15 tr > td{
+    width: 15%;
+}
+
+table.column-4-55-15-15-15 tr > td:first-child{
+    width: auto;
+}
+
+/* 20-20-20-40 */
+table.column-4-20-20-20-40 tr > td:last-child {
+    width: 50%;
+}
+
+/* 10-40-10-40 */
+table.column-4-10-40-10-40 tr > td {
+    width: 10%;
+}
+
+table.column-4-10-40-10-40 tr > td:nth-child(2),
+table.column-4-10-40-10-40 tr > td:nth-child(4){
+    width: 40%;
+}
+
+table.column-4-10-10-10-70 tr > td {
+    width: 15%;
+}
+table.column-4-10-10-10-70 tr > td:nth-child(1){
+    width: 5%
+}
+table.column-4-10-10-10-70 tr > td:nth-child(3){
+    width: 20%
+}
+table.column-4-10-10-10-70 tr > td:nth-child(4){
+    width: 60%;
+}
+/* =====5-column===== */
+table.column-5 td {
+    width: 19%;
+}
+
+table.column-5-52-12-12-12-12 tr > td {
+    width: 12%;
+}
+table.column-5-52-12-12-12-12 tr > td:first-child {
+    width: auto;
+}
+
+
+/* ======6-column====== */
+table.column-6 tr > td {
+    width: 15%;
+}
+table.column-6-50-10-10-10-10-10 tr > td {
+    width: 10%;
+}
+table.column-6-50-10-10-10-10-10 tr > td:first-child {
+    width: auto;
+}
+
+
+/* Standard Polycom Table */
+
+table.table-standard {
+ border: none;
+ border-top: 1px solid #999;
+ border-bottom: 1px solid #999;
+}
+
+.table-standard thead tr, .in-table-heading, .WideGrayHeader tr:first-child{
+ background: #eee;
+ font-weight: normal;
+ vertical-align: bottom;
+ text-align: left;
+}
+
+.table-standard tbody{}
+
+.table-standard tbody tr{
+ border-top: 1px solid #999;
+}
+.table-standard tbody tr:last-child{
+    border-bottom: 1px solid #999;
+}
+.table-standard tr:nth-child(2n+2) {
+ background-color: transparent;
+}
+
+p.table-body,
+table p.body-text,
+p.table-courier,
+p.table-hyperlink {
+    margin:0;
+    margin-bottom: .5em;
+}
+
+/*p.table-body:last-child,
+table p.body-text:last-child,
+p.table-courier:last-child,
+p.table-hyperlink:last-child {
+    margin-bottom: 0;
+}
+*/
+/* Standard Word Table (1pt black borders everywhere, no shading) */
+
+table.table-simple {
+ border:1px solid #000;
+}
+
+.table-simple tbody{}
+
+.table-simple tbody tr{
+ border-top: 1px solid #000;
+}
+
+.table-simple tr:nth-child(2n+2) {
+ background-color: transparent;
+}
+
+.table-simple td{
+ border-right: 1px solid #000;
+}
+
+/* Invisible Table (used for formatting) */
+
+table.table-invisible {
+ border: 0 none;
+}
+
+.table-invisible tbody{
+ border:0 none;
+}
+
+.table-invisible tbody tr{
+ border-top: none;
+}
+
+.table-invisible thead tr{
+ border-top: none;
+}
+
+.table-invisible td{
+ border-right: none;
+}
+
+.table-invisible td p.body-text {
+    padding-bottom: 0;
+}
+
+/* Parameter Reference Table */
+
+table.table-parameter-reference {
+ border-left: none;
+ border-right: none;
+ border-top: 1px solid #999;
+ border-bottom: 1px solid #999;
+}
+.table-parameter-reference thead tr{
+ font-weight: normal;
+}
+
+.table-parameter-reference tbody{}
+
+.table-parameter-reference tbody tr{
+ border-top: 1px solid #999; 
+}
+.table-parameter-reference tbody tr:nth-child(2n+1) td p{
+ margin: 0;
+}
+.table-parameter-reference tr:nth-child(2n+2) {
+ background-color: transparent;
+ border:0 none;
+}
+/* Feature Summary Table */
+
+/* Parameter Reference Table */
+
+table.table-feature-summary {
+
+}
+.table-feature-summary thead tr{
+
+}
+
+.table-feature-summary tbody{}
+
+.table-feature-summary tbody tr{
+    border: 0;
+}
+ td.border-top {
+    border-top: 1px solid #ddd;
+ }
+ 
+ td.border-bottom {
+    border-bottom: 1px solid #ddd;
+ }
+ 
+.table-feature-summary tbody tr:nth-child(2n+1) td p{}
+.table-feature-summary tr:nth-child(2n+2) {}
+
+/* Sidebar */
+
+p.sidebar-heading{
+    font-size: 1.3em;
+    font-weight: bold;
+    margin-top: 0;
+}
+
+#doc-content table.table-sidebar {
+ border-left: none;
+ border-right: none;
+ border-top: 1px solid #999;
+ border-bottom: 1px solid #999;
+ width: 75%;
+ margin-left: 10%;
+}
+.table-sidebar thead tr{
+ background: #eee;
+ font-weight: normal;
+}
+.table-sidebar tr:first-child td {
+    text-align: center;
+    font-weight: bold;
+    font-size: 1.1em;
+}
+
+.table-sidebar tbody{}
+
+.table-sidebar tbody tr{
+ border-top: 1px solid #999;
+ background: #eee;
+
+}
+
+.table-sidebar tr:nth-child(2n+2) {
+ background-color: #eee;
+}
+
+/* Note Tables */
+
+
+#doc-content table.note {
+    margin: 1em auto 1.2em auto;
+    width: 90%;
+    border-top: 0 none;
+    border-bottom: 0 none;
+    border-color: transparent;
+}
+
+table.note tbody{
+    border: 0 none;
+}
+
+table.note tr:first-child td:first-child{
+}
+.note tr td{
+    padding: 0 0 0 .5em;
+    height: 10px;
+    font-size: 1em;
+    vertical-align: text-top;
+}
+
+.note td p{
+ margin: 0 0 05px 0px;
+ padding: 5px 10px 5px 0px;
+ line-height: 1.3em;
+}
+
+.note td li>p {
+    padding: 0;
+}
+
+#doc-content .note td > p.note-header {
+    padding: 0;
+}
+
+.note td{
+ color: #000;
+ height: 10px;
+ padding: 0 5px 2px 5px;
+ margin: 0;
+ line-height:1em;
+ vertical-align: bottom;
+ /*border: 1px solid #ddd;*/
+}
+
+.note td:first-child{
+ font-weight: normal;
+ color: #808080;
+ vertical-align: top;
+ padding: 0 0 0 10px;
+ font-size: .9em;
+ line-height: 1.3em;
+}
+
+.note tr{
+ border: 0 none;
+}
+
+.note tr:first-child td:first-child {
+ padding: 0 10px 0 0;
+ width: 58px;
+ height: 60px;
+ background-image: url('images/note-icons/note-note.png');
+ background-repeat: no-repeat;
+ background-position: left top;
+}
+
+#doc-content table table.note tr {
+    border: 0;
+}
+
+#doc-content table table.note tr:first-child td:first-child {
+    width: 58px !important;
+}
+
+/* Overrides for bulleted lists stuck in the first note table td */
+
+#doc-content table.note ul li {
+    padding: 0;
+}
+
+#doc-content table.note td ul:first-child {
+    padding-left: 0;
+    margin-left: 0.5em;
+}
+
+#doc-content .note td ul:first-child li p.note-header {
+    padding-left: 1em;
+}
+
+
+/*.css-set-1 .note tr:first-child td:first-child{
+    background-image: url('images/note-icons/fm/note-note.png');
+}*/
+
+
+/* Resets for tables-in-tables (!) */
+
+.css-set-2 table[class*="note"] table,
+.css-set-2 table[class*="note"] table tr,
+.css-set-2 table[class*="note"] table td,
+.css-set-2 table[class*="note"] table td:first-child,
+.css-set-2 table[class*="note"] table tr:first-child,
+.css-set-2 table[class*="note"] table tr:first-child td:first-child,
+.stylesheet-1-0 table[class*="note"] table,
+.stylesheet-1-0 table[class*="note"] table tr,
+.stylesheet-1-0 table[class*="note"] table td,
+.stylesheet-1-0 table[class*="note"] table td:first-child,
+.stylesheet-1-0 table[class*="note"] table tr:first-child,
+.stylesheet-1-0 table[class*="note"] table tr:first-child td:first-child{
+    border: inherit;
+    width: inherit;
+    margin: inherit;
+    padding: inherit;
+    background: inherit;
+    color: inherit;
+    
+}
+
+
+/* Admin Tip */
+.note-admin-tip tr td{}
+.note-admin-tip tr:first-child td:first-child{
+ background-image: url('images/note-icons/note-admin.png');
+}
+
+/* Caution */
+.note-caution tr td{}
+
+.note.note-caution tr:first-child td:first-child{
+    width: 58px;
+    background-image: url('images/note-icons/note-caution.png');
+}
+
+/*.css-set-1 .note-caution tr:first-child td:first-child{
+    background-image: url('images/note-icons/fm/note-caution.png');
+}*/
+
+/* Note */
+.note-note tr td{}
+
+.note.note-note tr:first-child td:first-child{
+    width: 58px;
+    background-image: url('images/note-icons/note-note.png');
+}
+
+/*.css-set-1 .note-note tr:first-child td:first-child{
+    width: 58px;
+    background-image: url('images/note-icons/fm/note-note.png');
+}*/
+
+.css-set-2 .note-note  tr:first-child td:first-child {
+    width: 58px;
+    background-image: url('images/note-icons/note-note.png');
+}
+
+
+/* Power Tip */
+.note-power-tip tr td{}
+
+.note-power-tip tr:first-child td:first-child{
+    width: 58px;
+    background-image: url('images/note-icons/note-power-tip.png');
+}
+
+/* Settings */
+.note-settings tr td{}
+
+.note-settings  tr:first-child td:first-child{
+    width: 58px;
+    background-image: url('images/note-icons/note-settings.png');
+}
+
+/* Timesaver */
+.note-timesaver tr td{}
+
+.note-timesaver tr:first-child td:first-child{
+    width: 58px;
+    background-image: url('images/note-icons/note-timesaver.png');
+}
+
+/* User Tip */
+.note-user-tip tr td{}
+
+.note-user-tip  tr:first-child td:first-child{
+    background-image: url('images/note-icons/note-user-tip.png');
+    width: 58px;
+}
+
+/* Troubleshooting */
+.note-troubleshooting tr td{}
+
+.note-troubleshooting tr:first-child td:first-child{
+    background-image: url('images/note-icons/note-troubleshooting.png');
+    width: 58px;
+
+}
+
+/* Warning */
+.note-warning tr td{} 
+
+.note-warning  tr:first-child td:first-child{
+    background-image: url('images/note-icons/note-warning.png');
+    width: 58px;
+}
+
+/* Web Info */
+.note-web-info tr td{}
+
+.note-web-info  tr:first-child td:first-child{
+    background-image: url('images/note-icons/note-web.png');
+    width: 58px;
+}
+
+
+/* New Template Styles: Version 1.0 */
+/* CSS-SET-2: WORD-SPECIFIC STYLES */
+
+/* Insert correctly styled bullet symbols */
+
+#doc-content ul li {
+    list-style: none;
+}
+
+#doc-content ul li p {
+    text-indent: 0em;
+    padding-left: 1.5em;
+}
+
+#doc-content ul ul li p {
+    text-indent: 0em;
+}
+
+#doc-content ul:not(.preview-tabs) li:before {
+    position: absolute;
+}
+
+#doc-content ul:not(.preview-tabs) > li:before {
+    content: "● ";
+}
+
+#doc-content ul:not(.preview-tabs) ul > li:before {
+   content: "➢ ";
+}
+
+#doc-content ul:not(.preview-tabs) ul ul > li:before {
+    content: "♦  ";
+}
+#doc-content ul > li.task-one-step:before {
+    content: "» ";
+    font-weight: bold;
+}
+
+#doc-content ul.list-one-step{
+    list-style: none;
+}
+
+
+
+.note-shade-white{
+    background: red;
+}
+
+td.note-shade-gray {
+    background: rgba(0,0,0,.05);
+    border-radius: 0.5em;
+}
+
+
+/* Collapsing procedure and table styles */
+
+
+#doc-content div.ordered-procedure>p.numbered-task-introduction,
+#doc-content div.table-collapsing>p.caption{
+    margin: 0 0 0 0;
+    padding:0;
+    background: url('images/ui/open-close-vert.png') no-repeat left center;
+    background-position: 7px -22px;
+    color: #4A698F;
+    padding-left: 35px;
+    -moz-transition: background-color .25s linear;
+    -webkit-transition: background-color .25s linear;
+    -o-transition: background-color .25s linear;
+    transition: background-color .25s linear;
+    border-radius: 8px;
+}
+
+#doc-content div.ordered-procedure.expanded>p.numbered-task-introduction,
+#doc-content div.table-collapsing.expanded>p.caption{
+    border-radius: 8px 8px 0 0;
+    background-position: 7px 0px;
+}
+
+
+#doc-content div.ordered-procedure>p.numbered-task-introduction:hover,
+#doc-content div.table-collapsing>p.caption:hover,
+#doc-content div.ordered-procedure.expanded>p.numbered-task-introduction:hover,
+#doc-content div.table-collapsing.expanded>p.caption:hover{
+    background-color: #f6f6f6;
+    cursor: pointer;
+}
+
+#doc-content div.ordered-procedure,
+#doc-content div.table-collapsing{
+    margin:0 0 20px 20px;
+    width: 90%;
+    -moz-transition: margin .25s linear, width .25s linear;
+    -webkit-transition: margin .25s linear, width .25s linear;
+    -o-transition: margin .25s linear, width .25s linear;
+    transition: margin .25s linear, width .25s linear;
+}
+
+#doc-content div.table-collapsing.expanded,
+#doc-content div.ordered-procedure.expanded{
+    background-color:#FFF;
+    background-position: 7px 1px;
+    border-color: #ccc;
+    margin: 0 0 20px -20px;
+    width: 104%;
+}
+
+span.expander{
+    color: #666;
+    display: none;
+    float: right;
+    padding-right: 10px;
+    font-weight: normal;
+}
+
+span.expander.show{
+    display: inline;
+}
+div.ordered-procedure,
+div.table-collapsing{
+    width: 100%;
+    margin-bottom: 20px;    
+    border-radius: 8px;
+    background-color: #FFF;
+    box-shadow: 0 0 40px #eaeaea;
+}
+/* Collapsing procedures */
+
+#doc-content div.ordered-procedure{
+    border: 1px solid #f4d6b7;
+}
+
+#doc-content div.ordered-procedure>p.numbered-task-introduction{
+    background-color: #f4e8dc;
+}
+
+#doc-content div.ordered-procedure>ol{
+    padding: 20px 0 0 2em;
+    margin: 0 1em;
+}
+
+/* Collapsing Tables */
+#doc-content div.table-collapsing{
+    border: 1px solid #8fc3ea;
+}
+
+#doc-content div.table-collapsing>p.caption{
+    background-color: #d0dee8;
+}
+
+#doc-content.darkened p{
+    /*color: #999;*/
+}
+
+/* Troubleshooting */
+p.Trouble {
+    font-weight: bold;
+}
+
+p.Trouble+.list-continue-1,
+p.Trouble+.graphic+.list-continue-1 {
+    margin: .5em 0 1em 1em ;
+}
+
+/* === Special table types === */
+
+/* Regulatory Notices */
+table.regulatory-notices tbody tr:first-child td:first-child {
+    width: 1%;
+}
+table.regulatory-notices tbody tr:first-child td:first-child img{
+    display: none;
+}
+table.regulatory-notices tbody .IconWarning {
+    color: transparent;
+    background-image: url('images/note-icons/note-warning.png');
+    width: 58px;
+    height: 58px;
+}
+
+table.regulatory-notices tbody .IconWarning + .body-text{
+    font-weight: bold;
+}
+
+/* Centered tables */
+table.center-all tbody td {
+    text-align: center;
+}
+
+/* Development */
+
+.devel{
+    color:#666;
+}
+/* Errors */
+
+.not-logged-in span.link-error{
+    font-weight: bold;
+}
+
+.logged-in span.link-error{
+    border: 1px solid blue;
+    color: red;
+}
+
+/* === Numeric list counters === */
+ol {
+    counter-reset: level-one; 
+}
+
+ol ol,
+ul ol ol,
+ul ul ol ol {
+    counter-reset: level-two;
+}
+
+ol ol ol,
+ul ol ol ol,
+ul ul ol ol ol {
+    counter-reset: level-three;
+}
+
+ol > li,
+ol ol > li,
+ol ol ol > li,
+ul ol > li,
+ul ol ol > li,
+ul ol ol ol > li,
+ul ul ol > li,
+ul ul ol ol > li,
+ul ul ul ol ol ol > li {
+    position: relative; 
+    margin-left: 2em;
+    margin-bottom: 1em;
+    list-style: none;
+}
+
+ol > li:before {
+    content: counter(level-one);
+    counter-increment: level-one;
+}
+
+ol ol >li:before,
+ul ol ol > li:before,
+ul ul ol ol > li:before {
+    content: counter(level-two, lower-alpha);
+    counter-increment: level-two;
+}
+
+ol ol ol > li:before,
+ul ol ol ol > li:before,
+ul ul ol ol ol > li:before,
+ul ul ul ol ol ol > li:before {
+    content: counter(level-three, lower-roman);
+    counter-increment: level-three;
+}
+
+ol > li:before {
+    position:absolute;
+    left:-2.5em;
+    width:2em;
+    /* Some space between the number and the content in browsers that support
+       generated content but not positioning it (Camino 2 is one example) */
+    margin-right:8px;
+    padding-right: .5em;
+    font-weight:bold;
+    text-align:right;
+}

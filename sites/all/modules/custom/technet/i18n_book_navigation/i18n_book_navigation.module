@@ -1,0 +1,924 @@
+<?php
+
+/**
+ * @file
+ * Defines the i18n book navigation module. Contains all necessary data and
+ * hooks
+ */
+
+/**
+ * Implements hook_theme()
+ *
+ * The i18n_book_navigation uses the book-navigation.tpl.php file for theming
+ * the "footer" book navigation in book pages. It will use it to display
+ * this navigation on translated nodes, even if they're not part of a book
+ * outline. We must implement our own theme however, because the default
+ * book_navigation will call menu_tree_all_data() before i18n_book_navigation,
+ * which will store an empty tree statically, preventing us from using it and
+ * translating the links.
+ */
+function i18n_book_navigation_theme($existing, $type, $theme, $path) {
+  return array(
+    'i18n_book_navigation' => array(
+      'variables' => array('book_link' => NULL),
+      'path' => drupal_get_path('module', 'book'),
+      'template' => 'book-navigation'
+    ),
+  );
+}
+
+/**
+ * Implements hook_node_view()
+ */
+function i18n_book_navigation_node_view($node, $view_mode = 'full') {
+  if ($view_mode == 'full') {    
+    // Check that we're not dealing with the original node itself or with a
+    // non-translated node
+    if ($node->nid != $node->tnid) {
+      if ($node->tnid != 0) {
+          // Get the original node book information
+          $tnode = (object) array('nid' => $node->tnid);
+          book_node_load(array($node->tnid => $tnode), array());
+      }
+      else {
+        // In the case of field translation tnid is zero.
+        // We work with nid instead.
+        $tnode = (object) array('nid' => $node->nid);
+        book_node_load(array($node->nid => $tnode), array());
+      }
+
+      // If the original node is part of a book outline
+      if (!empty($tnode->book['bid'])) {
+        // Set the breadcrumb
+        i18n_book_navigation_set_breadcrumb($node, i18n_book_navigation($tnode));
+        
+        // Add the book navigation
+        $node->content['book_navigation'] = array(
+          '#markup' => theme('i18n_book_navigation', $tnode->book),
+          '#weight' => 100,
+        );
+      }
+    }
+  }
+}
+
+/**
+ * Implements hook_block_info()
+ */
+function i18n_book_navigation_block_info() {
+  $block = array();
+  
+  $block['i18n_book_navigation']['info'] = t("i18n Book navigation");
+  $block['i18n_book_navigation']['cache'] = DRUPAL_CACHE_PER_PAGE | DRUPAL_CACHE_PER_ROLE;
+
+  return $block;
+}
+
+/**
+ * Implements hook_block_configure()
+ * Uses the same settings as the book module.
+ * @see book_block_configure()
+ */
+function i18n_book_navigation_block_configure($delta = '') {
+  return book_block_configure($delta);
+}
+
+/**
+ * Implements hook_block_save()
+ * Uses the same settings as the book module.
+ * @see book_block_save()
+ */
+function i18n_book_navigation_block_save($delta = '', $edit = array()) {
+  return book_block_save($delta, $edit);
+}
+
+/**
+ * Implements hook_block_view()
+ * "Port" from the book module block.
+ * @see book_block_view()
+ */
+function i18n_book_navigation_block_view($delta = '') {
+  $tnode = menu_get_object();
+  
+  $block = array();
+
+  // Get the node in the original language
+  $node = i18n_book_navigation_get_original_node($tnode);
+  
+  if (!empty($node->book)) {    
+    $current_bid = $node->book['bid'];
+  }
+  else {
+    $current_bid = 0;
+  }
+  
+  if (variable_get('book_block_mode', 'all pages') == 'all pages') {
+    $book_menus = array();
+    
+    foreach (i18n_book_navigation_get_books() as $bid => $book) {
+      $tree = array();
+      
+      if ($bid == $current_bid) {
+        $tree = i18n_book_navigation($node);
+      }
+      //else {
+      //  $book['in_active_trail'] = FALSE;
+      //  
+      //  // Check whether user can access the book link.
+      //  $book_node = node_load($book['nid']);
+      //
+      //  $book['access'] = node_access('view', $book_node);
+      //  
+      //  $tree[0]['link'] = $book;
+      //  $tree[0]['below'] = FALSE;
+      //  
+      //  $tree = i18n_book_navigation_translate_tree($tree);
+      //}
+      
+      // Render
+      $book_menus[$bid] = menu_tree_output($tree);
+    }
+    
+    $block['subject'] = t("i18n Book navigation");
+    
+    $book_menus['#theme'] = 'book_all_books_block';
+    
+    $block['content'] = $book_menus;
+  }
+  elseif ($current_bid) {
+    // Disable the i18n node selection mode
+    $prev = i18n_select(FALSE);
+    
+    // Only display this block when the user is browsing a book.
+    $title = db_select('node', 'n')
+                ->fields('n', array('title'))
+                ->condition('n.nid', $node->book['bid'])
+                ->addTag('node_access')
+                ->execute()
+                ->fetchField();
+    
+    // Revert the i18n node selection mode
+    i18n_select($prev);
+    
+    // Only show the block if the user has view access for the top-level node.
+    if ($title) {
+      $tree = i18n_book_navigation($node);
+      
+      if (count($tree)) {
+        // There should only be one element at the top level.
+        $data = array_shift($tree);
+
+        $block['subject'] = theme('book_title_link', array('link' => $data['link']));
+        $block['content'] = ($data['below']) ? menu_tree_output($data['below']) : '';
+      }
+    }
+  }
+  
+  return $block;
+}
+
+/**
+ * Sets the breadcrumb.
+ * This is a port from menu_get_active_breadcrumb(). It will set the breadcrumb
+ * based on the current, translated tree.
+ * @see menu_get_active_breadcrumb()
+ *
+ * @param object $node
+ *        The node currently viewed (as in menu_get_item())
+ * @param array $tree
+ *        The translated tree
+ */
+function i18n_book_navigation_set_breadcrumb($node, $tree) {
+  $trail = array();
+  $breadcrumb = array(l(t("Home"), '<front>'));
+  $href = 'node/' . $node->nid;
+  
+  list($key, $curr) = each($tree);
+
+  while ($curr) {
+    // Terminate the loop when we find the current path in the active trail.
+    if ($curr['link']['href'] == $href) {
+      $trail[] = $curr['link'];
+      $curr = FALSE;
+    }
+    else {
+      // Add the link if it's in the active trail, then move to the link below.
+      if ($curr['link']['in_active_trail']) {
+        $trail[] = $curr['link'];
+        $tree = $curr['below'] ? $curr['below'] : array();
+      }
+      list($key, $curr) = each($tree);
+    }
+  }
+  
+  foreach ($trail as $element) {
+    $breadcrumb[] = l($element['title'], $element['href'], $element['localized_options']);
+  }
+  
+  // Remove the last element
+  array_pop($breadcrumb);
+
+  drupal_set_breadcrumb($breadcrumb);
+}
+
+/**
+ * Gets the translated menu tree for the original node.
+ *
+ * @param stdClass $node
+ *        The node in the original language, that is part of the book outline
+ *
+ * @return array
+ *        The translated menu tree, or an empty array
+ */
+function i18n_book_navigation($node) {
+  $cache = &drupal_static(__FUNCTION__, array());
+  
+  if (!empty($node->book)) {
+    // Disable the i18n node selection mode
+    $prev = i18n_select(FALSE);
+  }
+  else {
+    // Nothing we can do
+    return array();
+  }
+  
+  if (!empty($cache[$node->book['bid']])) {
+    return $cache[$node->book['bid']];
+  }
+  
+  // Get the original menu tree
+  $tree = menu_tree_all_data($node->book['menu_name'], $node->book);
+  
+  // Translate the tree
+  $tree = i18n_book_navigation_translate_tree($tree);
+  
+  // Cleanup the "empty" leaves
+  $tree = i18n_book_navigation_cleanup($tree);
+  
+  if (!empty($node->book)) {
+    // Revert the i18n node selection mode
+    i18n_select($prev);
+  }
+  
+  $cache[$node->book['bid']] = $tree;
+  
+  return $tree;
+}
+
+/**
+ * Gets all the available books.
+ * Port from book_get_books(). Needs to deactivate the i18n module in order to
+ * retrieve all books, regardless of the language settings.
+ * @see book_get_books()
+ */
+function i18n_book_navigation_get_books() {
+  // Disable the i18n node selection mode
+  $prev = i18n_select(FALSE);
+  
+  $books = book_get_books();
+  
+  // Revert the i18n node selection mode
+  i18n_select($prev);
+  
+  return $books;
+}
+
+/**
+ * Translates the tree.
+ * Walks down the tree and translates every item. Will respect the translation
+ * settings from the i18n module.
+ *
+ * @param array $tree
+ *        The menu tree
+ * @param string $lan = NULL
+ *        (optional) The language to translate the tree in. Defaults to the
+ *        current language
+ *
+ * @return array
+ *        The translated menu tree
+ */
+function i18n_book_navigation_translate_tree($tree, $lan = NULL) {
+  if (!$lan) {
+    $lan = i18n_langcode();
+  }
+
+  foreach ($tree as $key => &$item) {
+    if ($node = i18n_book_navigation_get_translated_node($item['link']['link_path'], $lan)) {
+      $item['link']['title'] = $item['link']['link_title'] = $node->title;
+      $item['link']['href']  = $item['link']['link_path']  = 'node/' . $node->nid;
+    }
+    else {
+      $item = array();
+    }
+    
+    if (!empty($item['below'])) {
+      $item['below'] = i18n_book_navigation_translate_tree($item['below'], $lan);
+    }
+  }
+  
+  return $tree;
+}
+
+/**
+ * Cleans up the tree.
+ * Depending on the translation mode, some leaves my be displayed as "empty".
+ * Walks down the tree and unsets all "empty" items.
+ *
+ * @param array $tree
+ *        The menu tree
+ *
+ * @return array
+ *        The cleaned up menu tree
+ */
+function i18n_book_navigation_cleanup($tree) {
+  $new_tree = array();
+  
+  foreach ($tree as $item) {
+    $temp = array();
+    
+    if (!empty($item['link'])) {
+      $temp['link'] = $item['link'];
+      
+      if (!empty($item['below'])) {
+        $temp['below'] = i18n_book_navigation_cleanup($item['below']);
+      }
+      else {
+        $temp['below'] = NULL;
+      }
+      
+      $new_tree[] = $temp;
+    }
+  }
+  
+  return $new_tree;
+}
+
+/**
+ * Preprocesses the i18n_book_navigation.
+ * Very similar to the book_navigation, the i18n_book_navigation uses the same
+ * template file and template variables. These variables will be translated and
+ * the urls adapted.
+ * @see template_preprocess_book_navigation()
+ *
+ * @param array &$variables
+ *        The template variables
+ */
+function template_preprocess_i18n_book_navigation(&$variables) {
+  // Get the current node
+  $tnode = menu_get_object();
+  
+  // Get the translation
+  $node = i18n_book_navigation_get_original_node($tnode);
+  
+  // We MUST call the menu_tree_all_data() function BEFORE the book module does.
+  // This is ok for performance, as the result is stored in a static cache, so
+  // the tree will not get build all over again later on
+  i18n_book_navigation($node);
+  
+  // Provide the original book link
+  $variables['book_link'] = $node->book;
+  
+  // Call the book module preprocess function
+  template_preprocess_book_navigation($variables);
+  
+  // Translate title and book url
+  $query = db_select('node_revision', 'v');
+            
+  $query->leftJoin('node', 'n', 'n.vid = v.vid');
+  
+  $data = $query->fields('v', array('nid', 'title'))
+                    ->condition('n.tnid', $variables['book_id'])
+                    ->condition('n.language', i18n_langcode())
+                    ->execute()
+                    ->fetchAssoc();
+  
+  $variables['book_title'] = check_plain($data['title']);
+  $variables['book_url'] = 'node/' . $data['nid'];
+  
+  // Translate the sub tree
+  if (strlen($variables['tree'])) {
+    $variables['tree'] = i18n_book_navigation_children($node->book);
+  }
+    
+  // Translate the book links
+  if ($variables['has_links']) {
+    
+    // Translate the "prev" link
+    if (!empty($variables['prev_url'])) {
+      if ($link = i18n_book_navigation_prev($variables['book_link'])) {
+        $href = url($link['href']);
+        
+        // This *should* override the default link, as it comes afterwards
+        drupal_add_html_head_link(array('rel' => 'prev', 'href' => $href));
+        
+        $variables['prev_url'] = $href;
+        $variables['prev_title'] = check_plain($link['title']);
+      }
+      else {
+        // Unset the variables
+        unset($variables['prev_url'], $variables['prev_title']);
+      }
+    }
+    
+    // Translate the "up" link
+    if (!empty($variables['parent_url'])) {
+      if ($link = i18n_book_navigation_link_load($variables['book_link']['plid'])) {
+        $href = url($link['href']);
+        
+        // This *should* override the default link, as it comes afterwards
+        drupal_add_html_head_link(array('rel' => 'up', 'href' => $href));
+        
+        $variables['parent_url'] = $href;
+        $variables['parent_title'] = check_plain($link['title']);
+      }
+      else {
+        unset($variables['parent_url'], $variables['parent_title']);
+      }
+    }
+    
+    // Translate the "next" link
+    if (!empty($variables['next_url'])) {
+      if ($link = i18n_book_navigation_next($variables['book_link'])) {
+        $href = url($link['href']);
+        
+        // This *should* override the default link, as it comes afterwards
+        drupal_add_html_head_link(array('rel' => 'next', 'href' => $href));
+        
+        $variables['next_url'] = $href;
+        $variables['next_title'] = check_plain($link['title']);
+      }
+      else {
+        unset($variables['next_url'], $variables['next_title']);
+      }
+    }
+    
+    $variables['has_links'] = FALSE;
+    
+    // Link variables to filter for values and set state of the flag variable.
+    $links = array('prev_url', 'prev_title', 'parent_url', 'parent_title', 'next_url', 'next_title');
+    foreach ($links as $link) {
+      if (isset($variables[$link])) {
+        // Flag when there is a value.
+        $variables['has_links'] = TRUE;
+      }
+      else {
+        // Set empty to prevent notices.
+        $variables[$link] = '';
+      }
+    }
+  }
+}
+
+/**
+ * Loads the direct child elements.
+ * Port from book_children(). Will perform a similar task, but will also translate
+ * the links.
+ * @see book_children()
+ *
+ * @param array $book_link
+ *        The link data
+ *
+ * @return string
+ *        The child elements as HTML. If no child elements were found, the string
+ *        will be empty
+ */
+function i18n_book_navigation_children($book_link) {
+  $flat = book_get_flat_menu($book_link);
+
+  $children = array();
+
+  if ($book_link['has_children']) {
+    // Walk through the array until we find the current page.
+    do {
+      $link = array_shift($flat);
+    }
+    while ($link && ($link['mlid'] != $book_link['mlid']));
+    
+    // Continue though the array and collect the links whose parent is this page.
+    while (($link = array_shift($flat)) && $link['plid'] == $book_link['mlid']) {
+      $data['link'] = $link;
+      $data['below'] = '';
+      $children[] = $data;
+    }
+  }
+  
+  // Translate the tree
+  $children = i18n_book_navigation_translate_tree($children);
+  
+  // Clean it up
+  $children = i18n_book_navigation_cleanup($children);
+
+  $tree = menu_tree_output($children);
+  
+  // Render it
+  return $children ? drupal_render($tree) : '';
+}
+
+/**
+ * Loads the previous link in the book.
+ * Port from book_prev(). Will translate the link after loading it.
+ * @see book_prev()
+ *
+ * @param array $book_link
+ *        The link data
+ *
+ * @return array|false
+ *        The loaded link or false if no link was found
+ */
+function i18n_book_navigation_prev($book_link) {
+  $tree = array(
+    array(
+      'link' => book_prev($book_link),
+      'below' => FALSE,
+    )
+  );
+  
+  $tree = i18n_book_navigation_translate_tree($tree);
+  
+  return isset($tree[0]['link']) ? $tree[0]['link'] : FALSE;
+}
+
+/**
+ * Loads the next link in the book.
+ * Port from book_next(). Will translate the link after loading it.
+ * @see book_nex()
+ *
+ * @param array $book_link
+ *        The link data
+ *
+ * @return array|false
+ *        The loaded link or false if no link was found
+ */
+function i18n_book_navigation_next($book_link) {
+  $tree = array(
+    array(
+      'link' => book_next($book_link),
+      'below' => FALSE,
+    )
+  );
+  
+  $tree = i18n_book_navigation_translate_tree($tree);
+  
+  return isset($tree[0]['link']) ? $tree[0]['link'] : FALSE;
+}
+
+/**
+ * Loads a link.
+ * Port from book_link_load(). Will translate the link after loading it.
+ * @see book_link_load()
+ *
+ * @param int $mlid
+ *        The menu link id
+ * @param string $lan = NULL
+ *        (optional) The desired language. Defaults to the current language
+ *
+ * @return array|false
+ *        The loaded link or false if no link was found
+ */
+function i18n_book_navigation_link_load($mlid, $lan = NULL) {
+  $cache = &drupal_static(__FUNCTION__, array());
+
+  if (!$lan) {
+    $lan = i18n_langcode();
+  }
+
+  if (!is_numeric($mlid)) {
+    return FALSE;
+  }
+
+  // Do we have a cached version ?
+  if (!isset($cache["$mlid-$lan"])) {
+    $tree = array(
+      array(
+        'link' => book_link_load($mlid),
+        'below' => FALSE,
+      )
+    );
+
+    $tree = i18n_book_navigation_translate_tree($tree, $lan);
+
+    $cache["$mlid-$lan"] = isset($tree[0]['link']) ? $tree[0]['link'] : FALSE;
+  }
+
+  return $cache["$mlid-$lan"];
+}
+
+/**
+ * Gets the translated node based on the link path.
+ * The returned value depends on the availability of a translation and the i18n
+ * settings.
+ *
+ * @param string $link_path
+ *        The link path of the original node
+ * @param string $lan = NULL
+ *        (optional) The desired language. Defaults to the current language
+ *
+ * @return object|false
+ *        The translated node, or the default node, or false
+ */
+function i18n_book_navigation_get_translated_node($link_path, $lan = NULL) {
+  $cache = &drupal_static(__FUNCTION__, array());
+
+  if (!$lan) {
+    $lan = i18n_langcode();
+  }
+
+  if (!isset($cache["$link_path-$lan"])) {
+    $i18n_setting = variable_get('i18n_select_nodes', FALSE);
+
+    $tnid = (int) substr($link_path, strlen('node/'));
+
+    if (module_exists('title') && db_table_exists('field_data_title_field')) {
+      // Check if we can find a translated title
+      $query = db_select('field_data_title_field', 'fdtf');
+      $query->addField('fdtf', 'entity_id', 'nid');
+      $query->addField('fdtf', 'title_field_value', 'title');
+      $data = $query->condition('fdtf.entity_type', 'node')
+        ->condition('fdtf.entity_id', $tnid)
+        ->condition('fdtf.language', $lan)
+        ->condition('fdtf.delta', 0)
+        ->execute()
+        ->fetchObject();
+
+      if (isset($data->nid) && !node_access('view', node_load($data->nid))) {
+        return FALSE;
+      }
+    }
+
+    if (empty($data)) {
+      $tlanguage = db_select('node', 'n')
+                    ->fields('n', array('language'))
+                    ->condition('n.nid', $tnid)
+                    ->addTag('node_access')
+                    ->execute()
+                    ->fetchField();
+
+      $nid = db_select('node', 'n')
+              ->fields('n', array('nid'))
+              ->condition('n.tnid', $tnid)
+              ->condition('n.language', $lan)
+              ->execute()
+              ->fetchField();
+
+      // We found a translation
+      if ($nid) {
+        $data = db_select('node', 'n')
+                  ->fields('n', array('nid', 'title'))
+                  ->condition('n.nid', $nid)
+                  ->addTag('node_access')
+                  ->execute()
+                  ->fetchObject();
+      }
+      // No translation available
+      else {
+        // Only current language OR no language conditions
+        if (($i18n_setting && $tlanguage == $lan) || !$i18n_setting) {
+          $data = db_select('node', 'n')
+                    ->fields('n', array('nid', 'title'))
+                    ->condition('n.nid', $tnid)
+                    ->addTag('node_access')
+                    ->execute()
+                    ->fetchObject();
+        }
+        // Language neutral
+        else {
+          $data = db_select('node', 'n')
+                    ->fields('n', array('nid', 'title'))
+                    ->condition('n.nid', $tnid)
+                    // make sure we capture different possibilities in the condition
+                    // in case some insert node data manually or programmatically
+                    // in an incorrect way
+                    ->condition(db_or()
+                                ->condition('language', 'und')
+                                ->condition('language', '')
+                                ->isNull('language'))
+                    ->addTag('node_access')
+                    ->execute()
+                    ->fetchObject();
+
+        }
+      }
+    }
+
+    $cache["$link_path-$lan"] = !empty($data) ? $data : FALSE;
+  }
+
+  return $cache["$link_path-$lan"];
+}
+
+/**
+ * Gets the original node based on the current, translated version.
+ *
+ * @param object $node
+ *        The translated node
+ *
+ * @return object
+ *        The original node, or an empty object if no translation was found
+ */
+function i18n_book_navigation_get_original_node($node) {
+  if (!empty($node->nid)) {
+    if ($node->tnid == $node->nid || empty($node->tnid)) {
+      return $node;
+    }
+    else {
+      return node_load($node->tnid);
+    }
+  }
+  else {
+    return new stdClass();
+  }
+}
+
+/**
+ * Implements hook_token_info()
+ * 
+ * Provide tokens similar to the book ones, except these will also be applicable
+ * to translated nodes, returning the translated book path.
+ * However, depending on the i18n settings, this could have unexpected results
+ * and should be used wisely (when translating the book, always start from the top,
+ * as to not have "empty" positions in the book path).
+ */
+function i18n_book_navigation_token_info($type = 'all') {
+  $info['tokens']['node']['i18n-book'] = array(
+    'name' => t('Translated Book'),
+    'description' => t('The book page associated with the node.'),
+    'type' => 'menu-link',
+  );
+
+  return $info;
+}
+
+/**
+ * Implements hook_tokens()
+ *
+ * Port of book_tokens() and part of token_tokens() from the token module. Will translate all the book tokens, and correctly implement
+ * the parents-join tokens (menu-link tokens).
+ * @see book_tokens().
+ * @see token_tokens().
+ */
+function i18n_book_navigation_tokens($type, $tokens, $data = array(), $options = array()) {
+  $replacements = array();
+  $sanitize = !empty($options['sanitize']);
+
+  if (isset($options['language'])) {
+    $lan = $options['language']->language;
+  }
+  else {
+    $lan = NULL;
+  }
+
+  // Node tokens.
+  if ($type == 'node' && !empty($data['node'])) {
+    $node = i18n_book_navigation_get_original_node($data['node']);
+
+    if (!empty($node->book['mlid'])) {
+      $link = i18n_book_navigation_link_load($node->book['mlid'], $lan);
+
+      foreach ($tokens as $name => $original) {
+        switch ($name) {
+          case 'i18n-book':
+            if ($node->nid == $node->book['bid']) {
+              $title = $link['title'];
+            }
+            else {
+              $book = node_load($node->book['bid']);
+              $root_link = i18n_book_navigation_link_load($book->book['mlid'], $lan);
+              $title = $root_link['title'];
+            }
+
+            $replacements[$original] = $sanitize ? check_plain($title) : $title;
+            break;
+        }
+      }
+
+      // Chained token relationships.
+      if ($book_tokens = token_find_with_prefix($tokens, 'i18n-book')) {
+        $replacements += token_generate('i18n-book-menu-link', $book_tokens, array('menu-link' => $link), $options);
+      }
+    }
+  }
+  // Menu link tokens.
+  elseif ($type == 'i18n-book-menu-link' && !empty($data['menu-link'])) {
+    $url_options = array('absolute' => TRUE);
+
+    if (isset($options['language'])) {
+      $url_options['language'] = $options['language'];
+    }
+
+    $link = $data['menu-link'];
+
+    foreach ($tokens as $name => $original) {
+      switch ($name) {
+        case 'mlid':
+          $replacements[$original] = $link['mlid'];
+          break;
+        case 'title':
+          $replacements[$original] = $sanitize ? check_plain($link['title']) : $link['title'];
+          break;
+        case 'url':
+          $replacements[$original] = url($link['href'], $url_options);
+          break;
+        case 'parent':
+          if (!empty($link['plid']) && $parent = i18n_book_navigation_link_load($link['plid'], $lan)) {
+            $replacements[$original] = $sanitize ? check_plain($parent['title']) : $parent['title'];
+          }
+          break;
+        case 'parents':
+          if ($parents = i18n_book_navigation_link_load_all_parents($link['mlid'], $lan)) {
+            $replacements[$original] = token_render_array($parents, $options);
+          }
+          break;
+        case 'root';
+          if (!empty($link['p1']) && $link['p1'] != $link['mlid'] && $root = i18n_book_navigation_link_load($link['p1'], $lan)) {
+            $replacements[$original] = $sanitize ? check_plain($root['title']) : $root['title'];
+          }
+          break;
+      }
+    }
+
+    // Chained token relationships.
+    if (!empty($link['plid']) && ($source_tokens = token_find_with_prefix($tokens, 'parent')) && $parent = i18n_book_navigation_link_load($link['plid'], $lan)) {
+      $replacements += token_generate('menu-link', $source_tokens, array('menu-link' => $parent), $options);
+    }
+    // [menu-link:parents:*] chained tokens.
+    if ($parents_tokens = token_find_with_prefix($tokens, 'parents')) {
+      if ($parents = i18n_book_navigation_link_load_all_parents($link['mlid'], $lan)) {
+        $replacements += token_generate('array', $parents_tokens, array('array' => $parents), $options);
+      }
+    }
+    if (!empty($link['p1']) && $link['p1'] != $link['mlid'] && ($root_tokens = token_find_with_prefix($tokens, 'root')) && $root = i18n_book_navigation_link_load($link['p1'], $lan)) {
+      $replacements += token_generate('menu-link', $root_tokens, array('menu-link' => $root), $options);
+    }
+    if ($url_tokens = token_find_with_prefix($tokens, 'url')) {
+      $replacements += token_generate('url', $url_tokens, array('path' => $link['href']), $options);
+    }
+  }
+
+  return $replacements;
+}
+
+/**
+ * Port of token_menu_link_load_all_parents().
+ * Loads all parent links, but translates them on the fly.
+ * @see token_menu_link_load_all_parents().
+ */
+function i18n_book_navigation_link_load_all_parents($mlid, $lan = NULL) {
+  $cache = &drupal_static(__FUNCTION__, array());
+
+  if (!is_numeric($mlid)) {
+    return array();
+  }
+
+  if (!$lan) {
+    $lan = i18n_langcode();
+  }
+
+  if (!isset($cache["$mlid-$lan"])) {
+    $cache["$mlid-$lan"] = array();
+    $plid = db_select('menu_links', 'ml')
+              ->fields('ml', array('plid'))
+              ->condition('ml.mlid', $mlid)
+              ->execute()
+              ->fetchField();
+
+    while ($plid && $parent = i18n_book_navigation_link_load($plid)) {
+      $cache["$mlid-$lan"] = array($plid => $parent['title']) + $cache["$mlid-$lan"];
+      $plid = $parent['plid'];
+    }
+  }
+
+  return $cache["$mlid-$lan"];
+}
+
+/**
+ * @todo Check when module is out of beta
+ * 
+ * Implementation of hook_presave_translation() from the Translation Management module.
+ * New translated nodes should not be saved with book information as it inteferes with
+ * this module.
+ *
+ * Patch by chaps2
+ */
+function i18n_book_navigation_presave_translation(&$node, $nid, $vid, $code) {
+  // Check that node is a new node cloned from a source node.
+  if(!isset($node->nid) && isset($node->tnid) && isset($node->book)) {
+    unset($node->book);
+    
+    variable_set('icl_content_books_to_update', array());
+  }
+}
+
+/**
+ * Implementation of hook_menu_block_tree_alter() from the Menu Block module.
+ * A menu block configured for book navigations can now also be translated.
+ */
+function i18n_book_navigation_menu_block_tree_alter(&$tree, &$config) {
+  $tnode = menu_get_object();
+  
+  // Get the node in the original language
+  $node = i18n_book_navigation_get_original_node($tnode);
+  
+  if (isset($node->language) && $node->language != i18n_langcode() && !empty($node->book) && $config['menu_name'] == $node->book['menu_name']) {
+    $tree = i18n_book_navigation($node);
+  }
+}

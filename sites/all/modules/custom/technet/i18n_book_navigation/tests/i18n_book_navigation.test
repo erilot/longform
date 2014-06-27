@@ -1,0 +1,610 @@
+<?php
+
+/**
+ * @file
+ * Unit tests
+ */
+
+/**
+ *
+ */
+class I18nBookNavigationTestCase extends DrupalWebTestCase {
+  
+  protected $browsing_language = NULL;
+  
+  public static function getInfo() {
+    return array(
+      'name' => 'Book translation',
+      'description' => 'test that the book translation works properly and translates the navigation as expected.',
+      'group' => 'Internationalization',
+    );
+  }
+  
+  public function setUp() {
+    parent::setUp('i18n_book_navigation', 'translation');
+    
+    // Create and login user.
+    $this->admin_user = $this->drupalCreateUser(array_keys(module_invoke_all('permission')));
+    
+    $this->drupalLogin($this->admin_user);
+    
+    $this->enableLanguages(array('fr'));
+    $this->configureI18nDetection();
+    $this->makeBooksTranslatable();
+    $this->enableI18nBookNavigationBlock();
+  }
+  
+  /**
+   * @override
+   */
+  public function assertText($text, $message = '', $num = 1, $group = 'Other') {
+    if ($num === 1) {
+      return parent::assertText($text, $message, $group);
+    }
+    else {
+      $matches = array();
+      
+      $page_content = filter_xss(preg_replace('/<title>(.+)<\/title>/', '', $this->drupalGetContent()), array());
+      
+      return $this->assert($num === preg_match_all("/($text)/", $page_content, $matches), $message . " (found $num times)", $group);
+    }
+  }
+  
+  /**
+   * @override
+   */
+  public function drupalGet($path, $options = array(), $headers = array()) {
+    if (!isset($options['query']['language']) && isset($this->browsing_language)) {
+      $options['query']['language'] = $this->browsing_language;
+    }
+    
+    return parent::drupalGet($path, $options, $headers);
+  }
+  
+  
+  
+  /*
+   *
+   * Unit tests
+   * 
+   */
+  
+  
+  
+  /**
+   * test core logic
+   */
+  public function testCoreLogic() {
+    // Create 2 books
+    list(, $nodes) = $this->createBookOutline();
+    $this->translateNodes($nodes, 'fr');
+    
+    list(, $nodes_2) = $this->createBookOutline();
+    $this->translateNodes($nodes_2, 'fr');
+    
+    $this->drupalGet('/node');
+    
+    $num_books = count(book_get_books());
+    
+    $this->assertEqual(count(i18n_book_navigation_get_books()), $num_books, "Find the same number of books when in english ($num_books books).", 'testCoreLogic');
+    
+    $this->drupalGet('/fr/node');
+    
+    $this->assertEqual(count(i18n_book_navigation_get_books()), $num_books, "Find the same number of books when in french ($num_books books).", 'testCoreLogic');
+  }
+  
+  /**
+   * test outline translations
+   *
+   * @param bool $use_entity_translation = FALSE
+   * @param string $group = 'testOutlineTranslation'
+   */
+  public function testOutlineTranslation($use_entity_translation = FALSE, $group = 'testOutlineTranslation') {
+    // Create 2 outlines
+    list($bid, $nodes) = $this->createBookOutline('en', $use_entity_translation);
+    $fr_nodes = $this->translateNodes($nodes, 'fr', $use_entity_translation);
+    
+    list($bid_2, $nodes_2) = $this->createBookOutline('en', $use_entity_translation);
+    $fr_nodes_2 = $this->translateNodes($nodes_2, 'fr', $use_entity_translation);
+    
+    if (!empty($nodes)) {
+      $this->outlineTranslationBlockVisibleOnAllPages($nodes, $nodes_2, $fr_nodes, $fr_nodes_2, $group);
+      $this->outlineTranslationBlockVisibleOnBookPages($nodes, $nodes_2, $fr_nodes, $fr_nodes_2, $group);
+    }
+  }
+  
+  /**
+   * test i18n_menu integration
+   * // @todo re-enable after [#1461662] has been resolved.
+   */
+  public function xtestI18nMenuIntegration() {
+    module_enable(array('i18n_menu'));
+
+    $this->resetAll();
+    
+    // test outline translation
+    $this->testOutlineTranslation();
+  }
+  
+  /**
+   * test i18n_select integration
+   */
+  public function testI18nSelectIntegration() {
+    module_enable(array('i18n_select'));
+
+    $this->resetAll();
+    
+    // test outline translation
+    $this->testOutlineTranslation();
+  }
+
+  /**
+   * test entity_translation and title integration
+   */
+  public function testEntityTranslationIntegration() {
+    module_disable(array('translation'), FALSE);
+
+    if (module_enable(array('entity_translation', 'title'))) {
+      $this->resetAll();
+
+      $this->configureI18nDetection(TRUE);
+      $this->makeBooksTranslatable(TRUE);
+      
+      // test outline translation
+      $this->testOutlineTranslation(TRUE, 'testEntityTranslationIntegration');
+    }
+    else {
+      $this->verbose(t("The Entity translation tests were not run, as the module could not be enabled."));
+    }
+  }
+  
+  /**
+   * @todo Keeps on failing, because the block is not created correctly. Bug with Simpletest ???
+   *
+   * test menu_block integration
+   */
+  public function xtestMenuBlockIntegration() {
+    if (module_enable(array('menu_block'))) {
+      $this->resetAll();
+
+      // Create user again - needs new permission for menu_block
+      $this->admin_user = $this->drupalCreateUser(array_keys(module_invoke_all('permission')));
+    
+      $this->drupalLogin($this->admin_user);
+
+      $this->disableI18nBookNavigationBlock();
+      
+      list($bid, $nodes) = $this->createBookOutline();
+      $fr_nodes = $this->translateNodes($nodes, 'fr');
+      
+      list($bid_2, $nodes_2) = $this->createBookOutline();
+      $fr_nodes_2 = $this->translateNodes($nodes_2, 'fr');
+      
+      // Add menu block
+      $this->configureAndEnableMenuBlock($nodes[0]->book['menu_name']);
+      
+      // test outline translation
+      if (!empty($nodes)) {
+        $this->outlineTranslationBlockVisibleOnAllPages($nodes, $nodes_2, $fr_nodes, $fr_nodes_2, 'testMenuBlockIntegration');
+        $this->outlineTranslationBlockVisibleOnBookPages($nodes, $nodes_2, $fr_nodes, $fr_nodes_2, 'testMenuBlockIntegration');
+      }
+    }
+    else {
+      drupal_set_message(t("The Menu Block tests were not run, as the module could not be enabled."), 'warning');
+    }
+  }
+  
+  /**
+   * Specific test case for [#1619026].
+   * @see http://drupal.org/node/1619026#comment-6276880
+   */
+  public function xtestIssue1619026() {
+    // Step 1 and 2 -> self::setUp()
+    
+    // Step 3
+    list($bid, $nodes) = $this->createBookOutline();
+    
+    // Step 4
+    $fr_nodes = $this->translateNodes($nodes, 'fr');
+    
+    // Step 5
+    module_enable(array('i18n_menu', 'i18n_select'));
+
+    $this->resetAll();
+    
+    // Step 6
+    $this->enableLanguages(array('de'));
+    
+    // Step 7
+    $de_nodes = $this->translateNodes($nodes, 'de');
+    
+    // Step 8
+    // Check english menu links
+    $this->drupalGet('node/' . $nodes[1]->nid);
+    
+    $this->assertText($nodes[0]->title, "Found english root node title, from book navigation, breadcrumb and footer navigation.", 3, 'testIssue1619026');
+    $this->assertText($nodes[1]->title, "Found english node 1 title, from book navigation and page title.", 2, 'testIssue1619026');
+    
+    // Check french menu links
+    $this->drupalGet('fr/node/' . $fr_nodes[1]->nid);
+    
+    $this->assertText($fr_nodes[0]->title, "Found french root node title, from book navigation, breadcrumb and footer navigation.", 3, 'testIssue1619026');
+    
+    $this->drupalGet('fr/node/' . $fr_nodes[3]->nid);
+    
+    $this->assertText($fr_nodes[0]->title, "Found french root node title, from book navigation and breadcrumb.", 2, 'testIssue1619026');
+    
+    // Check german menu links
+    $this->drupalGet('de/node/' . $de_nodes[1]->nid);
+    
+    $this->assertText($de_nodes[0]->title, "Found german root node title, from book navigation, breadcrumb and footer navigation.", 3, 'testIssue1619026');
+    
+    $this->drupalGet('de/node/' . $de_nodes[3]->nid);
+    
+    $this->assertText($de_nodes[0]->title, "Found german root node title, from book navigation and breadcrumb.", 2, 'testIssue1619026');
+  }
+  
+  
+  
+  /*
+   *
+   * Protected methods
+   * 
+   */
+  
+  
+  
+  /**
+   * Enable languages
+   *
+   * @param array $languages
+   *        Each item should be a language code
+   */
+  protected function enableLanguages($languages) {
+    foreach ($languages as $language) {
+      $edit = array(
+        'langcode' => $language,
+      );
+      
+      $this->drupalPost('admin/config/regional/language/add', $edit, t("Add language"));
+    }
+  }
+  
+  /**
+   * Enables translations on book nodes
+   * 
+   * @param bool $use_entity_translation = FALSE
+   */
+  protected function makeBooksTranslatable($use_entity_translation = FALSE) {
+    $edit = array(
+      'language_content_type' => $use_entity_translation ? 4 : 2
+    );
+    
+    $this->drupalPost('admin/structure/types/manage/book', $edit, t("Save content type"));
+
+    // Make fields translatable
+    if ($use_entity_translation) {
+      $this->drupalGet('admin/structure/types/manage/book/fields');
+
+      // Title field
+      $this->clickLink('replace');
+      $edit = array(
+        'enabled' => 1,
+      );
+      $this->drupalPost(NULL, $edit, t("Save settings"));
+
+      // Body field
+      $this->drupalGet('admin/structure/types/manage/page/fields/body');
+      $edit = array(
+        'field[translatable]' => 1,
+      );
+      $this->drupalPost(NULL, $edit, t("Save settings"));
+    }
+  }
+  
+  /**
+   * Enable i18n book navigation block
+   */
+  protected function enableI18nBookNavigationBlock() {
+    $edit = array(
+      "blocks[i18n_book_navigation_i18n_book_navigation][region]" => 'sidebar_first'
+    );
+    
+    $this->drupalPost('admin/structure/block', $edit, t("Save blocks"));
+  }
+  
+  /**
+   * Disable i18n book navigation block
+   */
+  protected function disableI18nBookNavigationBlock() {
+    $edit = array(
+      "blocks[i18n_book_navigation_i18n_book_navigation][region]" => '-1'
+    );
+    
+    $this->drupalPost('admin/structure/block', $edit, t("Save blocks"));
+  }
+  
+  /**
+   * Enable i18n book navigation block
+   */
+  protected function configureAndEnableMenuBlock($menu_name) {
+    $this->drupalGet('admin/structure/block/add-menu-block');
+    
+    $edit = array(
+      'title' => 'Menu Block',
+      'admin_title' => 'Menu Block',
+      'menu_name' => $menu_name,
+      'regions[bartik]' => 'sidebar_first',
+    );
+    
+    $this->drupalPost('admin/structure/block/add-menu-block', $edit, t("Save block"));
+  }
+  
+  /**
+   * Creates a book outline in the desired language
+   *
+   * @param string $language = 'en'
+   * @param bool $use_entity_translation = FALSE
+   *
+   * @return array
+   *        The book bid and the nodes in an array
+   */
+  protected function createBookOutline($language = 'en', $use_entity_translation = FALSE) {
+    $this->book = $this->createBookNode('new', NULL, $language, $use_entity_translation);
+
+    /*
+     * Add page hierarchy to book.
+     * Book - Node 0
+     *  |- Node 1
+     *    |- Node 2
+     *    |- Node 3
+     *  |- Node 4
+     *  |- Node 5
+     */
+    $nodes = array();
+    
+    $nodes[] = $this->book;
+    $nodes[] = $this->createBookNode($this->book->nid, NULL, $language, $use_entity_translation); // Node 1.
+    $nodes[] = $this->createBookNode($this->book->nid, $nodes[1]->book['mlid'], $language, $use_entity_translation); // Node 2.
+    $nodes[] = $this->createBookNode($this->book->nid, $nodes[1]->book['mlid'], $language, $use_entity_translation); // Node 3.
+    $nodes[] = $this->createBookNode($this->book->nid, NULL, $language, $use_entity_translation); // Node 4.
+    $nodes[] = $this->createBookNode($this->book->nid, NULL, $language, $use_entity_translation); // Node 5.
+    
+    return array($this->book->nid, $nodes);
+  }
+  
+  /**
+   * Translate nodes
+   *
+   * @param array $nodes
+   * @param string $language
+   * @param bool $use_entity_translation = FALSE
+   */
+  protected function translateNodes($nodes, $language, $use_entity_translation = FALSE) {
+    $new_nodes = array();
+    
+    foreach ($nodes as $node) {
+      $new_nodes[] = $this->translateBookNode($node, $language, $use_entity_translation);
+    }
+    
+    return $new_nodes;
+  }
+  
+  /**
+   * Create a book node.
+   * Port of the book module test cases.
+   * @see BooktestCase::createBookNode()
+   *
+   * @param int|string $bid
+   * @param int $plid = NULL
+   * @param string $language = NULL
+   * @param bool $use_entity_translation = FALSE
+   *
+   * @return object
+   *        The new node
+   */
+  protected function createBookNode($bid, $plid = NULL, $language = NULL, $use_entity_translation = FALSE) {
+    static $number = 0;
+
+    $edit = array();
+    
+    $und_language = LANGUAGE_NONE;
+
+    $title_key = $use_entity_translation ? "title_field[$und_language][0][value]" : "title";
+
+    $edit[$title_key] = $number . ' - Simpletest test node ' . $this->randomName(10);
+
+    $edit["body[$und_language][0][value]"] = 'Simpletest test body ' . $this->randomName(32) . ' ' . $this->randomName(32);
+    
+    $edit['book[bid]'] = $bid;
+    
+    $edit['language'] = isset($language) ? $language : $und_language;
+
+    if (isset($plid)) {
+      $this->drupalPost('node/add/book', $edit, t('Change book (update list of parents)'));
+
+      $edit['book[plid]'] = $plid;
+      
+      $this->drupalPost(NULL, $edit, t('Save'));
+    }
+    else {
+      $this->drupalPost('node/add/book', $edit, t('Save'));
+    }
+
+    $number++;
+
+    return $this->drupalGetNodeByTitle($edit[$title_key]);
+  }
+  
+  /**
+   * Translate book node
+   *
+   * @param object $node
+   * @param string $language
+   * @param bool $use_entity_translation = FALSE
+   * 
+   * @return object
+   *        The new translated node
+   */
+  protected function translateBookNode($node, $language, $use_entity_translation = FALSE) {
+    $edit = array();
+
+    $body_language = $use_entity_translation ? $language : LANGUAGE_NONE;
+
+    $title_key = $use_entity_translation ? "title_field[$language][0][value]" : "title";
+
+    $edit[$title_key] = $language . ' - Simpletest test node ' . $this->randomName(10);
+      
+    $edit["body[$body_language][0][value]"] = 'Simpletest test body ' . $this->randomName(32) . ' ' . $this->randomName(32);
+
+    if ($use_entity_translation) {
+      $this->drupalPost('node/' . $node->nid . '/edit/add/' . $node->language . '/' . $language, $edit, t("Save"));
+    }
+    else {
+      $edit['language'] = $language;
+
+      $this->drupalPost('node/add/book', $edit, t("Save"));
+    }
+    
+    if (!$use_entity_translation) {
+      // Add the translation link, because Drupal stores the translation link in
+      // the form cache, not in the hidden form elements
+      $new_node = $this->drupalGetNodeByTitle($edit[$title_key]);
+
+      $new_node->tnid = $node->nid;
+      
+      node_save($new_node);
+    }
+    else {
+      $new_node = clone $node;
+
+      $new_node->title = $edit[$title_key];
+    }
+
+    return $new_node;
+  }
+  
+  /**
+   * Configure the locale selection
+   */
+  protected function configureI18nDetection($use_entity_translation = FALSE) {
+    $edit = array(
+      "language[enabled][locale-session]" => 0,
+      "language[enabled][locale-url]" => 1,
+    );
+
+    if ($use_entity_translation) {
+      $edit["language_content[enabled][locale-session]"] = 0;
+      $edit["language_content[enabled][locale-url]"] = 1;
+    }
+    
+    $this->drupalPost('admin/config/regional/language/configure', $edit, t("Save settings"));
+  }
+  
+  
+  
+  /**
+   * test outline and breadcrumb translation with the book block
+   * being visible on ALL pages
+   */
+  protected function outlineTranslationBlockVisibleOnAllPages($nodes, $nodes_2, $fr_nodes, $fr_nodes_2, $group = 'Other') {
+    variable_set('book_block_mode', 'all pages');
+    
+    // Check menu links. Should be found 2 or 3 times each time:
+    //  - once in the block
+    //  - once in the breadcrumb
+    //  - one or zero times in the footer navigation
+    
+    // Check english menu links
+    $this->setBrowsingSessionLanguageTo('en');
+    $this->drupalGet('node/' . $nodes[1]->nid);
+    
+    $this->assertText($nodes[0]->title, "Found english book 1 root node title ({$nodes[0]->title}), from book navigation, breadcrumb and footer navigation.", 3, $group);
+    $this->assertText($nodes_2[0]->title, "Found english book 2 root node title ({$nodes_2[0]->title}), from book navigation.", 1, $group);
+    
+    $this->drupalGet('node/' . $nodes[3]->nid);
+    
+    $this->assertText($nodes[0]->title, "Found english book 1 root node title ({$nodes[0]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertText($nodes_2[0]->title, "Found english book 2 root node title ({$nodes_2[0]->title}), from book navigation.", 1, $group);
+    $this->assertText($nodes[1]->title, "Found english book 1 node 1 title ({$nodes[1]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertText($nodes[2]->title, "Found english book 1 node 2 title ({$nodes[2]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($nodes[4]->title, "Found english book 1 node 4 title ({$nodes[4]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($nodes[5]->title, "Found english book 1 node 5 title ({$nodes[5]->title}), from book navigation.", 1, $group);
+    
+    // Check french menu links
+    $this->setBrowsingSessionLanguageTo('fr');
+    $this->drupalGet('fr/node/' . $fr_nodes[1]->nid);
+    
+    $this->assertText($fr_nodes[0]->title, "Found french book 1 root node title ({$fr_nodes[0]->title}), from book navigation, breadcrumb and footer navigation.", 3, $group);
+    $this->assertText($fr_nodes_2[0]->title, "Found french book 2 root node title ({$fr_nodes_2[0]->title}), from book navigation.", 1, $group);
+    
+    $this->drupalGet('fr/node/' . $fr_nodes[3]->nid);
+    
+    $this->assertText($fr_nodes[0]->title, "Found french book 1 root node title ({$fr_nodes[0]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertText($fr_nodes_2[0]->title, "Found french book 2 root node title ({$fr_nodes_2[0]->title}), from book navigation.", 1, $group);
+    $this->assertText($fr_nodes[1]->title, "Found french book 1 node 1 title ({$fr_nodes[1]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertText($fr_nodes[2]->title, "Found french book 1 node 2 title ({$fr_nodes[2]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($fr_nodes[4]->title, "Found french book 1 node 4 title ({$fr_nodes[4]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($fr_nodes[5]->title, "Found french book 1 node 5 title ({$fr_nodes[5]->title}), from book navigation.", 1, $group);
+  }
+  
+  /**
+   * test outline and breadcrumb translation with the book block
+   * being visible on only BOOK pages
+   */
+  protected function outlineTranslationBlockVisibleOnBookPages($nodes, $nodes_2, $fr_nodes, $fr_nodes_2, $group = 'Other') {
+    variable_set('book_block_mode', 'book pages');
+    
+    // Check menu links. Should be found 2 or 3 times each time:
+    //  - once in the block
+    //  - once in the breadcrumb
+    //  - one or zero times in the footer navigation
+    
+    // Check english menu links
+    $this->setBrowsingSessionLanguageTo('en');
+    $this->drupalGet('node/' . $nodes[1]->nid);
+    
+    $this->assertText($nodes[0]->title, "Found english book 1 root node title, from book navigation, breadcrumb and footer navigation.", 3, $group);
+    $this->assertNoText($nodes_2[0]->title, "Found no english book 2 root node title, from book navigation.", $group);
+    
+    $this->drupalGet('node/' . $nodes[3]->nid);
+    
+    $this->assertText($nodes[0]->title, "Found english book 1 root node title ({$nodes[0]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertNoText($nodes_2[0]->title, "Found no english book 2 root node title ({$nodes_2[0]->title}), from book navigation.", $group);
+    $this->assertText($nodes[1]->title, "Found english book 1 node 1 title ({$nodes[1]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertText($nodes[2]->title, "Found english book 1 node 2 title ({$nodes[2]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($nodes[4]->title, "Found english book 1 node 4 title ({$nodes[4]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($nodes[5]->title, "Found english book 1 node 5 title ({$nodes[5]->title}), from book navigation.", 1, $group);
+    
+    // Check french menu links
+    $this->setBrowsingSessionLanguageTo('fr');
+    $this->drupalGet('fr/node/' . $fr_nodes[1]->nid);
+    
+    $this->assertText($fr_nodes[0]->title, "Found french book 1 root node title ({$fr_nodes[0]->title}), from book navigation, breadcrumb and footer navigation.", 3, $group);
+    $this->assertNoText($fr_nodes_2[0]->title, "Found no french book 2 root node title ({$fr_nodes_2[0]->title}), from book navigation.", $group);
+    
+    $this->drupalGet('fr/node/' . $fr_nodes[3]->nid);
+    
+    $this->assertText($fr_nodes[0]->title, "Found french book 1 root node title ({$fr_nodes[0]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertNoText($fr_nodes_2[0]->title, "Found no french book 2 root node title ({$fr_nodes_2[0]->title}), from book navigation.", $group);
+    $this->assertText($fr_nodes[1]->title, "Found french book 1 node 1 title ({$fr_nodes[1]->title}), from book navigation and breadcrumb.", 2, $group);
+    $this->assertText($fr_nodes[2]->title, "Found french book 1 node 2 title ({$fr_nodes[2]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($fr_nodes[4]->title, "Found french book 1 node 4 title ({$fr_nodes[4]->title}), from book navigation and footer navigation.", 2, $group);
+    $this->assertText($fr_nodes[5]->title, "Found french book 1 node 5 title ({$fr_nodes[5]->title}), from book navigation.", 1, $group);
+  }
+  
+  /**
+   * Helper function to set the current browsing session language.
+   * Sets the browser session language to the desired language.
+   * It seems Simpletest sometimes gets confused (bug with local browsing session ?) when
+   * testing the entity translation links.
+   *
+   * @param string $language = 'en'
+   *        (optional) The language code
+   */
+  protected function setBrowsingSessionLanguageTo($language = 'en') {
+    $this->browsing_language = $language;
+    return;
+    $this->drupalGet($language != 'en' ? "$language/node" : 'node', array('query' => array('language' => $language)));
+  }
+}

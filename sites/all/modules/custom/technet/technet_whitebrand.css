@@ -1,0 +1,12 @@
+/**
+ * File: technet_whitebrand.css
+ * Style overrides for whitebranded documents
+ */
+
+.whitebrand #page{
+    background-color: #fff;   
+}
+
+.whitebrand #header{
+    background-color: inherit;
+}

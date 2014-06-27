@@ -1,0 +1,6 @@
+name = "Technet Translation Utilities"
+description = Utilities for translation in Technet
+core = 7.x
+package = Polycom
+version = "7.x-1.0"
+

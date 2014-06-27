@@ -1,0 +1,12 @@
+/**
+ * CSS overrides for the user interface tour.
+ *
+ */
+
+.popover-navigation .btn.disabled {
+    opacity: 0;
+}
+
+ul li {
+    list-style-type: disc;
+}

@@ -1,0 +1,11 @@
+;$Id polycom_basic.info $
+name = "Polycom Basic"
+description = "Enables basic technet functionality, including views and several library functions."
+package = "polycom"
+core = 7.x
+
+version = 7.x-1.0
+
+dependencies[] = views
+
+;scripts[] = /includes/bootstrap/js/bootstrap.min.js

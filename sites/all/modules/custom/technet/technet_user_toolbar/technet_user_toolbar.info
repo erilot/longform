@@ -1,0 +1,10 @@
+;$Id: language_switcher.info $
+name = "Technet User Toolbar"
+description = "Provide several blocks for navigating and using Technet documents"
+package = "polycom"
+dependencies[] = polycom_basic
+
+core = 7.x
+php = 5
+version = 7.x-1.2
+; updated on November 29, 2013

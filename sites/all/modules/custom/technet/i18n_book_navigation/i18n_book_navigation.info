@@ -1,0 +1,15 @@
+name = Book translation
+description = Module for translating the Book navigation (block and node links)
+core = 7.x
+package = Multilingual - Internationalization
+dependencies[] = i18n
+dependencies[] = book
+
+files[] = tests/i18n_book_navigation.test
+
+; Information added by drupal.org packaging script on 2013-04-02
+version = "7.x-2.5"
+core = "7.x"
+project = "i18n_book_navigation"
+datestamp = "1364901913"
+

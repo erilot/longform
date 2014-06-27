@@ -1,0 +1,11 @@
+--- a/hierarchical_select.js	2014-04-12 20:15:38.218050881 +0300
++++ b/hierarchical_select.js	2014-04-12 20:15:52.202050467 +0300
+@@ -252,7 +252,7 @@
+ 
+ Drupal.HierarchicalSelect.attachBindings = function(hsid) {
+   var updateOpString = $('#hierarchical-select-'+ hsid +'-wrapper .update-button').val();
+-  var addOpString = $('#hierarchical-select-'+ hsid +'-wrapper .hierarchical-select input', Drupal.HierarchicalSelect.context).val();
++  var addOpString = $('#hierarchical-select-'+ hsid +'-wrapper .hierarchical-select .add-to-dropbox', Drupal.HierarchicalSelect.context).val();
+   var createNewItemOpString = $('#hierarchical-select-'+ hsid +'-wrapper .hierarchical-select .create-new-item-create', Drupal.HierarchicalSelect.context).val();
+   var cancelNewItemOpString = $('#hierarchical-select-'+ hsid +'-wrapper .hierarchical-select .create-new-item-cancel', Drupal.HierarchicalSelect.context).val();
+ 

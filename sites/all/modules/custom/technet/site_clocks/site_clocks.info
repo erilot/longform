@@ -1,0 +1,13 @@
+;$Id: site_clocks.info $
+name = "LSG Site Clocks"
+description = "Generates canvas clocks for each LSG site."
+package = "Polycom"
+dependencies[] = polycom_basic
+
+files[] = site_clocks.module
+
+stylesheets[all][] = site_clocks.css
+core = 7.x
+php = 5
+version = 7.x-1.0
+; updated on August 16, 2013

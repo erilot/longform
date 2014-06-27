@@ -1,0 +1,164 @@
+/**
+ * @file: topic-edit.css
+ *
+ * Style overrides for topic-edit
+ */
+
+#doc-content ul.nav.nav-stacked li:before{
+    content: '';
+}
+
+#doc-content ul li {
+    padding: 0;
+}
+
+.edit-wrapper {
+    opacity: .5;
+    transition: .2s right;
+    right: -6em;
+    position: absolute;
+    z-index: 1;
+    cursor: pointer;
+}
+
+.edit-wrapper:hover {
+    opacity: 1;
+    right: -1em;
+    z-index: 1001;
+}
+
+.edit-wrapper .workflow-edit-button .workflow-insert {
+    display: none;
+    opacity: 0;
+    transition: .5s all;
+}
+
+.edit-wrapper .workflow-edit-button:hover .workflow-insert {
+    display: block;
+    opacity: 1;
+}
+
+.edit-wrapper .list-group-item {
+    padding-left: .7em;
+}
+
+.edit-wrapper .glyphicon {
+    padding-right: .5em;
+}
+
+.edit-wrapper .flag-wrapper.list-group-item {
+    padding: 0;
+}
+
+.edit-wrapper a.flag,
+.flag-wrapper.list-group-item a.flag{
+    padding: 10px 11px;
+    display: inline-block;
+    width: 100%;
+}
+
+.flag-wrapper.list-group-item {
+    padding: 0; 
+}
+
+.flag-wrapper.list-group-item .sm {
+    display: none;
+}
+
+.edit-wrapper a.flag .lg {
+    display: none;
+}
+
+.edit-wrapper a.flag .sm {
+    display: inline;
+}
+
+.edit-wrapper a.flag+.flag-throbber {
+    display: none;
+}
+
+.edit-wrapper a.flag:hover,
+.flag-wrapper.list-group-item a.flag:hover {
+    text-decoration: none;
+    background-color: #f5f5f5;
+}
+
+.topic-wrapper {
+    transition: .2s all;
+    position: relative;
+}
+
+.topic-wrapper.highlighted {
+    background: rgba(255,200,0,.1);
+}
+
+#edit-content-form-format {
+    display: none;
+}
+
+#book-nav-edit-form-create .form-group {
+    display: inline;
+}
+
+#book-nav-edit-form-create .form-group.alert {
+    display: block;
+}
+
+fieldset {
+    border: 0 !important;
+}
+
+span.cke_skin_kama {
+    border: 0 !important;
+    padding: 0 !important;
+}
+
+.vertical-spacer {
+    margin-top: 2em;
+}
+
+.modal-dialog.modal-xl {
+    width: 1000px;
+}
+
+.modal-error .modal-content{
+    font-size: 1em !important;
+}
+
+.document-content .alert.alert-edit {
+    width: 90%;
+}
+
+.edit-wrapper .vertical-collapse-trigger {
+    display: none;
+}
+
+.vertical-collapse-trigger.alert {
+    color: #F00;
+}
+
+.edit-wrapper .vertical-collapse-trigger.vertical-collapse {
+    display: block;
+    opacity: 1;
+}
+
+.edit-wrapper .vertical-collapse:not(.vertical-collapse-trigger) {
+    transition: left .2s .1s;
+    opacity: 0;
+    left: 100%;
+}
+
+.edit-wrapper:hover .vertical-collapse {
+    left: 0%;
+    opacity: 1;
+}
+
+/* === Drop-in editor === */
+
+#edit-title-form {
+    width: 75%;
+}
+
+#edit-heading-form {
+    width: 25%;
+}

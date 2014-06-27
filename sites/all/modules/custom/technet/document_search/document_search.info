@@ -1,0 +1,11 @@
+;$Id document_search.info $
+name = "Document Search"
+description = "Creates a search block that is restricted to the current book."
+dependencies[] = book_nav
+
+files[] = book_nav.module
+
+package = "Polycom"
+core = 7.x
+
+version = 7.x-1.0
