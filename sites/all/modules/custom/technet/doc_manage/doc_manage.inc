@@ -203,7 +203,7 @@ function doc_manage_metadata_table($ticket = NULL, $options = NULL) {
     'label' => t('Part number'),
     'type' => 'term',
     'machine_name' => 'field_part_number',
-    'missing_tooltip' => 'Part numbers are not required by Technet, but are almost always required by Polycom',
+    'missing_tooltip' => 'Part numbers are not required by Technet, but are almost always required by definio',
     'present_tooltip' => NULL,
     'importance' => 'recommended',
     'editable' => TRUE,
@@ -3073,7 +3073,7 @@ function _publishing_actions_import ($node, &$form_state) {
   // possible states are: pending, next, finished, locked
   
   $states = _doc_manage_get_import_state($node);
-  if($states['finished'] && !polycom_basic_check_admin()){
+  if($states['finished'] && !doc_manage_core_check_admin()){
     return;
   }
   

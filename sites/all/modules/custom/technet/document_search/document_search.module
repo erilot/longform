@@ -37,7 +37,7 @@ function document_search_block_view($delta = '') {
   $block = array();
   switch ($delta) {
     case 'document_search':
-      $block['title'] = t('Polycom Technet Search');   
+      $block['title'] = t('definio Technet Search');   
       $block['content'] = drupal_render(drupal_get_form('document_search_search_block_form'));
       break;
   }
@@ -55,7 +55,7 @@ function document_search_search_block_form($form, &$form_state) {
     '#defaultvalue' => '',
     '#maxlength' => 255,
     '#attributes' => array(
-      'placeholder' => t('Search Polycom Technet'),      
+      'placeholder' => t('Search definio Technet'),      
     )
   );
   $form['submit'] = array(

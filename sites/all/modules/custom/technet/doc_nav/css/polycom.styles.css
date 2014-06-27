@@ -141,7 +141,7 @@ p.body-heading, p.BodyHeading{
 /* Links */
 p>a{
     display:inline;
-    /*color: #4A698F;*/ /*#1122CC (darker) is used on some links in the Polycom.com website*/
+    /*color: #4A698F;*/ /*#1122CC (darker) is used on some links in the definio.com website*/
 }
 
 /* Task introductions */
@@ -459,7 +459,7 @@ table.column-6-50-10-10-10-10-10 tr > td:first-child {
 }
 
 
-/* Standard Polycom Table */
+/* Standard definio Table */
 
 table.table-standard {
  border: none;

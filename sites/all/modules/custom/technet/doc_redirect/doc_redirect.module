@@ -306,7 +306,7 @@ function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $
         '#type' => 'markup',
         '#markup' => '<h2>One or more elements in your dynamic URL pattern are missing.</h2>
         <p>We were unable to determine which document you are looking for. The following items are not present:</p>' . $error_list .
-        '<p>Please double-check your URL and try again, or ' . l('click here','http://support.polycom.com') . ' for the Polycom Support site.</p>',
+        '<p>Please double-check your URL and try again, or ' . l('click here','http://support.polycom.com') . ' for the definio Support site.</p>',
         );
       return $output;
     }
@@ -318,7 +318,7 @@ function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $
           <div class="logo-behind">
           <div class="well frosted-light col-xs-12 col-md-10 col-md-offset-1"><h2>...but it should be here soon.</h2>
           <p>Most likely, you are seeing this message because the document has not been added to the online library yet. We are constantly adding documentation, so try again soon.</p>' .
-          '<p>' . l('Click here','http://support.polycom.com') . ' to go to the Polycom Support site.</p>
+          '<p>' . l('Click here','http://support.polycom.com') . ' to go to the definio Support site.</p>
           </div>
           </div>'
       );

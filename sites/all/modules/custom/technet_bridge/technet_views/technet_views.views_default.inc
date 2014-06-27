@@ -3736,7 +3736,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_toc_array']['label'] = '';
   $handler->display->display_options['fields']['field_toc_array']['exclude'] = TRUE;
   $handler->display->display_options['fields']['field_toc_array']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_toc_array']['type'] = 'polycom_basic_toc_array';
+  $handler->display->display_options['fields']['field_toc_array']['type'] = 'doc_manage_core_toc_array';
   /* Field: Content: Title */
   $handler->display->display_options['fields']['title']['id'] = 'title';
   $handler->display->display_options['fields']['title']['table'] = 'node';

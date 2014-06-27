@@ -1,5 +1,5 @@
 <?php
-// $Id polycom_basic.module $
+// $Id doc_manage_core.module $
 /**
  * File: module functions
  */
@@ -7,15 +7,15 @@
 define ('MAX_IMAGE_HEIGHT',400);
 define ('MAX_IMAGE_WIDTH', 890);
 
-function polycom_basic_init(){
+function doc_manage_core_init(){
   //load libraries
-  drupal_add_js(drupal_get_path('module','polycom_basic') . '/includes/technet.js');
+  drupal_add_js(drupal_get_path('module','doc_manage_core') . '/includes/technet.js');
   drupal_add_library('system', 'ui');
   
   // Load bootstrap on non-administration pages
   //if(!path_is_admin(current_path())){
-    //drupal_add_js(drupal_get_path('module','polycom_basic') . '/includes/bootstrap-3.1.0/js/bootstrap.min.js');
-    //drupal_add_css(drupal_get_path('module', 'polycom_basic') . '/includes/bootstrap-3.1.0/css/bootstrap.min.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
+    //drupal_add_js(drupal_get_path('module','doc_manage_core') . '/includes/bootstrap-3.1.0/js/bootstrap.min.js');
+    //drupal_add_css(drupal_get_path('module', 'doc_manage_core') . '/includes/bootstrap-3.1.0/css/bootstrap.min.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
   //}
 
   // Load tour framework on non-administration pages.
@@ -23,8 +23,8 @@ function polycom_basic_init(){
   if(!path_is_admin(current_path())){
     
     // Insert a check for cookie here.
-    drupal_add_js(drupal_get_path('module','polycom_basic') . '/includes/bootstrap-tour/js/bootstrap-tour.js');
-    drupal_add_css(drupal_get_path('module', 'polycom_basic') . '/includes/bootstrap-tour/css/bootstrap-tour.min.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
+    drupal_add_js(drupal_get_path('module','doc_manage_core') . '/includes/bootstrap-tour/js/bootstrap-tour.js');
+    drupal_add_css(drupal_get_path('module', 'doc_manage_core') . '/includes/bootstrap-tour/css/bootstrap-tour.min.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
   
   }
 
@@ -33,7 +33,7 @@ function polycom_basic_init(){
 /**
  * Implements hook_block_info()
  */
-function polycom_basic_block_info(){
+function doc_manage_core_block_info(){
   
   $blocks['feedback'] = array(
     'info' => t('Feedback form'),
@@ -50,7 +50,7 @@ function polycom_basic_block_info(){
 /**
  * Implements hook_block_view()
  */
-function polycom_basic_block_view($delta){
+function doc_manage_core_block_view($delta){
   
   switch($delta){
     case 'feedback':
@@ -194,7 +194,7 @@ function polycom_docsite_menu_tree__menu_create_new_content($variables) {
 /**
  * Utiltiy function to generate a themed button for the user's profile edit page
  */
-function _polycom_basic_get_profile_edit_button() {
+function _doc_manage_core_get_profile_edit_button() {
   global $user;
   
 }
@@ -202,32 +202,32 @@ function _polycom_basic_get_profile_edit_button() {
 /**
 * Implements hook_field_formatter_info().
 */
-function polycom_basic_field_formatter_info() {
+function doc_manage_core_field_formatter_info() {
   
   $info = array(
     // Formatter for JSON toc's.
-    'polycom_basic_toc_array' => array(
+    'doc_manage_core_toc_array' => array(
       'label' => t('TOC array'), 
       'field types' => array('text', 'text_long'),
       'description' => t('Renders a TOC array as boostrapiefied HTML.'),
     ),
     
     // Formatter for PDF downloads (displays simple 'download PDF' message instead of filename).
-    'polycom_basic_download_link' => array(
+    'doc_manage_core_download_link' => array(
       'label' => t('File download link'),
       'field types' => array('file'),
       'description' => t('Presents a simple "download" link instead of the full filename'),
     ),
     
     // Formatter for PDF downloads (displays simple 'download PDF' message instead of filename).
-    'polycom_basic_download_button' => array(
+    'doc_manage_core_download_button' => array(
       'label' => t('File download button'),
       'field types' => array('file'),
       'description' => t('Presents a simple "download" button instead of the full filename'),
     ),
     
     // Formatter for import assignments (displays a button linked to the user's profile).
-    'polycom_basic_assigned_button' => array(
+    'doc_manage_core_assigned_button' => array(
       'label' => t('Assigned user button'),
       'field types' => array('entity_reference'),
       'description' => t('Displays a button with the user\'s name, linked to the user\'s profile.'),
@@ -241,11 +241,11 @@ function polycom_basic_field_formatter_info() {
 /**
 * Implements hook_field_formatter_view().
 */
-function polycom_basic_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+function doc_manage_core_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
   $elements = array();
     switch ($display['type']) {
       
-      case 'polycom_basic_toc_array':
+      case 'doc_manage_core_toc_array':
 	foreach ($items as $item) {
 	  $markup = theme_item_list(_book_nav_bootstrapify_toc(json_decode($item['value'], TRUE)));
 	  $elements[] = array(
@@ -254,7 +254,7 @@ function polycom_basic_field_formatter_view($entity_type, $entity, $field, $inst
 	}
 	break;
           
-      case 'polycom_basic_download_link':
+      case 'doc_manage_core_download_link':
 	foreach ($items as $delta => $item) {
 	$options = array(
 	  'html' => TRUE,
@@ -267,7 +267,7 @@ function polycom_basic_field_formatter_view($entity_type, $entity, $field, $inst
 	);
 	}
 	break;
-      case 'polycom_basic_download_button':
+      case 'doc_manage_core_download_button':
 	foreach ($items as $delta => $item) {
 	  $options = array(
 	    'html' => TRUE,
@@ -305,10 +305,10 @@ function _build_download_link($delta, $item, $options) {
 /**
 * Implements hook_theme().
 */
-function polycom_basic_theme() {
+function doc_manage_core_theme() {
   return array(
-    'polycom_basic_technet' => array(
-      'template' => 'polycom_basic_technet',
+    'doc_manage_core_technet' => array(
+      'template' => 'doc_manage_core_technet',
       'variables' => array(
         'data' => NULL,
       ),
@@ -325,7 +325,7 @@ function polycom_basic_theme() {
  * the Techent "published" state (NOT the Drupal published state).
  * 
  */
-function polycom_basic_node_access($node, $op, $account) {
+function doc_manage_core_node_access($node, $op, $account) {
   $type = is_string($node) ? $node : $node->type;
 
 
@@ -357,12 +357,12 @@ function polycom_basic_node_access($node, $op, $account) {
 }
 
 
-function polycom_basic_page_alter(&$page){
+function doc_manage_core_page_alter(&$page){
     //debuggers
     //dpm(workflow_get_workflow_states_by_sid(31),'workflow state');
 
     // Add polycom topic editing functions to page if a qualified user
-    polycom_basic_topic_editor($page);
+    doc_manage_core_topic_editor($page);
     
     //Whitebranding check
     if($_GET['partner'] || isset($_SESSION['technet']['partner'])) {
@@ -377,8 +377,8 @@ function polycom_basic_page_alter(&$page){
       }
     
       // The term is matched -- load JS and CSS files, get logo display HTML, and send it through to JS.
-      drupal_add_css(drupal_get_path('module','polycom_basic') . '/technet_whitebrand.css');
-      drupal_add_js(drupal_get_path('module','polycom_basic'). '/technet_whitebrand.js');
+      drupal_add_css(drupal_get_path('module','doc_manage_core') . '/technet_whitebrand.css');
+      drupal_add_js(drupal_get_path('module','doc_manage_core'). '/technet_whitebrand.js');
       $image = array(
 	'style_name' => 'whitebranded_logo',
 	'path' => $term->field_whitebrand_logo[LANGUAGE_NONE][0]['uri'],
@@ -404,14 +404,14 @@ function polycom_basic_page_alter(&$page){
     }
 }
 
-function polycom_basic_topic_editor(&$page) {
+function doc_manage_core_topic_editor(&$page) {
   
   $content = $page['content']['system_main']['main']['#markup'];
   $content = htmlqp($content);
   
 }
 
-function polycom_basic_add_topic_workflows() {
+function doc_manage_core_add_topic_workflows() {
   $page = menu_get_object();
   dpm($page);
   
@@ -419,15 +419,15 @@ function polycom_basic_add_topic_workflows() {
 /**
  * Implements hook_permission(). 
  */
-function polycom_basic_permission() {
+function doc_manage_core_permission() {
   return array(
-    'administer polycom_basic' => array(
-      'title' => t('administer polycom_basic'),
-      'description' => t('TODO Add a description for \'administer polycom_basic\''),
+    'administer doc_manage_core' => array(
+      'title' => t('administer doc_manage_core'),
+      'description' => t('TODO Add a description for \'administer doc_manage_core\''),
     ),
-    'access polycom_basic' => array(
-      'title' => t('access polycom_basic'),
-      'description' => t('TODO Add a description for \'access polycom_basic\''),
+    'access doc_manage_core' => array(
+      'title' => t('access doc_manage_core'),
+      'description' => t('TODO Add a description for \'access doc_manage_core\''),
     ),
   );
 }
@@ -440,14 +440,14 @@ function polycom_basic_permission() {
  * preparation of the string because of the special html tags < and >. The
  * foo_filter is more complex, including its own settings and inline tips.
  */
-function polycom_basic_filter_info() {
+function doc_manage_core_filter_info() {
   $filters['filter_topic_workflows'] = array(
     'title' => t('Insert Topic Workflows'),
     'cache' => FALSE,
     'description' => t('Each topic on a book page will have a workflow feedback/menu prepended.'),
     'default settings' => array('user_roles' => array(3,16)),
-    'process callback' => '_polycom_basic_workflow_insert_process',
-    'tips callback' => '_polycom_basic_workflow_insert_tips',
+    'process callback' => '_doc_manage_core_workflow_insert_process',
+    'tips callback' => '_doc_manage_core_workflow_insert_tips',
   );
   return $filters;
 }
@@ -458,7 +458,7 @@ function polycom_basic_filter_info() {
  * Now, in the "process" step, we'll search for our escaped time tags and
  * do the real filtering: replace the xml tag with the date.
  */
-function _polycom_basic_workflow_insert_process($text, $filter) {
+function _doc_manage_core_workflow_insert_process($text, $filter) {
   return $text;
 }
 
@@ -471,7 +471,7 @@ function _polycom_basic_workflow_insert_process($text, $filter) {
  * screen, while long tips are provided on a separate linked page. Short tips
  * are optional, but long tips are highly recommended.
  */
-function _polycom_basic_workflow_insert_tips($filter, $format, $long = FALSE) {
+function _doc_manage_core_workflow_insert_tips($filter, $format, $long = FALSE) {
   return t('Topics present will be detected, and workflow/edit forms attached to them. <b>This functionality is in development and not currently impemented.</b>');
 }
 
@@ -480,29 +480,29 @@ function _polycom_basic_workflow_insert_tips($filter, $format, $long = FALSE) {
 /**
  * Implements hook_menu().
  */
-function polycom_basic_menu() {
+function doc_manage_core_menu() {
   $items = array();
   $items['admin/technet'] = array(
     'title' => t('Technet'),
     'description' => t('Technet Settings'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('polycom_admin_form'),
-    'access arguments' => array('access polycom_basic'),
+    'access arguments' => array('access doc_manage_core'),
     'type' => MENU_NORMAL_ITEM,
   );
   $items['admin/technet/polycom_admin'] = array(
-    'title' => t('Polycom Admin'),
-    'description' => t('Polycom Admin'),
+    'title' => t('definio Admin'),
+    'description' => t('definio Admin'),
     'page callback' => 'drupal_get_form',
     'page arguments' => array('polycom_admin_form'),
-    'access arguments' => array('access polycom_basic'),
+    'access arguments' => array('access doc_manage_core'),
     'type' => MENU_DEFAULT_LOCAL_TASK,
     'weight' => -99,
   );
   $items['admin/technet/workflows/workflow-report'] = array(
     'title' => t('Workflows'),
     'description' => t('Workflow report'),
-    'page callback' => 'polycom_basic_workflow_report',
+    'page callback' => 'doc_manage_core_workflow_report',
     'access arguments' => array('access content'),
     'type' => MENU_NORMAL_ITEM,
   );
@@ -562,7 +562,7 @@ function _custom_theme_status_messages($variables) {
 /**
  * Generates DPM displays of workflow components. For development only. Requires Devel to be installed and enabled.
  */
-function polycom_basic_workflow_report(){
+function doc_manage_core_workflow_report(){
   
   if(!module_exists('devel')) {
     drupal_set_message('The Devel module must be installed and enabled to generate this report.','error');
@@ -580,7 +580,7 @@ function polycom_basic_workflow_report(){
 /**
  * Implements hook_menu_alter()
  */
-function polycom_basic_menu_alter(&$items){
+function doc_manage_core_menu_alter(&$items){
  // Remove "/node"
  $items['node']['access callback'] = FALSE;
 
@@ -593,7 +593,7 @@ function polycom_basic_menu_alter(&$items){
 * Implements hook_entity_info_alter().
 * Creates a print view mode for documentation.
 */
-function polycom_basic_entity_info_alter(&$entity_info) {
+function doc_manage_core_entity_info_alter(&$entity_info) {
   $entity_info['node']['view modes']['print_document'] = array(
     'label' => t('Print Document'),
     'custom settings' => TRUE,
@@ -605,7 +605,7 @@ function polycom_basic_entity_info_alter(&$entity_info) {
  * Currently does nothing (used for debugging only)
  */
 
-function polycom_basic_workflow($op, $old_state, $new_state, $node, $force = TRUE) {
+function doc_manage_core_workflow($op, $old_state, $new_state, $node, $force = TRUE) {
  
   switch ($op) {
     case 'transition permitted':
@@ -633,15 +633,15 @@ function polycom_basic_workflow($op, $old_state, $new_state, $node, $force = TRU
  * Implements hook_views_pre_render()
  */
 
-function polycom_basic_views_pre_render(&$view){
+function doc_manage_core_views_pre_render(&$view){
   
   if($view->current_display) {
     switch ($view->current_display){
       case 'related_with_children':
-	polycom_basic_filter_current($view);
+	doc_manage_core_filter_current($view);
 	break;
       case 'related_other_versions':
-	polycom_basic_filter_other($view);
+	doc_manage_core_filter_other($view);
     }
   }
   else {
@@ -660,7 +660,7 @@ function polycom_basic_views_pre_render(&$view){
  * This is a hack workaround for a workflow bug (cannot filter by workflow state without throwing an error during view save).
  *
  */
-function polycom_basic_filter_other(&$view){
+function doc_manage_core_filter_other(&$view){
   
   $result = $view->result;
   
@@ -681,7 +681,7 @@ function polycom_basic_filter_other(&$view){
  *  ---Release Notes: returns all versions from current version until NEXT HIGHER version
  *  ---Others: returns the first matching document with a LOWER version.
  */
-function polycom_basic_filter_current(&$view, $current = NULL){
+function doc_manage_core_filter_current(&$view, $current = NULL){
   $node = menu_get_object();
   
   //get current software release and doctype from page being viewed
@@ -689,7 +689,7 @@ function polycom_basic_filter_current(&$view, $current = NULL){
     $current = taxonomy_term_load($node->field_software_release[LANGUAGE_NONE][0]['tid'])->name;
   }
   $current_doctype = $node->taxonomy_vocabulary_8[LANGUAGE_NONE][0]['tid'];
-  $split_release = _polycom_basic_split_version($current);
+  $split_release = _doc_manage_core_split_version($current);
   
   $doctypes = array();
   $results = $view->result;
@@ -727,11 +727,11 @@ function polycom_basic_filter_current(&$view, $current = NULL){
   
   foreach($doctypes as $doctype=>$matched){
 
-    $fuzzy = _polycom_basic_filter_array($index, NULL, $doctype);
+    $fuzzy = _doc_manage_core_filter_array($index, NULL, $doctype);
     switch ($doctype){
       case 1033: //release notes are handled differently
         foreach($fuzzy as &$item){
-          $query_split_release = _polycom_basic_split_version($item['software_release']);
+          $query_split_release = _doc_manage_core_split_version($item['software_release']);
 
           if ($item['software_release'] > $current && ($query_split_release['major'] < $split_release['major'] + 1 && $query_split_release['minor'] < $split_release['minor'] + 1)){
             $key = $item['key'];
@@ -761,7 +761,7 @@ function polycom_basic_filter_current(&$view, $current = NULL){
 /*
  * Helper function which filters an array by key and/or value
  */
-function _polycom_basic_filter_array($array, $key = NULL, $value = NULL){
+function _doc_manage_core_filter_array($array, $key = NULL, $value = NULL){
   if(!$key && !$value){
     return FALSE;
   }
@@ -777,7 +777,7 @@ function _polycom_basic_filter_array($array, $key = NULL, $value = NULL){
 /*
  * Helper function which splits a string release version (1.2.3.4) and returns a keyed array with each level identified.
  */
-function _polycom_basic_split_version($version){
+function _doc_manage_core_split_version($version){
   $release_array = explode('.',$version);  
   $release['major'] = array_shift($release_array);
   $release['minor'] = array_shift($release_array);
@@ -790,7 +790,7 @@ function _polycom_basic_split_version($version){
 /**
  * Simple check to see if the current user is an administrator. Returns TRUE if the user has one of roles 3 or 16, FALSE otherwise
  */
-function polycom_basic_check_admin(){
+function doc_manage_core_check_admin(){
   global $user;
   if (array_key_exists(3, $user->roles) || array_key_exists(16, $user->roles)){
     return TRUE;
@@ -1049,7 +1049,7 @@ function extract_body(&$content){
  *  - User is a member of the "content publisher" group (56131).
  *
  */
-function polycom_basic_node_presave($node) {
+function doc_manage_core_node_presave($node) {
   $wrapper = entity_metadata_wrapper('node', $node);
   
   if ($wrapper->getBundle() != 'import_ticket') return;
@@ -1872,7 +1872,7 @@ function tn_bootstrap_preprocess_page(&$variables) {
 
   // Technet user nav.
   global $user;
-  if($user->uid && module_exists('polycom_basic')) {
+  if($user->uid && module_exists('doc_manage_core')) {
     $variables['technet_nav']['enabled'] = TRUE;
     $variables['technet_nav']['content'] = technet_technet_header(menu_get_object());
   }
@@ -1910,7 +1910,7 @@ function tn_bootstrap_preprocess_page(&$variables) {
 
 function tn_bootstrap_lt_unified_login_page($variables) {
 
-  drupal_set_title(t('Log in to Polycom Technet'));
+  drupal_set_title(t('Log in to definio Technet'));
   $login_form = $variables['login_form'];
   $register_form = $variables['register_form'];
   $active_form = $variables['active_form'];

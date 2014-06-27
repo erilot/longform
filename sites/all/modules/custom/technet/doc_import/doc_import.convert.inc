@@ -45,7 +45,7 @@ function doc_import_convert_topic($topic, $author_tool, $controller = NULL) {
     // Process symbol characters
     doc_import_process_symbols($section);
     
-    //Convert embedded classes to Polycom document classes.
+    //Convert embedded classes to definio document classes.
     extract_body($section);    
 
     doc_import_transliterate_classes($section, $author_tool);

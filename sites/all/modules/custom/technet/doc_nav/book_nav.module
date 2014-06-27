@@ -1194,7 +1194,7 @@ function book_nav_title_block(){
  */
 function book_nav_footer_info(){
  
-  $copyright = l('&copy; ' . date('Y') . ' Polycom, Inc.','documents/en/legal-documents/1846', array('html'=>TRUE));
+  $copyright = l('&copy; ' . date('Y') . ' definio, Inc.','documents/en/legal-documents/1846', array('html'=>TRUE));
   $node = menu_get_object();
   $nid = $node->nid;
   $part_number = taxonomy_term_load($node->field_part_number[LANGUAGE_NONE][0]['tid']);
@@ -1635,7 +1635,7 @@ function _doc_manage_display_tour($node, $book) {
     
     if($display_tour) {
         drupal_add_js(drupal_get_path('module','book_nav') . '/includes/js/ui-tour.js');
-	drupal_add_css(drupal_get_path('module','polycom_basic') . '/includes/ui-tour.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
+	drupal_add_css(drupal_get_path('module','doc_manage_core') . '/includes/ui-tour.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
     }
 }
 

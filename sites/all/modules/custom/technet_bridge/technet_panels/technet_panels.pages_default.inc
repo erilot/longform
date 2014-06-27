@@ -225,7 +225,7 @@ function technet_panels_default_page_manager_handlers() {
     $pane->access = array();
     $pane->configuration = array(
       'label' => 'hidden',
-      'formatter' => 'polycom_basic_download_button',
+      'formatter' => 'doc_manage_core_download_button',
       'delta_limit' => '0',
       'delta_offset' => '0',
       'delta_reversed' => 0,
@@ -1138,7 +1138,7 @@ if ($nid == $bid){
     $pane->pid = 'new-e874d8f6-f60f-4261-b9f2-499205459001';
     $pane->panel = 'footer';
     $pane->type = 'block';
-    $pane->subtype = 'polycom_basic-feedback';
+    $pane->subtype = 'doc_manage_core-feedback';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
@@ -2760,7 +2760,7 @@ function technet_panels_default_page_manager_pages() {
     ),
   );
   $display->cache = array();
-  $display->title = 'Search Polycom® Technet';
+  $display->title = 'Search definio® Technet';
   $display->uuid = 'da28ce6b-4d34-448b-abf2-a453df38d7db';
   $display->content = array();
   $display->panels = array();
@@ -3006,7 +3006,7 @@ function technet_panels_default_page_manager_pages() {
     ),
   );
   $display->cache = array();
-  $display->title = 'Polycom End User Licence Agreements';
+  $display->title = 'definio End User Licence Agreements';
   $display->uuid = '6f5e06db-c9d5-417e-bd56-2715b52cd599';
   $display->content = array();
   $display->panels = array();

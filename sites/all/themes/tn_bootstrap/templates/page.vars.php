@@ -35,7 +35,7 @@ function tn_bootstrap_preprocess_page(&$variables) {
   if($user->uid) {
     $variables['technet_nav']['enabled'] = TRUE;
     dpm('aaahhahhaha');
-    $variables['technet_nav']['content'] = drupal_render(_block_get_renderable_array(_block_render_blocks(array(block_load('polycom_basic', 'technet_header'),))));
+    $variables['technet_nav']['content'] = drupal_render(_block_get_renderable_array(_block_render_blocks(array(block_load('doc_manage_core', 'technet_header'),))));
   }
 
   // Secondary nav.
