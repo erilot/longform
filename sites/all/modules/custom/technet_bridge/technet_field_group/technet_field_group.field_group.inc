@@ -119,8 +119,8 @@ function technet_field_group_field_group_info() {
     'children' => array(
       0 => 'field_platform',
       1 => 'field_software_release',
-      2 => 'taxonomy_vocabulary_12',
-      3 => 'taxonomy_vocabulary_8',
+      2 => 'field_device_type',
+      3 => 'field_document_type',
       4 => 'field_release_state',
     ),
     'format_type' => 'div',

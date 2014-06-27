@@ -895,8 +895,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-book-taxonomy_vocabulary_12'
-  $field_instances['node-book-taxonomy_vocabulary_12'] = array(
+  // Exported field_instance: 'node-book-field_device_type'
+  $field_instances['node-book-field_device_type'] = array(
     'bundle' => 'book',
     'default_value' => NULL,
     'deleted' => 0,
@@ -944,7 +944,7 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_12',
+    'field_name' => 'field_device_type',
     'label' => 'Device Type',
     'required' => 0,
     'settings' => array(
@@ -959,8 +959,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-book-taxonomy_vocabulary_8'
-  $field_instances['node-book-taxonomy_vocabulary_8'] = array(
+  // Exported field_instance: 'node-book-field_document_type'
+  $field_instances['node-book-field_document_type'] = array(
     'bundle' => 'book',
     'default_value' => NULL,
     'deleted' => 0,
@@ -1008,7 +1008,7 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_8',
+    'field_name' => 'field_document_type',
     'label' => 'Document Type',
     'required' => 0,
     'settings' => array(
@@ -2523,100 +2523,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-taxonomy_vocabulary_10'
-  $field_instances['node-import_ticket-taxonomy_vocabulary_10'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => 'Who is this document intended for?<br/>This category will be used to group documents on the site, so the appropriate audience can find documentation intended for them more easily.',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 11,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 8,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_10',
-    'label' => 'Audience',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'hs_taxonomy',
-      'settings' => array(),
-      'type' => 'taxonomy_hs',
-      'weight' => 5,
-    ),
-  );
-
-  // Exported field_instance: 'node-import_ticket-taxonomy_vocabulary_11'
-  $field_instances['node-import_ticket-taxonomy_vocabulary_11'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 15,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 12,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_11',
-    'label' => 'Partner',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'taxonomy',
-      'settings' => array(
-        'autocomplete_path' => 'taxonomy/autocomplete',
-        'content_taxonomy_autocomplete_new_terms' => 'allow',
-        'size' => 60,
-      ),
-      'type' => 'taxonomy_autocomplete',
-      'weight' => 50,
-    ),
-  );
-
-  // Exported field_instance: 'node-import_ticket-taxonomy_vocabulary_12'
-  $field_instances['node-import_ticket-taxonomy_vocabulary_12'] = array(
+  // Exported field_instance: 'node-import_ticket-field_device_type'
+  $field_instances['node-import_ticket-field_device_type'] = array(
     'bundle' => 'import_ticket',
     'default_value' => NULL,
     'deleted' => 0,
@@ -2644,7 +2552,7 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_12',
+    'field_name' => 'field_device_type',
     'label' => 'Device Type',
     'required' => 0,
     'settings' => array(
@@ -2666,8 +2574,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-taxonomy_vocabulary_8'
-  $field_instances['node-import_ticket-taxonomy_vocabulary_8'] = array(
+  // Exported field_instance: 'node-import_ticket-field_document_type'
+  $field_instances['node-import_ticket-field_document_type'] = array(
     'bundle' => 'import_ticket',
     'default_value' => NULL,
     'deleted' => 0,
@@ -2695,7 +2603,7 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_8',
+    'field_name' => 'field_document_type',
     'label' => 'Document Type',
     'required' => 1,
     'settings' => array(
@@ -2850,7 +2758,6 @@ function document_manage_core_feature_field_default_field_instances() {
   t('This is the document control ID number. For revisions, use the format 1234-12345-1234<b>/A</b> (not "rev A").');
   t('This is the parking space for a completely converted content array. This is created after all content processing has been finished. It stores an array of the spec: {Item: (1: Heading Level, 2: Title, 3: Content)} ');
   t('Tracking these topics');
-  t('Who is this document intended for?<br/>This category will be used to group documents on the site, so the appropriate audience can find documentation intended for them more easily.');
 
   return $field_instances;
 }

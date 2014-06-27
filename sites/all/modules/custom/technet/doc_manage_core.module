@@ -688,7 +688,7 @@ function doc_manage_core_filter_current(&$view, $current = NULL){
   if(!$current){
     $current = taxonomy_term_load($node->field_software_release[LANGUAGE_NONE][0]['tid'])->name;
   }
-  $current_doctype = $node->taxonomy_vocabulary_8[LANGUAGE_NONE][0]['tid'];
+  $current_doctype = $node->field_document_type[LANGUAGE_NONE][0]['tid'];
   $split_release = _doc_manage_core_split_version($current);
   
   $doctypes = array();
@@ -697,7 +697,7 @@ function doc_manage_core_filter_current(&$view, $current = NULL){
   //cycle through results and create index sub-array to operate on
   foreach($results as $i=>$result){
     $index[$i]['software_release'] = $result->field_field_software_release[0]['rendered']['#markup'];
-    $index[$i]['doctype'] = $result->field_taxonomy_vocabulary_8[0]['raw']['tid'];
+    $index[$i]['doctype'] = $result->field_field_document_type[0]['raw']['tid'];
     $index[$i]['key'] = $i;
     //assemble sub-array of document types present
     if (!array_key_exists($index[$i]['doctype'],$doctypes)){
@@ -832,8 +832,8 @@ function doc_manage_core_check_admin(){
   }
   
   $releases = field_get_items('node', $node, 'field_software_release');
-  $devices = field_get_items('node', $node, 'taxonomy_vocabulary_12');
-  $doctypes = field_get_items('node', $node, 'taxonomy_vocabulary_8');
+  $devices = field_get_items('node', $node, 'field_device_type');
+  $doctypes = field_get_items('node', $node, 'field_document_type');
   $platforms = field_get_items('node', $node, 'field_platform');
   
   $filters = $options['scope'] ? $options['scope'] : 'default';
@@ -849,27 +849,27 @@ function doc_manage_core_check_admin(){
 	$query->fieldCondition('field_software_release', 'tid', _technet_shift_array($releases), 'IN');
       }
       if($devices) {
-	$query->fieldCondition('taxonomy_vocabulary_12', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN');
       }
       $query->propertyOrderBy('title', 'ASC');
 
       break;
     case 'releases':
       if($devices){
-	$query->fieldCondition('taxonomy_vocabulary_12', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN');
       }
       if($doctypes && $filters == 'default'){
-	$query->fieldCondition('taxonomy_vocabulary_8', 'tid', _technet_shift_array($doctypes), 'IN');
+	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
       }
       $query->propertyOrderBy('nid', 'DESC');
 
       break;
     case 'platforms':
       if($devices){
-	$query->fieldCondition('taxonomy_vocabulary_12', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN');
       }
       if($doctypes){
-	$query->fieldCondition('taxonomy_vocabulary_8', 'tid', _technet_shift_array($doctypes), 'IN');
+	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
       }
       if($releases){
 	$query->fieldCondition('field_software_release', 'tid', _technet_shift_array($releases), 'IN');
@@ -902,8 +902,8 @@ function doc_manage_core_check_admin(){
   //  $fps = new EntityFieldQuery();
   //  $fps->entityCondition('entity_type', 'node')
   //  ->entityCondition('bundle', 'book')
-  //  ->fieldCondition('taxonomy_vocabulary_8', 'tid', array(1201), 'IN')
-  //  ->fieldCondition('taxonomy_vocabulary_12', 'tid', _technet_shift_array($devices), 'IN')
+  //  ->fieldCondition('field_document_type', 'tid', array(1201), 'IN')
+  //  ->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN')
   //  ->propertyCondition('status', $publish_state)
   //  ->propertyOrderBy('title', 'ASC');
   //  
@@ -939,17 +939,17 @@ function doc_manage_core_check_admin(){
 
 	}
 	if($options['grouped'] ){
-	  $category = array_shift(taxonomy_get_parents($match_wrapper->taxonomy_vocabulary_8->value()->tid));
+	  $category = array_shift(taxonomy_get_parents($match_wrapper->field_document_type->value()->tid));
 	  if(!array_key_exists('term-' . $release, $grouped[$release])){
 	    $grouped['term-' . $release][$category->tid]['data'] = $category->name;
 	    $grouped['term-' . $release][$category->tid]['class'] = array('nav', 'nav-pills', 'nav-stacked');
 
 	  }
-	  $grouped['term-' . $release][$category->tid]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->taxonomy_vocabulary_8->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+	  $grouped['term-' . $release][$category->tid]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
 	  $grouped['term-' . $release][$category->tid]['children'][$match->nid]['class'] = array('group-document');
 	}
 	else {
-	$nested[$name]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->taxonomy_vocabulary_8->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+	$nested[$name]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
 	}
       }
       switch ($options['grouped']) {
@@ -977,7 +977,7 @@ function doc_manage_core_check_admin(){
       
       switch ($find) {
 	case 'doctypes':
-	  $links[] = l(taxonomy_term_load($target->taxonomy_vocabulary_8[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
+	  $links[] = l(taxonomy_term_load($target->field_document_type[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
 	  break;
 	case 'releases':
 	  $links[] = l(taxonomy_term_load($target->field_software_release[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));

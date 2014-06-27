@@ -862,87 +862,13 @@ function document_manage_core_feature_field_default_field_bases() {
     'type' => 'relation',
   );
 
-  // Exported field_base: 'taxonomy_vocabulary_10'
-  $field_bases['taxonomy_vocabulary_10'] = array(
+  // Exported field_base: 'field_device_type'
+  $field_bases['field_device_type'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'taxonomy_vocabulary_10',
-    'foreign keys' => array(
-      'tid' => array(
-        'columns' => array(
-          'tid' => 'tid',
-        ),
-        'table' => 'taxonomy_term_data',
-      ),
-    ),
-    'indexes' => array(
-      'tid' => array(
-        0 => 'tid',
-      ),
-    ),
-    'locked' => 0,
-    'module' => 'taxonomy',
-    'settings' => array(
-      'allowed_values' => array(
-        0 => array(
-          'vocabulary' => 'vocabulary_10',
-          'parent' => 0,
-          'depth' => '',
-        ),
-      ),
-      'options_list_callback' => 'content_taxonomy_allowed_values',
-      'required' => TRUE,
-    ),
-    'translatable' => 0,
-    'type' => 'taxonomy_term_reference',
-  );
-
-  // Exported field_base: 'taxonomy_vocabulary_11'
-  $field_bases['taxonomy_vocabulary_11'] = array(
-    'active' => 1,
-    'cardinality' => -1,
-    'deleted' => 0,
-    'entity_types' => array(),
-    'field_name' => 'taxonomy_vocabulary_11',
-    'foreign keys' => array(
-      'tid' => array(
-        'columns' => array(
-          'tid' => 'tid',
-        ),
-        'table' => 'taxonomy_term_data',
-      ),
-    ),
-    'indexes' => array(
-      'tid' => array(
-        0 => 'tid',
-      ),
-    ),
-    'locked' => 0,
-    'module' => 'taxonomy',
-    'settings' => array(
-      'allowed_values' => array(
-        0 => array(
-          'vocabulary' => 'vocabulary_11',
-          'parent' => 0,
-          'depth' => '',
-        ),
-      ),
-      'options_list_callback' => 'content_taxonomy_allowed_values',
-      'required' => FALSE,
-    ),
-    'translatable' => 0,
-    'type' => 'taxonomy_term_reference',
-  );
-
-  // Exported field_base: 'taxonomy_vocabulary_12'
-  $field_bases['taxonomy_vocabulary_12'] = array(
-    'active' => 1,
-    'cardinality' => -1,
-    'deleted' => 0,
-    'entity_types' => array(),
-    'field_name' => 'taxonomy_vocabulary_12',
+    'field_name' => 'field_device_type',
     'foreign keys' => array(
       'tid' => array(
         'columns' => array(
@@ -973,13 +899,13 @@ function document_manage_core_feature_field_default_field_bases() {
     'type' => 'taxonomy_term_reference',
   );
 
-  // Exported field_base: 'taxonomy_vocabulary_8'
-  $field_bases['taxonomy_vocabulary_8'] = array(
+  // Exported field_base: 'field_document_type'
+  $field_bases['field_document_type'] = array(
     'active' => 1,
     'cardinality' => 1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'taxonomy_vocabulary_8',
+    'field_name' => 'field_document_type',
     'foreign keys' => array(
       'tid' => array(
         'columns' => array(

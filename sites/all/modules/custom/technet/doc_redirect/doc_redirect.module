@@ -53,8 +53,8 @@ function doc_redirect_permalink_current(){
   $node = menu_get_object();
   if($node->type == 'book' && user_is_logged_in()){
    global $base_url;   
-    $this_device = $node->taxonomy_vocabulary_12[LANGUAGE_NONE][0]['tid'];
-    $this_doctype = $node->taxonomy_vocabulary_8[LANGUAGE_NONE ][0]['tid'];
+    $this_device = $node->field_device_type[LANGUAGE_NONE][0]['tid'];
+    $this_doctype = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
     $this_platform = $node->field_platform[LANGUAGE_NONE][0]['tid'];
     $this_language = $node->language;
     
@@ -85,8 +85,8 @@ function doc_redirect_get_adaptive_permalink(){
   $node = menu_get_object();
   if($node->type == 'import_ticket' && user_is_logged_in()){
    global $base_url;   
-    $this_device = $node->taxonomy_vocabulary_12[LANGUAGE_NONE][0]['tid'];
-    $this_doctype = $node->taxonomy_vocabulary_8[LANGUAGE_NONE ][0]['tid'];
+    $this_device = $node->field_device_type[LANGUAGE_NONE][0]['tid'];
+    $this_doctype = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
     $this_platform = $node->field_platform[LANGUAGE_NONE][0]['tid'];
     $this_language = $node->language;
     $this_version = taxonomy_term_load($node->field_software_release[LANGUAGE_NONE][0]['tid'])->name;
@@ -602,11 +602,11 @@ FROM
 LEFT JOIN {book} book ON node.nid = book.nid
 LEFT JOIN {node} node_book ON book.bid = node_book.nid
 LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
-LEFT JOIN {field_data_taxonomy_vocabulary_12} field_data_taxonomy_vocabulary_12 ON node.nid = field_data_taxonomy_vocabulary_12.entity_id AND (field_data_taxonomy_vocabulary_12.entity_type = 'node' AND field_data_taxonomy_vocabulary_12.deleted = '0')
-LEFT JOIN {field_data_taxonomy_vocabulary_8} field_data_taxonomy_vocabulary_8 ON node.nid = field_data_taxonomy_vocabulary_8.entity_id AND (field_data_taxonomy_vocabulary_8.entity_type = 'node' AND field_data_taxonomy_vocabulary_8.deleted = '0')
+LEFT JOIN {field_data_field_device_type} field_data_field_device_type ON node.nid = field_data_field_device_type.entity_id AND (field_data_field_device_type.entity_type = 'node' AND field_data_field_device_type.deleted = '0')
+LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
 LEFT JOIN {field_data_field_platform} field_data_field_platform ON node.nid = field_data_field_platform.entity_id AND (field_data_field_platform.entity_type = 'node' AND field_data_field_platform.deleted = '0')
 LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
-WHERE (( (node.language = '$language') AND (field_data_taxonomy_vocabulary_12.taxonomy_vocabulary_12_tid = '$device_type' ) AND (field_data_taxonomy_vocabulary_8.taxonomy_vocabulary_8_tid = '$doc_type' ) AND (field_data_field_platform.field_platform_tid = '$device_platform' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+WHERE (( (node.language = '$language') AND (field_data_field_device_type.field_device_type_tid = '$device_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) AND (field_data_field_platform.field_platform_tid = '$device_platform' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
 ORDER BY field_data_field_software_release_field_software_release_tid DESC
 LIMIT 10 OFFSET 0";
   }
@@ -618,10 +618,10 @@ FROM
 LEFT JOIN {book} book ON node.nid = book.nid
 LEFT JOIN {node} node_book ON book.bid = node_book.nid
 LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
-LEFT JOIN {field_data_taxonomy_vocabulary_12} field_data_taxonomy_vocabulary_12 ON node.nid = field_data_taxonomy_vocabulary_12.entity_id AND (field_data_taxonomy_vocabulary_12.entity_type = 'node' AND field_data_taxonomy_vocabulary_12.deleted = '0')
-LEFT JOIN {field_data_taxonomy_vocabulary_8} field_data_taxonomy_vocabulary_8 ON node.nid = field_data_taxonomy_vocabulary_8.entity_id AND (field_data_taxonomy_vocabulary_8.entity_type = 'node' AND field_data_taxonomy_vocabulary_8.deleted = '0')
+LEFT JOIN {field_data_field_device_type} field_data_field_device_type ON node.nid = field_data_field_device_type.entity_id AND (field_data_field_device_type.entity_type = 'node' AND field_data_field_device_type.deleted = '0')
+LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
 LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
-WHERE (( (node.language = '$language') AND (field_data_taxonomy_vocabulary_12.taxonomy_vocabulary_12_tid = '$device_type' ) AND (field_data_taxonomy_vocabulary_8.taxonomy_vocabulary_8_tid = '$doc_type' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+WHERE (( (node.language = '$language') AND (field_data_field_device_type.field_device_type_tid = '$device_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
 ORDER BY field_data_field_software_release_field_software_release_tid DESC
 LIMIT 10 OFFSET 0";
 }

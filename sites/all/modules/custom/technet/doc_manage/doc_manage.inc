@@ -157,7 +157,7 @@ function doc_manage_metadata_table($ticket = NULL, $options = NULL) {
   $fields[] = array(
     'label' => t('Document type'),
     'type' => 'term',
-    'machine_name' => 'taxonomy_vocabulary_8',
+    'machine_name' => 'field_document_type',
     'missing_tooltip' => NULL,
     'present_tooltip' => NULL,
     'importance' => 'required',
@@ -166,7 +166,7 @@ function doc_manage_metadata_table($ticket = NULL, $options = NULL) {
   $fields[] = array(
     'label' => t('Product(s)'),
     'type' => 'term',
-    'machine_name' => 'taxonomy_vocabulary_12',
+    'machine_name' => 'field_device_type',
     'missing_tooltip' => 'Documents must be tagged with at least one product to be published',
     'present_tooltip' => NULL,
     'importance' => 'required',
@@ -770,7 +770,7 @@ function doc_manage_display_adaptive_links($ticket){
 
   // Build release-specific link
   if($links['override']){
-    if($controller->taxonomy_vocabulary_12 && $controller->taxonomy_vocabulary_8){
+    if($controller->field_device_type && $controller->field_document_type){
       $specific = '<p class="text-success">' . $links['override'] . '</p>';
     }
     else{
@@ -782,7 +782,7 @@ function doc_manage_display_adaptive_links($ticket){
   }
 
   // Build adaptive link
-  $adaptive = ($controller->taxonomy_vocabulary_12 && $controller->taxonomy_vocabulary_8)
+  $adaptive = ($controller->field_device_type && $controller->field_document_type)
       ? '<p class="text-success">' . $links['adaptive']. '</p>'
       : '<p class="text-warning">An adaptive link will be available once the <b>document type</b> and <b>product type</b> have been assigned.</p>';
       
@@ -1156,7 +1156,7 @@ function _doc_manage_metadata_warnings($ticket) {
   if (!isset($wrapper->field_software_release) || count($wrapper->field_software_release->value()) == 0) {
     $warns[] = '<li>' . t('<b>No software release</b> has been specified.') . '</li>';
   }
-  if (!isset($wrapper->taxonomy_vocabulary_12) || count($wrapper->taxonomy_vocabulary_12->value()) == 0) {
+  if (!isset($wrapper->field_device_type) || count($wrapper->field_device_type->value()) == 0) {
     $warns[] = '<li>' . t('<b>No product/device type</b> has been specified.') . '</li>';
   }
   if (!isset($wrapper->field_part_number) || count($wrapper->field_part_number->value()) == 0) {

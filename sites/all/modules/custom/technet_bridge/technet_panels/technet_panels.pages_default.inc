@@ -112,7 +112,7 @@ function technet_panels_default_page_manager_handlers() {
     $pane->pid = 'new-79b7984b-3cae-452e-bd7a-6b9fe150884b';
     $pane->panel = 'row-1-first';
     $pane->type = 'entity_form_field';
-    $pane->subtype = 'node:taxonomy_vocabulary_12';
+    $pane->subtype = 'node:field_device_type';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
@@ -249,7 +249,7 @@ function technet_panels_default_page_manager_handlers() {
     $pane->pid = 'new-31b04288-b2d9-42c4-b934-2d60d7034086';
     $pane->panel = 'row-1-33-b';
     $pane->type = 'entity_field';
-    $pane->subtype = 'node:taxonomy_vocabulary_12';
+    $pane->subtype = 'node:field_device_type';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
@@ -557,7 +557,7 @@ function technet_panels_default_page_manager_handlers() {
       1 => array(
         'identifier' => 'Taxonomy term from Node: Device Type',
         'keyword' => 'device_type',
-        'name' => 'entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term',
+        'name' => 'entity_from_field:field_device_type-node-taxonomy_term',
         'delta' => '0',
         'context' => 'argument_entity_id:node_1',
         'id' => 1,
@@ -751,7 +751,7 @@ if ($nid == $bid){
     $pane->access = array();
     $pane->configuration = array(
       'context' => array(
-        0 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        0 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
         1 => 'argument_entity_id:node_1',
       ),
     );
@@ -778,7 +778,7 @@ if ($nid == $bid){
     $pane->access = array();
     $pane->configuration = array(
       'context' => array(
-        0 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        0 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
         1 => 'argument_entity_id:node_1',
       ),
     );
@@ -805,7 +805,7 @@ if ($nid == $bid){
     $pane->access = array();
     $pane->configuration = array(
       'context' => array(
-        0 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        0 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
         1 => 'argument_entity_id:node_1',
       ),
     );
@@ -832,7 +832,7 @@ if ($nid == $bid){
     $pane->access = array();
     $pane->configuration = array(
       'context' => array(
-        0 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        0 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
         1 => 'argument_entity_id:node_1',
         2 => 'relationship_entity_from_field:field_software_release-node-taxonomy_term_1',
       ),
@@ -860,9 +860,9 @@ if ($nid == $bid){
     $pane->access = array();
     $pane->configuration = array(
       'context' => array(
-        0 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        0 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
         1 => 'argument_entity_id:node_1',
-        2 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        2 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
       ),
       'override_title' => 0,
       'override_title_text' => '',
@@ -890,7 +890,7 @@ if ($nid == $bid){
     $pane->access = array();
     $pane->configuration = array(
       'context' => array(
-        0 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        0 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
         1 => 'argument_entity_id:node_1',
       ),
     );
@@ -917,7 +917,7 @@ if ($nid == $bid){
     $pane->access = array();
     $pane->configuration = array(
       'context' => array(
-        0 => 'relationship_entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term_1',
+        0 => 'relationship_entity_from_field:field_device_type-node-taxonomy_term_1',
         1 => 'argument_entity_id:node_1',
       ),
     );
@@ -1002,7 +1002,7 @@ if ($nid == $bid){
       1 => array(
         'identifier' => 'Taxonomy term from Node (on Node: Device Type)',
         'keyword' => 'taxonomy_term',
-        'name' => 'entity_from_field:taxonomy_vocabulary_12-node-taxonomy_term',
+        'name' => 'entity_from_field:field_device_type-node-taxonomy_term',
         'delta' => '0',
         'context' => 'argument_entity_id:node_1',
         'id' => 1,
