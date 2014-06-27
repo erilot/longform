@@ -1,0 +1,786 @@
+/**
+ * Technet boostrap style overrides
+ * 
+ */
+
+/* == HTML == */
+body {
+  font-family: "proxima-nova", Arial, Helvetica, sans-serif;
+  font-size: 16px;
+  /*background-color: #E8E9E9;*/
+}
+
+h1, h2, h3, h4, h5, h6, .h1, .h2, .h3, .h4, .h5, .h6 {
+  font-family: "proxima-nova", Arial, Helvetica, sans-serif;
+}
+
+/* h5, h6 are styled too small by default */
+h5 {
+  font-size: 1.2em;
+  font-weight: bold;
+}
+
+h6 {
+  font-size: 1.1em;
+  font-weight: bold;
+}
+
+table thead tr td,
+table thead tr th {
+    background-color: #e5e5e5;
+}
+
+a,
+a:visited,
+a:hover,
+a:focus {
+  color: #4A698C;
+}
+
+.dropdown-menu a,
+.dropdown-menu a:visited,
+a.btn:not(.btn-default) {
+  color: #fff;
+}
+
+a.link-external .glyphicon {
+  font-size: .8em;
+  opacity: .4;
+}
+
+a.link-error {
+  color: red;
+  font-weight: bold;
+  border: 1px solid blue;
+}
+
+a.other-section.link-error {
+  background: #fdd;
+  border: 2px dashed blue;
+
+}
+
+.technet-section {
+  background-color: #fff;
+}
+
+/*== Glyphicons ==*/
+
+ul li .glyphicon {
+  margin-right: .5em;
+}
+
+/* === Collapsing automation === */
+
+/* Collapsing trigger buttons */
+
+.btn.btn-header.collapsed {
+  background-color: #c9c9c9;
+}
+
+.btn.btn-header:hover {
+  color: #fff;
+  background: #bbb;
+}
+
+.btn .glyphicon {
+  margin-right: 0.5em;
+  padding-top: 2px;
+  vertical-align: top;
+  margin-left: 5px;
+  /*color: #999;*/
+}
+
+.view-grouping .btn {
+  margin-bottom: .5em;
+}
+
+.view-grouping-content .view-grouping {
+  margin-left: 1em;
+}
+
+.view-grouping-content.in {
+  margin-bottom: 1em;
+}
+
+.view-grouping-content.in table {
+  margin-left: 1em;
+}
+
+.btn.collapsed .glyphicon-chevron-down {
+  display: none;
+}
+
+.btn:not(.collapsed) .glyphicon-chevron-right {
+  display: none;
+}
+
+.finders .view-grouping .btn {
+  background: #fff;
+  border: 1px solid #e7e7e7;
+}
+.finders .view-grouping .btn:not(.collapsed) {
+  background: #eee;
+}
+
+.finders table caption {
+  text-align: left;
+  color: #d11c23;
+}
+
+/* ===== Cover Page TOCs ===== */
+
+.book-top .technet-col-last {
+    min-height: 700px;
+    background: url('images/branding/title-background.png') left bottom no-repeat #FFF;
+}
+
+.book-top .technet-col-last h2 {
+  font-size: 1.1em;
+  color: #666;
+  border-bottom: 2px solid #999;
+  margin: 1em -10px 0 -10px;
+}
+
+.toc ul,
+ul.toc,
+.toc .item-list ul{
+  margin-left: 1.5em;
+  margin-right: 1em;
+  list-style: none;
+  padding: 0;
+}
+
+.toc ul li {
+  margin: 0;
+  padding: 0;
+}
+
+.toc button.justify,
+.toc a.justify{
+  padding-left: 0;
+  width: 100%;
+  text-align: left;
+}
+
+.toc .btn,
+.toc a.btn {
+  margin: 2px 0;
+  background-color: rgba(0,0,0,.2);
+  color: #4A698F;
+  border: 0;
+}
+
+.dropdown-toc .toc a.btn {
+  color: #ddd;
+}
+
+.book-top .toc .btn,
+.book-top .toc a.btn {
+  font-weight: bold;
+}
+.toc a.btn {
+  display: block;
+  padding: 6px 0;
+  white-space: normal;
+}
+
+.toc .link-title a,
+.toc-aggregated>a{
+  /*color: #d11c23;*/
+  font-weight: bold;
+}
+
+.dropdown-toc .toc .link-title a {
+  color: #fff;
+}
+
+.toc div.link-title>a.btn {
+  margin-left: 1.2em;
+}
+
+.toc a.btn:hover {
+  text-decoration: none;
+}
+
+.toc .btn:hover,
+.toc .btn.collapsed:hover,
+.toc .single .btn:hover,
+a.toc-aggregated:hover{
+  color: #000;
+  background-color: rgba(0,0,0,.1);
+}
+
+.dropdown-menu .toc .btn:hover,
+.dropdown-menu .toc .btn.collapsed:hover,
+.dropdown-menu .toc .single .btn:hover,
+.dropdown-menu a.toc-aggregated:hover{
+  color: #fff;
+  background-color: rgba(0,0,0,.1);
+}
+
+.toc .btn:not(.collapsed):focus,
+.toc a.btn:not(.collapsed):focus,
+a.toc-aggregated:not(.collapsed):focus{
+  color: #333;
+}
+
+.toc .btn.collapsed,
+.toc .single .btn,
+.toc .single.btn,
+.toc a.single.btn,
+.toc a.single .btn,
+a.toc-aggregated{
+  background-color: rgba(0,0,0,.0);
+  border: none;
+  text-align: left;
+}
+
+.toc li.single {
+  padding: 0;
+}
+
+.toc .single .btn{
+  padding: 0 0 0 26px;
+  width: 100%;
+}
+
+.toc .single a.btn {
+  padding: 6px 26px;
+}
+.toc .btn.caption {
+  margin: 1em 0 0 0;
+  padding: .5em;
+  background-color: rgba(0,0,0,.05);
+}
+
+.toc .btn.caption:hover {
+  background-color: rgba(0,0,0,.1);
+}
+
+.book-ui .technet-col-first-inner{
+  background: url('images/textures/noisy-texture-100x100-o3-d12-c-555-t1.png') repeat #555;
+  min-height: 700px;
+  border-radius: 4px;
+  padding-top: 1em;
+  padding-bottom: 1em;
+}
+
+.book-ui .technet-col-first .region-inner.affix-top {
+  padding-top: 35px;  
+}
+
+.book-ui .technet-col-first .region-inner.affix {
+  position: fixed;
+  top: 0;
+  overflow-y: scroll;
+  width: 31.5%;
+}
+
+.book-inside .technet-col-last {
+  padding-top: 1em;
+  background: #fff;
+}
+
+.book-top .toc{
+  padding: 1em;
+  background-color: rgba(245,245,245,0.8);
+  margin: 0 -10px;
+}
+
+
+.book-ui #toc-page-links {
+  background: transparent;
+  box-shadow: none;
+}
+
+/* Modals */
+
+.modal .modal-content {
+  padding: 0;
+  margin: 0;
+  color: #c9c9c9;
+  border: none;
+  font-size: .8em;
+  overflow-y: scroll;
+  background: #3e424e;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#696d76), to(#3e424e), color-stop(0.5, #595c66));
+  background: -moz-linear-gradient(top, #696d76 0%, #595c66 50%, #3e424e 100%);
+  background: -ms-linear-gradient(top, #696d76 0%, #595c66 50%, #3e424e 100%);
+  background: linear-gradient(top, #696d76 0%, #595c66 50%, #3e424e 100%);
+  -moz-border-radius: 0 0 10px 10px;
+  -webkit-border-radius: 0 0 10px 10px;
+  -o-border-radius: 0 0 10px 10px;
+  -ms-border-radius: 0 0 10px 10px;
+  border-radius: 0 0 10px 10px;
+  -moz-box-shadow: 0 3px 8px #383838;
+  -webkit-box-shadow: 0 3px 8px #383838;
+  -ms-box-shadow: 0 3px 8px #383838;
+  -o-box-shadow: 0 3px 8px #383838;
+  box-shadow: 0 3px 8px #383838;  
+}
+
+.modal .modal-header {
+  border-bottom-color: #999;
+}
+
+.modal .modal-footer {
+  border-top-color: #999;
+}
+
+/* Google Translate Disclaimer modal */
+
+.modal.disclaimer {}
+
+.modal.disclaimer .modal-body {
+  margin:0;
+  padding: 0;
+  height: auto;
+  transition: .5s padding ease-out;
+}
+
+.modal.disclaimer .modal-body.accepted{
+  padding: 20px;
+}
+
+/* GT disclaimer nav overrides */
+
+.disclaimer a:link,
+.disclaimer a:visited {
+  color: #fff;
+}
+
+.disclaimer .gt-widget a:link,
+.disclaimer .gt-widget a:visited {
+  color: #000;
+}
+
+.language-list.nav-pills>li.active>a,
+.dropdown-menu .nav-pills>li.active>a:hover,
+.dropdown-menu .nav-pills>li.active>a:focus {
+  background-color: rgba(255,255,255,.1);
+}
+
+.language-list.nav>li>a:hover,
+.dropdown-menu .nav>li>a:focus {
+  background-color: rgba(255,255,255,.2);
+}
+
+.disclaimer .tab-content {
+  padding: 1em 0;
+}
+
+
+/* Panels overrides for book UI */
+.book-ui .pane-1{
+  margin-bottom: 0;
+}
+
+/* === Collapsing elements ===*/
+
+/* == Procedures == */
+
+button.procedure + *:not('.procedure-wrapper') {
+  margin-bottom: 1em;
+}
+
+button.procedure:not(.collapsed):not(.collapsing) {
+  box-shadow: 0 5px 10px #aaa;
+  margin-bottom: 0em;
+}
+.procedure-wrapper {
+  border: 1px solid rgba(0,0,0,.1);
+  background: rgba(0,0,0,.01);
+  padding: 1em .5em;
+  margin-bottom: 1em;
+}
+
+.procedure-wrapper.in {
+}
+
+/* == Tables == */
+
+.table-wrapper.in {
+    margin-bottom: 2em;    
+}
+
+.btn.justify {
+    width: 100%;
+    text-align: left;
+}
+
+/* list element overrides for book UI */
+
+
+.book-ui li a{
+    display: inline-block;
+}
+.book-ui li a:hover{}
+
+.book-ui li a.active, .book-ui li a.active hover{}
+
+.book-top ul.menu li.active a.active{
+  /*display:none;*/
+}
+.book-ui p>a {
+  display:inline;
+}
+.book-top .pdf{
+  margin: 0;
+}
+
+.book-inside .pdf{
+  margin: 0;
+}
+.book-ui .pdf .field-type-file{
+  margin: -0em 0 .5em 0;
+  float: right;
+  background: #e8e8e8;
+  box-shadow: 0px 0px 30px #ddd inset;
+    transition: all .2s;
+    -moz-transition: all .2s;     /* Firefox 4 */
+    -webkit-transition: all .2s;  /* Safari and Chrome */
+    -o-transition: all .2s;       /* Opera */
+}
+
+.book-inside .pdf .field-type-file{
+  margin-top: 0;
+}
+
+.book-ui .pdf .file-icon{
+  display: none;
+}
+
+.book-ui .pdf .field-type-file a{
+  padding: 9px 32px 0 0;
+  display: block;
+  font-size: 0;
+  text-decoration: none;
+  background:url('images/branding/adobe_acrobat_logo.png') 1px center no-repeat transparent;
+  height: 23px;
+}
+
+.book-inside .pdf .field-type-file{
+  background: #E8E8E8;
+  width: 32px;
+  float: right;
+  position: absolute;
+  top: .3em;
+  right: .7em;
+  overflow: hidden;
+}
+
+.book-inside .pdf .field-type-file:hover, .book-top .pdf .field-type-file:hover{
+  background: #D11c23;
+}
+
+.book-inside .pdf .field-type-file a{
+  font-size: 0;
+}
+
+book-ui .active{
+  pointer-events: none;
+  cursor: default;
+}
+
+/* == FLAG MODULE OVERRIDES == */
+
+.flag-throbber {
+    display: none;
+}
+
+.flag-wrapper a {
+    color: #555;
+}
+
+/* Dropdowns */
+
+nav .dropdown-menu {
+  padding: 1em 2em;
+  margin: 0;
+  color: #c9c9c9;
+  border: none;
+  font-size: .8em;
+  background: #3e424e;
+  background: -webkit-gradient(linear, 0% 0%, 0% 100%, from(#696d76), to(#3e424e), color-stop(0.5, #595c66));
+  background: -moz-linear-gradient(top, #696d76 0%, #595c66 50%, #3e424e 100%);
+  background: -ms-linear-gradient(top, #696d76 0%, #595c66 50%, #3e424e 100%);
+  background: linear-gradient(top, #696d76 0%, #595c66 50%, #3e424e 100%);
+  -moz-border-radius: 0 0 4px 4px;
+  -webkit-border-radius: 0 0 4px 4px;
+  -o-border-radius: 0 0 4px 4px;
+  -ms-border-radius: 0 0 4px 4px;
+  border-radius: 0 0 4px 4px;
+  -moz-box-shadow: 0 3px 8px #383838;
+  -webkit-box-shadow: 0 3px 8px #383838;
+  -ms-box-shadow: 0 3px 8px #383838;
+  -o-box-shadow: 0 3px 8px #383838;
+  box-shadow: 0 3px 8px #383838;
+  max-height: 600px;
+}
+
+.dropdown-menu .panel-default {
+  background-color: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.05);
+}
+
+.dropdown-menu a {
+    font-size: 0.8em;
+}
+
+.dropdown-menu.dropdown-toc {
+  padding: 1em 0;  
+}
+
+.dropdown-menu .toc button,
+.dropdown-menu .toc button:focus{
+  color: #eee;
+}
+
+.dropdown-menu.row,
+.dropdown-menu .row {
+  margin-bottom: 2em;
+}
+
+.navbar-right .dropdown-menu {
+  width: 17.5em;
+  text-align: center;
+  padding: .5em;
+}
+
+.dropdown-menu h2,
+.dropdown-menu h3{
+  display: block;
+  font-size: 12px;
+  line-height: 20px;
+  margin: 0 0 15px;
+  text-transform: uppercase;
+}
+
+.dropdown-menu h2 {
+    border-bottom: 2px solid #999;
+}
+
+.dropdown-menu h3 {
+  font-weight: normal;
+}
+
+ul.menu .dropdown-menu ul {
+  padding: 0;
+}
+
+.switcher {
+  z-index: 2;
+}
+.dropdown-menu .item-list ul li:not(.switcher) {
+  list-style: none;
+  padding: 0;
+  margin-bottom: 0.25em;
+}
+
+.switcher-container {
+  margin-bottom: 2em;
+}
+
+.switcher-container .btn.btn-default {
+  background-color: rgba(255,255,255,.1);
+  border-color: rgba(255,255,255,.2);
+  color: #fff;
+}
+
+.switcher-container .btn.btn-default:not(.active):hover {
+  background-color: rgba(255,255,255,.2);
+  
+}
+
+.switcher-container .btn-default.active {
+  background-color: rgba(255,255,255,.6);
+  color: #000;
+}
+
+.dropdown-menu ul:not(.toc):not(.nav) li:not(.switcher) a:hover {
+  text-decoration: underline;
+  background: inherit;
+}
+
+.dropdown-menu .nav li a.home-link {
+  text-align: left;
+  text-transform: uppercase;
+  border-bottom: 2px solid #999;
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.dropdown-menu a,
+.dropdown-menu li a.active,
+.dropdown-menu button{
+  color: #fff;
+}
+
+.dropdown-menu a:hover {
+    color: #eee;
+}
+
+.dropdown-menu .glyphicon {
+  margin-right: .5em;
+}
+
+.dropdown-menu .pager li>a, .pager li>span {
+  display: inline-block;
+  padding: 5px 14px;
+  background-color: rgba(255,255,255,.2);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 8px;
+  margin: 0 2em;
+}
+
+.dropdown-menu.warning-dropdown {
+  padding: 0;
+  width: 60em;
+}
+
+.warning-dropdown .col-md-12 {
+  padding: 0;
+}
+
+.warning-dropdown .alert{
+  margin: 0;
+  padding: 1em;
+}
+
+.dropdown-menu.warning-dropdown a {
+  color: inherit;
+}
+/* Nested related list */
+
+.dropdown-menu .nav li a {
+  display: inline-block;
+  width: 100%;
+  text-align: center;
+  font-size: .9em;
+  background: rgba(255,255,255,.05);
+  transition: .1s all;
+  padding: 10px;
+  border-radius: 4px;
+}
+
+
+.dropdown-menu  .navbar-right .nav li a {
+  padding: 5px;
+  font-size: 1em;
+}
+
+.dropdown-menu .parents  {
+  margin-bottom: 0;
+}
+
+.dropdown-menu .nav li.active > a,
+.dropdown-menu .nav li a:hover {
+  text-decoration: none;
+  background: rgba(255,255,255,.2);
+}
+
+.dropdown-menu .parents .nav > li.active > a {
+  width: 108%;
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.doctypes-by-release {
+}
+
+.doctypes-by-release > li {
+  width: 50%;
+  color: #fff;
+}
+
+.doctypes-by-release ul li{
+  width: 200%;
+}
+
+.item-list {
+  position: relative;
+}
+
+.item-list ul li {
+  margin-left: 0;
+}
+
+
+
+.doctypes-by-release li a:hover {
+  background:rgba(255,255,255,.1);
+}
+
+.children {
+  background: transparent;
+  transition: .1s all;
+  position: relative;
+  height: 100%;
+}
+
+.children.active {
+  border-left: 2px solid rgba(255,255,255,.2);
+}
+
+.group-child {
+  display: none;
+}
+
+.scrollable {
+  overflow-y: scroll;
+}
+
+/* === Special page overrides === */
+
+/* = General logo-behind pages AND LOGIN TOBOGGAN UNIFIED LOGIN = */
+.logo-behind{
+  background: url("images/branding/title-background.png") right bottom no-repeat #FFF;
+  min-height: 570px;
+}
+
+.well.frosted-light {
+  background-color: #f5f5f5;
+  background-color: rgba(255,255,255,.8);
+}
+
+.well.frosted-dark {
+  background-color: #f5f5f5;
+  background-color: rgba(0,0,0,.05);
+}
+
+.left-rule {
+  border-left: 5px solid #eee;
+}
+
+.no-pad, .no-pad .panel-body {
+  padding: 0;
+}
+
+.well.status-bar {
+  background: rgba(0,0,0,.05);
+  border: 0;
+  padding: 0;
+}
+
+.flag-set .dropdown-menu {
+  padding: 1em;
+  min-width: 300px;
+}
+
+/*.navbar-inverse */.navbar-nav>li>a.text-danger {
+  color: red;
+}
+
+/*.navbar-inverse */.navbar-nav>li>a.text-success {
+  color: #5cb85c;
+}
+
+a.disabled {
+  pointer-events: none;
+  cursor: not-allowed;
+  opacity: .65;
+  filter: alpha(opacity=65);
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
