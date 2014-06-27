@@ -1,6 +1,6 @@
 ; $Id: devel.info,v 1.11 2010/01/27 23:45:52 weitzman Exp $
 name = Book Navigation System
-description = Custom book navigation elements for browsing Polycom sites
+description = Custom book navigation system, integrated with Twitter Bootstrap
 core = 7.x
 files[] = book_nav.module
 package = Doc Manager

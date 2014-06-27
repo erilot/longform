@@ -1,7 +1,7 @@
 ;$Id polycom_basic.info $
-name = "Polycom Basic"
-description = "Enables basic technet functionality, including views and several library functions."
-package = "polycom"
+name = "Document Manager Core"
+description = "Enables the core framework for document publishing and administration."
+package = "Doc Manager"
 core = 7.x
 
 version = 7.x-1.0
