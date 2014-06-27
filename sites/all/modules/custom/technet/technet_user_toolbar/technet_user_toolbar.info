@@ -1,8 +1,8 @@
 ;$Id: language_switcher.info $
 name = "Technet User Toolbar"
 description = "Provide several blocks for navigating and using Technet documents"
-package = "polycom"
-dependencies[] = polycom_basic
+package = "Document Manager"
+dependencies[] = doc_manage_core
 
 core = 7.x
 php = 5

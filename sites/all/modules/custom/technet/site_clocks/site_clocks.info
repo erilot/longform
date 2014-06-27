@@ -1,8 +1,8 @@
 ;$Id: site_clocks.info $
-name = "LSG Site Clocks"
-description = "Generates canvas clocks for each LSG site."
-package = "Polycom"
-dependencies[] = polycom_basic
+name = "Site Clocks"
+description = "Generates canvas clocks for OG groups."
+package = "Doc Manager"
+dependencies[] = doc_manage_core
 
 files[] = site_clocks.module
 
