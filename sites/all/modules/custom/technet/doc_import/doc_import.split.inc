@@ -177,9 +177,9 @@ function _doc_import_save_topics_operation($content_array, $controller, &$contex
     if(!$section['title']) drupal_set_message('a topic with an empty title (a heading tag with no content) was found while saving topics. That topic has been discarded.', 'warning');
     $topic->title = html_entity_decode($section['title'], ENT_QUOTES | 'ENT_HTML401', 'UTF-8');
     $topic->field_topic_raw_content[LANGUAGE_NONE][0]['value'] = $section['content'];
-    $topic->field_topic_raw_content[LANGUAGE_NONE][0]['format'] = 2;
-    $topic->field_topic_original_weight[LANGUAGE_NONE][0]['value'] = $section['id'];
-    $topic->field_topic_original_heading[LANGUAGE_NONE][0]['value'] = $section['level'];
+    $topic->field_topic_raw_content[LANGUAGE_NONE][0]['format'] = 'full_html';
+    $topic->field_topic_initial_weight[LANGUAGE_NONE][0]['value'] = $section['id'];
+    $topic->field_topic_initial_heading[LANGUAGE_NONE][0]['value'] = $section['level'];
     
     //dpm($section['anchors'],'targets to save');
     if(!empty($section['anchors'])){

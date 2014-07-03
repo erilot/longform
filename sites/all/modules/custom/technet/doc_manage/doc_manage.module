@@ -501,6 +501,7 @@ function doc_manage_cron_queue_info() {
  * Implementation of hook_cron()
  */
 function doc_manage_cron() {
+ module_load_include('inc', 'doc_manage', 'doc_manage.relation');
   $items = _doc_manage_get_orphaned_topics();
   if($items) {
     $queue = DrupalQueue::get('delete_orphan_topics');

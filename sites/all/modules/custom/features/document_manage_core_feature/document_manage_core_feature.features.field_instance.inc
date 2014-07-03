@@ -131,6 +131,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 16,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_document_author',
@@ -148,7 +154,7 @@ function document_manage_core_feature_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'taxonomy_hs',
-      'weight' => 10,
+      'weight' => 7,
     ),
   );
 
@@ -177,11 +183,23 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
       'search_result' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
         'weight' => 21,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
       ),
     ),
     'entity_type' => 'node',
@@ -200,7 +218,120 @@ function document_manage_core_feature_field_default_field_instances() {
       'module' => 'number',
       'settings' => array(),
       'type' => 'number',
-      'weight' => 17,
+      'weight' => 13,
+    ),
+  );
+
+  // Exported field_instance: 'node-book-field_document_type'
+  $field_instances['node-book-field_document_type'] = array(
+    'bundle' => 'book',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'taxonomy',
+        'settings' => array(),
+        'type' => 'taxonomy_term_reference_link',
+        'weight' => 10,
+      ),
+      'document_print_version' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 10,
+      ),
+      'print' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 10,
+      ),
+      'print_document' => array(
+        'label' => 'above',
+        'module' => 'hs_taxonomy',
+        'settings' => array(),
+        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
+        'weight' => 0,
+      ),
+      'search_result' => array(
+        'label' => 'hidden',
+        'module' => 'taxonomy',
+        'settings' => array(),
+        'type' => 'taxonomy_term_reference_plain',
+        'weight' => 10,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'module' => 'taxonomy',
+        'settings' => array(),
+        'type' => 'taxonomy_term_reference_link',
+        'weight' => 10,
+      ),
+    ),
+    'entity_type' => 'node',
+    'field_name' => 'field_document_type',
+    'label' => 'Document Type',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'options',
+      'settings' => array(
+        'content_taxonomy_opt_groups' => FALSE,
+      ),
+      'type' => 'options_select',
+      'weight' => 2,
+    ),
+  );
+
+  // Exported field_instance: 'node-book-field_document_unique_id'
+  $field_instances['node-book-field_document_unique_id'] = array(
+    'bundle' => 'book',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 23,
+      ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'fences_wrapper' => 'div',
+    'field_name' => 'field_document_unique_id',
+    'label' => 'Document Unique ID',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 10,
     ),
   );
 
@@ -228,11 +359,23 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
       'search_result' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
         'weight' => 20,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
       ),
     ),
     'entity_type' => 'node',
@@ -247,67 +390,7 @@ function document_manage_core_feature_field_default_field_instances() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_buttons',
-      'weight' => 9,
-    ),
-  );
-
-  // Exported field_instance: 'node-book-field_part_number'
-  $field_instances['node-book-field_part_number'] = array(
-    'bundle' => 'book',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => 'The assigned version control number for this document. This number is not tracked specifically by Drupal, but  is used to group nodes and construct URL aliases. The part number is controlled externally and is not validated for uniqueness.',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 15,
-      ),
-      'document_print_version' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 15,
-      ),
-      'print' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 15,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'module' => 'hs_taxonomy',
-        'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 0,
-      ),
-      'search_result' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 15,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_part_number',
-    'label' => 'Part Number',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 0,
-      'module' => 'hs_taxonomy',
-      'settings' => array(
-        'autocomplete_path' => 'taxonomy/autocomplete',
-        'content_taxonomy_autocomplete_new_terms' => 'allow',
-        'size' => 60,
-      ),
-      'type' => 'taxonomy_hs',
-      'weight' => 7,
+      'weight' => 6,
     ),
   );
 
@@ -351,6 +434,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hs_taxonomy_term_reference_last_text_only',
         'weight' => 18,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_platform',
@@ -364,7 +453,7 @@ function document_manage_core_feature_field_default_field_instances() {
       'module' => 'hs_taxonomy',
       'settings' => array(),
       'type' => 'taxonomy_hs',
-      'weight' => 5,
+      'weight' => 4,
     ),
   );
 
@@ -407,6 +496,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 17,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_product_manager',
@@ -424,7 +519,51 @@ function document_manage_core_feature_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'taxonomy_hs',
-      'weight' => 11,
+      'weight' => 8,
+    ),
+  );
+
+  // Exported field_instance: 'node-book-field_product_type'
+  $field_instances['node-book-field_product_type'] = array(
+    'bundle' => 'book',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'taxonomy',
+        'settings' => array(),
+        'type' => 'taxonomy_term_reference_link',
+        'weight' => 22,
+      ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'fences_wrapper' => 'div',
+    'field_name' => 'field_product_type',
+    'label' => 'Product Type',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'hs_taxonomy',
+      'settings' => array(),
+      'type' => 'taxonomy_hs',
+      'weight' => 3,
     ),
   );
 
@@ -467,6 +606,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 13,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_project_name',
@@ -484,7 +629,7 @@ function document_manage_core_feature_field_default_field_instances() {
         'size' => 60,
       ),
       'type' => 'taxonomy_hs',
-      'weight' => 12,
+      'weight' => 9,
     ),
   );
 
@@ -650,55 +795,9 @@ function document_manage_core_feature_field_default_field_instances() {
         'year_range' => '-3:+3',
       ),
       'type' => 'date_popup',
-      'weight' => 8,
+      'weight' => 5,
     ),
     'widget_type' => 'date_text',
-  );
-
-  // Exported field_instance: 'node-book-field_short_title'
-  $field_instances['node-book-field_short_title'] = array(
-    'bundle' => 'book',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'text',
-        'settings' => array(),
-        'type' => 'text_default',
-        'weight' => 22,
-      ),
-      'print' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-      'search_result' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 22,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_short_title',
-    'label' => 'Short title',
-    'required' => 0,
-    'settings' => array(
-      'text_processing' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'text',
-      'settings' => array(
-        'size' => 60,
-      ),
-      'type' => 'text_textfield',
-      'weight' => 21,
-    ),
   );
 
   // Exported field_instance: 'node-book-field_software_release'
@@ -713,36 +812,23 @@ function document_manage_core_feature_field_default_field_instances() {
         'module' => 'taxonomy',
         'settings' => array(),
         'type' => 'taxonomy_term_reference_link',
-        'weight' => 11,
-      ),
-      'document_print_version' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 11,
-      ),
-      'print' => array(
-        'label' => 'inline',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 11,
+        'weight' => 24,
       ),
       'print_document' => array(
         'label' => 'above',
-        'module' => 'hs_taxonomy',
         'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
+        'type' => 'hidden',
         'weight' => 0,
       ),
-      'search_result' => array(
-        'label' => 'hidden',
-        'module' => 'hs_taxonomy',
+      'teaser' => array(
+        'label' => 'above',
         'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 11,
+        'type' => 'hidden',
+        'weight' => 0,
       ),
     ),
     'entity_type' => 'node',
+    'fences_wrapper' => 'div',
     'field_name' => 'field_software_release',
     'label' => 'Software Release',
     'required' => 0,
@@ -751,277 +837,13 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
     'widget' => array(
       'active' => 0,
-      'module' => 'hs_taxonomy',
+      'module' => 'taxonomy',
       'settings' => array(
         'autocomplete_path' => 'taxonomy/autocomplete',
-        'content_taxonomy_autocomplete_new_terms' => 'allow',
         'size' => 60,
       ),
-      'type' => 'taxonomy_hs',
-      'weight' => 6,
-    ),
-  );
-
-  // Exported field_instance: 'node-book-taxonomy_vocabulary_10'
-  $field_instances['node-book-taxonomy_vocabulary_10'] = array(
-    'bundle' => 'book',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-      'document_print_version' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'module' => 'hs_taxonomy',
-        'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 0,
-      ),
-      'search_result' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_10',
-    'label' => 'Audience',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 0,
-      'module' => 'hs_taxonomy',
-      'settings' => array(
-        'autocomplete_path' => 'taxonomy/autocomplete',
-        'content_taxonomy_autocomplete_new_terms' => 'allow',
-        'size' => 60,
-      ),
-      'type' => 'taxonomy_hs',
-      'weight' => 14,
-    ),
-  );
-
-  // Exported field_instance: 'node-book-taxonomy_vocabulary_11'
-  $field_instances['node-book-taxonomy_vocabulary_11'] = array(
-    'bundle' => 'book',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-      'document_print_version' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'module' => 'hs_taxonomy',
-        'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 0,
-      ),
-      'search_result' => array(
-        'label' => 'above',
-        'module' => 'hs_taxonomy',
-        'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 10,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'taxonomy_vocabulary_11',
-    'label' => 'Partner',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'options',
-      'settings' => array(
-        'content_taxonomy_opt_groups' => FALSE,
-      ),
-      'type' => 'options_select',
-      'weight' => 13,
-    ),
-  );
-
-  // Exported field_instance: 'node-book-field_device_type'
-  $field_instances['node-book-field_device_type'] = array(
-    'bundle' => 'book',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-      'document_print_version' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'module' => 'hs_taxonomy',
-        'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 0,
-      ),
-      'search_result' => array(
-        'label' => 'hidden',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_plain',
-        'weight' => 10,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_device_type',
-    'label' => 'Device Type',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'hs_taxonomy',
-      'settings' => array(),
-      'type' => 'taxonomy_hs',
-      'weight' => 4,
-    ),
-  );
-
-  // Exported field_instance: 'node-book-field_document_type'
-  $field_instances['node-book-field_document_type'] = array(
-    'bundle' => 'book',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-      'document_print_version' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 10,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'module' => 'hs_taxonomy',
-        'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 0,
-      ),
-      'search_result' => array(
-        'label' => 'hidden',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_plain',
-        'weight' => 10,
-      ),
-      'teaser' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 10,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_document_type',
-    'label' => 'Document Type',
-    'required' => 0,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'options',
-      'settings' => array(
-        'content_taxonomy_opt_groups' => FALSE,
-      ),
-      'type' => 'options_select',
-      'weight' => 3,
+      'type' => 'taxonomy_autocomplete',
+      'weight' => 17,
     ),
   );
 
@@ -1119,7 +941,7 @@ function document_manage_core_feature_field_default_field_instances() {
         'progress_indicator' => 'throbber',
       ),
       'type' => 'file_generic',
-      'weight' => 16,
+      'weight' => 12,
     ),
   );
 
@@ -1201,6 +1023,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_authoring_tool',
@@ -1235,6 +1063,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 47,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -1288,54 +1122,6 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-field_doc_assigned_to'
-  $field_instances['node-import_ticket-field_doc_assigned_to'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => 'The user responsible for publishing this document. This can be re-assigned at any time. If no user is assigned now, the document will be assigned to the creator (i.e., you!).',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'entityreference',
-        'settings' => array(
-          'link' => FALSE,
-        ),
-        'type' => 'entityreference_label',
-        'weight' => 43,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_doc_assigned_to',
-    'label' => 'Assigned To',
-    'required' => 0,
-    'settings' => array(
-      'mediafront' => array(
-        'custom' => '',
-        'field_type' => 0,
-        'media_type' => 'media',
-        'preview' => 0,
-        'thumbnail' => 0,
-      ),
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'options',
-      'settings' => array(
-        'content_taxonomy_opt_groups' => FALSE,
-      ),
-      'type' => 'options_select',
-      'weight' => 5,
-    ),
-  );
-
   // Exported field_instance: 'node-import_ticket-field_document_archive'
   $field_instances['node-import_ticket-field_document_archive'] = array(
     'bundle' => 'import_ticket',
@@ -1357,6 +1143,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 13,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -1478,6 +1270,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_document_author',
@@ -1499,32 +1297,26 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-field_heading_split_level'
-  $field_instances['node-import_ticket-field_heading_split_level'] = array(
+  // Exported field_instance: 'node-import_ticket-field_document_type'
+  $field_instances['node-import_ticket-field_document_type'] = array(
     'bundle' => 'import_ticket',
-    'default_value' => array(
-      0 => array(
-        'tid' => 1106,
-      ),
-    ),
+    'default_value' => NULL,
     'deleted' => 0,
-    'description' => 'Choose the heading level that the importer will use to split content into separate nodes. This should generally correspond to the <em>chapter</em> level in the document, <em>ignoring the title level</em>; for example, a document that is organized <b>Title > Chapter </b> would use Heading 1. A document with a <b>Title > Section > Chapter</b> structure would use Heading 2.
-
-<b>Most documents will use Heading 1.</b>',
+    'description' => '<p>Starting from broad categories and working to narrow, tag this document type. For example, <b>User Documents</b> > <b>User\'s Guide</b>.</p>',
     'display' => array(
       'default' => array(
         'label' => 'above',
         'module' => 'taxonomy',
         'settings' => array(),
-        'type' => 'taxonomy_term_reference_plain',
-        'weight' => 20,
+        'type' => 'taxonomy_term_reference_link',
+        'weight' => 6,
       ),
       'full' => array(
         'label' => 'above',
-        'module' => 'hs_taxonomy',
+        'module' => 'taxonomy',
         'settings' => array(),
-        'type' => 'hs_taxonomy_term_reference_hierarchical_text',
-        'weight' => 15,
+        'type' => 'taxonomy_term_reference_link',
+        'weight' => 3,
       ),
       'print_document' => array(
         'label' => 'above',
@@ -1532,11 +1324,119 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_heading_split_level',
-    'label' => 'Heading Split Level',
+    'field_name' => 'field_document_type',
+    'label' => 'Document Type',
     'required' => 1,
+    'settings' => array(
+      'mediafront' => array(
+        'custom' => '',
+        'field_type' => 0,
+        'media_type' => 'media',
+        'preview' => 0,
+        'thumbnail' => 0,
+      ),
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'hs_taxonomy',
+      'settings' => array(),
+      'type' => 'taxonomy_hs',
+      'weight' => 45,
+    ),
+  );
+
+  // Exported field_instance: 'node-import_ticket-field_document_unique_id'
+  $field_instances['node-import_ticket-field_document_unique_id'] = array(
+    'bundle' => 'import_ticket',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => 'Document Unique ID should be the unique identifier for the entire document (for example, a part number). Uniqueness is not enforced since several HTML subpages may share the same unique ID.',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'text',
+        'settings' => array(),
+        'type' => 'text_default',
+        'weight' => 51,
+      ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'fences_wrapper' => 'div',
+    'field_name' => 'field_document_unique_id',
+    'label' => 'Document Unique ID',
+    'required' => 0,
+    'settings' => array(
+      'text_processing' => 0,
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'text',
+      'settings' => array(
+        'size' => 60,
+      ),
+      'type' => 'text_textfield',
+      'weight' => 50,
+    ),
+  );
+
+  // Exported field_instance: 'node-import_ticket-field_granularity'
+  $field_instances['node-import_ticket-field_granularity'] = array(
+    'bundle' => 'import_ticket',
+    'default_value' => array(
+      0 => array(
+        'value' => 1,
+      ),
+    ),
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'list',
+        'settings' => array(),
+        'type' => 'list_default',
+        'weight' => 54,
+      ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'fences_wrapper' => 'div',
+    'field_name' => 'field_granularity',
+    'label' => 'Granularity',
+    'required' => 0,
     'settings' => array(
       'user_register_form' => FALSE,
     ),
@@ -1545,7 +1445,7 @@ function document_manage_core_feature_field_default_field_instances() {
       'module' => 'options',
       'settings' => array(),
       'type' => 'options_buttons',
-      'weight' => 4,
+      'weight' => -3,
     ),
   );
 
@@ -1563,6 +1463,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 19,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -1669,45 +1575,7 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_internal',
-    'label' => 'Internal Document',
-    'required' => 1,
-    'settings' => array(
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'options',
-      'settings' => array(),
-      'type' => 'options_buttons',
-      'weight' => 3,
-    ),
-  );
-
-  // Exported field_instance: 'node-import_ticket-field_part_number'
-  $field_instances['node-import_ticket-field_part_number'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => 'This is the document control ID number. For revisions, use the format 1234-12345-1234<b>/A</b> (not "rev A").',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 9,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 6,
-      ),
-      'print_document' => array(
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -1715,29 +1583,79 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_part_number',
-    'label' => 'Part Number',
+    'fences_wrapper' => 'div',
+    'field_name' => 'field_internal',
+    'label' => 'Internal Document',
     'required' => 0,
     'settings' => array(
-      'mediafront' => array(
-        'custom' => '',
-        'field_type' => 0,
-        'media_type' => 'media',
-        'preview' => 0,
-        'thumbnail' => 0,
-      ),
       'user_register_form' => FALSE,
     ),
     'widget' => array(
-      'active' => 0,
-      'module' => 'taxonomy',
+      'active' => 1,
+      'module' => 'options',
       'settings' => array(
-        'autocomplete_path' => 'taxonomy/autocomplete',
-        'content_taxonomy_autocomplete_new_terms' => 'allow',
-        'size' => 60,
+        'display_label' => 0,
       ),
-      'type' => 'taxonomy_autocomplete',
-      'weight' => 45,
+      'type' => 'options_onoff',
+      'weight' => -4,
+    ),
+  );
+
+  // Exported field_instance: 'node-import_ticket-field_manual_pdf'
+  $field_instances['node-import_ticket-field_manual_pdf'] = array(
+    'bundle' => 'import_ticket',
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'file',
+        'settings' => array(),
+        'type' => 'file_default',
+        'weight' => 52,
+      ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'fences_wrapper' => 'div',
+    'field_name' => 'field_manual_pdf',
+    'label' => 'Manual PDF',
+    'required' => 0,
+    'settings' => array(
+      'description_field' => 0,
+      'file_directory' => 'resources/pdf/[current-date:custom:Y]/[current-date:custom:M]',
+      'file_extensions' => 'pdf',
+      'max_filesize' => '',
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'file',
+      'settings' => array(
+        'allowed_schemes' => array(
+          'public' => 'public',
+        ),
+        'allowed_types' => array(
+          'audio' => 0,
+          'default' => 0,
+          'image' => 'image',
+          'video' => 0,
+        ),
+        'progress_indicator' => 'throbber',
+      ),
+      'type' => 'file_generic',
+      'weight' => 15,
     ),
   );
 
@@ -1763,6 +1681,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 5,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -1805,6 +1729,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 38,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -1901,6 +1831,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 39,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -2011,6 +1947,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_product_manager',
@@ -2029,6 +1971,50 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
       'type' => 'taxonomy_autocomplete',
       'weight' => 48,
+    ),
+  );
+
+  // Exported field_instance: 'node-import_ticket-field_product_type'
+  $field_instances['node-import_ticket-field_product_type'] = array(
+    'bundle' => 'import_ticket',
+    'default_value' => NULL,
+    'deleted' => 0,
+    'description' => '',
+    'display' => array(
+      'default' => array(
+        'label' => 'above',
+        'module' => 'taxonomy',
+        'settings' => array(),
+        'type' => 'taxonomy_term_reference_link',
+        'weight' => 53,
+      ),
+      'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+    ),
+    'entity_type' => 'node',
+    'fences_wrapper' => 'div',
+    'field_name' => 'field_product_type',
+    'label' => 'Product Type',
+    'required' => 0,
+    'settings' => array(
+      'user_register_form' => FALSE,
+    ),
+    'widget' => array(
+      'active' => 1,
+      'module' => 'hs_taxonomy',
+      'settings' => array(),
+      'type' => 'taxonomy_hs',
+      'weight' => 46,
     ),
   );
 
@@ -2059,6 +2045,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_project_name',
@@ -2084,7 +2076,7 @@ function document_manage_core_feature_field_default_field_instances() {
   $field_instances['node-import_ticket-field_publish_date'] = array(
     'bundle' => 'import_ticket',
     'deleted' => 0,
-    'description' => 'The effective publication date for this document (this will appear on the title page).<br/><b>The date will be displayed only as month and year</b>, so if the specific day is irrelevant, just choose the first of the month.',
+    'description' => 'The publication date for this document (this will appear on the title page).<br/><b>If there is a GA date for this document, use that. This is normally displayed on the site as a month and year, without the day.',
     'display' => array(
       'default' => array(
         'label' => 'above',
@@ -2120,8 +2112,15 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
+    'fences_wrapper' => 'div',
     'field_name' => 'field_publish_date',
     'label' => 'Publish Date',
     'required' => 1,
@@ -2136,63 +2135,15 @@ function document_manage_core_feature_field_default_field_instances() {
       'active' => 1,
       'module' => 'date',
       'settings' => array(
-        'display_all_day' => 0,
         'increment' => 15,
         'input_format' => 'Y-m-d H:i:s',
         'input_format_custom' => '',
         'label_position' => 'above',
-        'repeat_collapsed' => 0,
         'text_parts' => array(),
         'year_range' => '-3:+3',
       ),
       'type' => 'date_popup',
       'weight' => 46,
-    ),
-  );
-
-  // Exported field_instance: 'node-import_ticket-field_publish_ticket_relation'
-  $field_instances['node-import_ticket-field_publish_ticket_relation'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 36,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'relation_dummy_field',
-        'settings' => array(),
-        'type' => 'relation_default',
-        'weight' => 18,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_publish_ticket_relation',
-    'label' => 'Related to book nodes',
-    'required' => 0,
-    'settings' => array(
-      'relation_type' => array(
-        'is_a_record_in' => 'is_a_record_in',
-      ),
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 0,
-      'module' => 'relation_dummy_field',
-      'settings' => array(),
-      'type' => 'relation_default',
-      'weight' => 10,
     ),
   );
 
@@ -2210,6 +2161,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 18,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -2317,6 +2274,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_release_state',
@@ -2343,73 +2306,19 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-field_short_title'
-  $field_instances['node-import_ticket-field_short_title'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '<p>This title will be used instead of the full title when displayed in-context (for example, in the document\'s title block).</p<p><b>This should almost always be simply the product name(s)</b>. If the document applies to more than one product, write them out as a partial sentence; for example, "Product A, Product B, and Product C".</p>',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'text',
-        'settings' => array(),
-        'type' => 'text_default',
-        'weight' => 4,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_short_title',
-    'label' => 'Short title',
-    'required' => 0,
-    'settings' => array(
-      'mediafront' => array(
-        'custom' => '',
-        'field_type' => 0,
-        'media_type' => 'media',
-        'preview' => 0,
-        'thumbnail' => 0,
-      ),
-      'text_processing' => 0,
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'text',
-      'settings' => array(
-        'size' => 80,
-      ),
-      'type' => 'text_textfield',
-      'weight' => 1,
-    ),
-  );
-
   // Exported field_instance: 'node-import_ticket-field_software_release'
   $field_instances['node-import_ticket-field_software_release'] = array(
     'bundle' => 'import_ticket',
     'default_value' => NULL,
     'deleted' => 0,
-    'description' => 'If this document applies to a specific software release, specify which one. ',
+    'description' => '',
     'display' => array(
       'default' => array(
         'label' => 'above',
         'module' => 'taxonomy',
         'settings' => array(),
         'type' => 'taxonomy_term_reference_link',
-        'weight' => 7,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 4,
+        'weight' => 55,
       ),
       'print_document' => array(
         'label' => 'above',
@@ -2417,8 +2326,15 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
+    'fences_wrapper' => 'div',
     'field_name' => 'field_software_release',
     'label' => 'Software Release',
     'required' => 0,
@@ -2430,7 +2346,6 @@ function document_manage_core_feature_field_default_field_instances() {
       'module' => 'taxonomy',
       'settings' => array(
         'autocomplete_path' => 'taxonomy/autocomplete',
-        'content_taxonomy_autocomplete_new_terms' => 'allow',
         'size' => 60,
       ),
       'type' => 'taxonomy_autocomplete',
@@ -2452,6 +2367,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'weight' => 42,
       ),
       'print_document' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
+      'teaser' => array(
         'label' => 'above',
         'settings' => array(),
         'type' => 'hidden',
@@ -2503,6 +2424,12 @@ function document_manage_core_feature_field_default_field_instances() {
         'type' => 'hidden',
         'weight' => 0,
       ),
+      'teaser' => array(
+        'label' => 'above',
+        'settings' => array(),
+        'type' => 'hidden',
+        'weight' => 0,
+      ),
     ),
     'entity_type' => 'node',
     'field_name' => 'field_topic_used_in_',
@@ -2523,239 +2450,49 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-field_device_type'
-  $field_instances['node-import_ticket-field_device_type'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '<p>Choose the product(s) to associate with this document. To add a product, select it using the progressive drop-down lists and click <b>Add</b>. You may add as many products as you need.</p><p>You do not need to specify every individual product if a document applies to an entire group; just specify the group. For example, if a document applies to all of the CloudAXIS products, just choose "CloudAXIS".</p>',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 5,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 2,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_device_type',
-    'label' => 'Device Type',
-    'required' => 0,
-    'settings' => array(
-      'mediafront' => array(
-        'custom' => '',
-        'field_type' => 0,
-        'media_type' => 'media',
-        'preview' => 0,
-        'thumbnail' => 0,
-      ),
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'hs_taxonomy',
-      'settings' => array(),
-      'type' => 'taxonomy_hs',
-      'weight' => 46,
-    ),
-  );
-
-  // Exported field_instance: 'node-import_ticket-field_document_type'
-  $field_instances['node-import_ticket-field_document_type'] = array(
-    'bundle' => 'import_ticket',
-    'default_value' => NULL,
-    'deleted' => 0,
-    'description' => '<p>Starting from broad categories and working to narrow, tag this document type. For example, <b>User Documents</b> > <b>User\'s Guide</b>.</p>',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 6,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'taxonomy',
-        'settings' => array(),
-        'type' => 'taxonomy_term_reference_link',
-        'weight' => 3,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'field_document_type',
-    'label' => 'Document Type',
-    'required' => 1,
-    'settings' => array(
-      'mediafront' => array(
-        'custom' => '',
-        'field_type' => 0,
-        'media_type' => 'media',
-        'preview' => 0,
-        'thumbnail' => 0,
-      ),
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'hs_taxonomy',
-      'settings' => array(),
-      'type' => 'taxonomy_hs',
-      'weight' => 45,
-    ),
-  );
-
-  // Exported field_instance: 'node-import_ticket-upload'
-  $field_instances['node-import_ticket-upload'] = array(
-    'bundle' => 'import_ticket',
-    'deleted' => 0,
-    'description' => '<p class="alert alert-info"><b>Note:</b> Technet will automatically generate PDFs for you unless you upload one here. If your PDF needs to be specifically approved (for example, a document approved by legal), upload it here to prevent the automated behavior.</p>',
-    'display' => array(
-      'default' => array(
-        'label' => 'above',
-        'module' => 'file',
-        'settings' => array(),
-        'type' => 'file_default',
-        'weight' => 17,
-      ),
-      'full' => array(
-        'label' => 'above',
-        'module' => 'file',
-        'settings' => array(),
-        'type' => 'file_default',
-        'weight' => 14,
-      ),
-      'print_document' => array(
-        'label' => 'above',
-        'settings' => array(),
-        'type' => 'hidden',
-        'weight' => 0,
-      ),
-    ),
-    'entity_type' => 'node',
-    'field_name' => 'upload',
-    'label' => 'PDF Attachment',
-    'required' => 0,
-    'settings' => array(
-      'description_field' => 0,
-      'file_directory' => 'import-source/[current-date:custom:Y-M]',
-      'file_extensions' => 'pdf',
-      'max_filesize' => '',
-      'mediafront' => array(
-        'custom' => '',
-        'field_type' => 0,
-        'media_type' => 'media',
-        'preview' => 0,
-        'thumbnail' => 0,
-      ),
-      'user_register_form' => FALSE,
-    ),
-    'widget' => array(
-      'active' => 1,
-      'module' => 'file',
-      'settings' => array(
-        'insert' => 0,
-        'insert_absolute' => 0,
-        'insert_class' => '',
-        'insert_default' => 'auto',
-        'insert_styles' => array(
-          'auto' => 'auto',
-          'icon_link' => 0,
-          'image' => 0,
-          'image_document_thumbnail' => 0,
-          'image_large' => 0,
-          'image_medium' => 0,
-          'image_product_shot' => 0,
-          'image_thumbnail' => 0,
-          'image_watermark_100' => 0,
-          'image_whitebranded_logo' => 0,
-          'link' => 0,
-        ),
-        'insert_width' => '',
-        'progress_indicator' => 'throbber',
-      ),
-      'type' => 'file_generic',
-      'weight' => 15,
-    ),
-  );
-
   // Translatables
   // Included for use with string extractors like potx.
   t('<b>Only use this field if there are multiple platform versions for this product</b>. <br/><br/>If this document applies to specific platforms only (for example, Windows, Android, or iOS), specify that here. Only specify a sane depth here; unless your document only applies to Windows 7, you can simply specify Windows.');
-  t('<p class="alert alert-info"><b>Note:</b> Technet will automatically generate PDFs for you unless you upload one here. If your PDF needs to be specifically approved (for example, a document approved by legal), upload it here to prevent the automated behavior.</p>');
   t('<p>
 	A <em>book page</em> is a page of content, organized into a collection of related entries collectively known as a <em>book</em>. A <em>book page</em> automatically displays links to adjacent pages, providing a simple navigation system for organizing and reviewing structured content.</p>
 ');
-  t('<p>Choose the product(s) to associate with this document. To add a product, select it using the progressive drop-down lists and click <b>Add</b>. You may add as many products as you need.</p><p>You do not need to specify every individual product if a document applies to an entire group; just specify the group. For example, if a document applies to all of the CloudAXIS products, just choose "CloudAXIS".</p>');
   t('<p>Starting from broad categories and working to narrow, tag this document type. For example, <b>User Documents</b> > <b>User\'s Guide</b>.</p>');
-  t('<p>This title will be used instead of the full title when displayed in-context (for example, in the document\'s title block).</p<p><b>This should almost always be simply the product name(s)</b>. If the document applies to more than one product, write them out as a partial sentence; for example, "Product A, Product B, and Product C".</p>');
   t('<p>Upload the zip archive of the document to be imported. The file must comply with the following:</p><ul><li>Must be a .zip file</li><li>Must be generated either by Word (filtered HTML), or Mif2Go  for FrameMaker documents.</li></ul><p>Make sure that <b>editdata.mso</b> is removed from Word archives before uploading.');
-  t('Assigned To');
-  t('Audience');
   t('Authoring Tool');
   t('Auto PDF');
   t('Body');
-  t('Choose the heading level that the importer will use to split content into separate nodes. This should generally correspond to the <em>chapter</em> level in the document, <em>ignoring the title level</em>; for example, a document that is organized <b>Title > Chapter </b> would use Heading 1. A document with a <b>Title > Section > Chapter</b> structure would use Heading 2.
-
-<b>Most documents will use Heading 1.</b>');
-  t('Device Type');
   t('Document Archive');
   t('Document Author');
   t('Document Type');
+  t('Document Unique ID');
+  t('Document Unique ID should be the unique identifier for the entire document (for example, a part number). Uniqueness is not enforced since several HTML subpages may share the same unique ID.');
   t('Document relation');
   t('Enter any notes related to this document here; for example, intended heading heading split level.');
   t('File attachments');
-  t('Heading Split Level');
+  t('Granularity');
   t('If this book applies to a specific platform, indicate that here.');
-  t('If this document applies to a specific software release, specify which one. ');
   t('Imported HTML master');
   t('Internal Document');
+  t('Manual PDF');
   t('Notes');
-  t('PDF Attachment');
-  t('Part Number');
-  t('Partner');
   t('Platform');
   t('Preprocessed HTML');
   t('Processed JSON');
   t('Product Manager');
+  t('Product Type');
   t('Project Name');
   t('Publish Date');
   t('Raw HTML master');
-  t('Related to book nodes');
   t('Release Type');
   t('Select <b>internal</b> if this document is not public-facing. Documents marked as internal will only be visible to logged-in users.');
-  t('Short title');
   t('Software Release');
   t('TOC array');
-  t('The assigned version control number for this document. This number is not tracked specifically by Drupal, but  is used to group nodes and construct URL aliases. The part number is controlled externally and is not validated for uniqueness.');
-  t('The effective publication date for this document (this will appear on the title page).<br/><b>The date will be displayed only as month and year</b>, so if the specific day is irrelevant, just choose the first of the month.');
   t('The original author of this document');
-  t('The user responsible for publishing this document. This can be re-assigned at any time. If no user is assigned now, the document will be assigned to the creator (i.e., you!).');
+  t('The publication date for this document (this will appear on the title page).<br/><b>If there is a GA date for this document, use that. This is normally displayed on the site as a month and year, without the day.');
   t('This field holds the PDF automatically generated by PDF Reactor. It should not normally be edited.');
   t('This field is automatically filled by doc_import_postprocess.inc.');
   t('This is assigned by the import module. When a book is saved, a new relation is generated and the resulting rid is saved here.');
   t('This is normally <i>Stable</i>, indicating a GA release. You may also specify other pre-release states like <i>beta</i>. Documents that are tagged as pre-release versions will not appear in "related documents" lists, and are only accessible via direct link.');
-  t('This is the document control ID number. For revisions, use the format 1234-12345-1234<b>/A</b> (not "rev A").');
   t('This is the parking space for a completely converted content array. This is created after all content processing has been finished. It stores an array of the spec: {Item: (1: Heading Level, 2: Title, 3: Content)} ');
   t('Tracking these topics');
 

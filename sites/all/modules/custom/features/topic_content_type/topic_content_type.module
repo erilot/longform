@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Topic Content Type feature.
+ */
+
+include_once 'topic_content_type.features.inc';

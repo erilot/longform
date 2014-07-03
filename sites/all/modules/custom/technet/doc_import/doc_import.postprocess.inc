@@ -82,6 +82,7 @@ function _doc_import_postprocess_batch_add_links_operation($endpoints, $controll
 	$body = $page->body[LANGUAGE_NONE][0]['value'];
 	
 	$page_uses_topics = doc_manage_relation_query('page_uses_topic', $page);
+	dpm($page_uses_topics,'page uses topics');
 	$section = htmlqp($body);
 	$level = $section->find('div.wrapper')->attr('heading');
 	//if heading attribute wasn't found, this is an older document. Get it the hard way.
@@ -99,12 +100,15 @@ function _doc_import_postprocess_batch_add_links_operation($endpoints, $controll
 		$section->attr('heading','3')->addClass('wrapper');
 	    }
 	}
-	  
+	  	dpm($section,'section');
+return false;
 	//Add navigation elements
 	if($level != ''){
 	    $section = doc_import_add_page_links($section->top(), $level);
 	}
+
 	node_save($page);
+	die($page->nid);
 
 	$page->body[LANGUAGE_NONE][0]['value'] = $section;
 	try{

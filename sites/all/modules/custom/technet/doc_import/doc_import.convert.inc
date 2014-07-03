@@ -22,7 +22,6 @@
 function doc_import_convert_topic($topic, $author_tool, $controller = NULL) {
     
     module_load_include ('inc', 'doc_import');
-    
     if (!$topic || !is_object($topic) || $topic->type != 'topic') return FALSE;
     if (!$controller) {
 	$controller = menu_get_object();
@@ -93,7 +92,7 @@ function doc_import_convert_topic($topic, $author_tool, $controller = NULL) {
     $section = doc_import_last_train_processes($section, $topic);
     
     $topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'] = $section;
-    $topic->field_topic_processed_html[LANGUAGE_NONE][0]['format'] = '2';
+    $topic->field_topic_processed_html[LANGUAGE_NONE][0]['format'] = 'full_html';
     
     node_save($topic);
 
@@ -1181,9 +1180,9 @@ function doc_import_process_symbols(&$section) {
  * 	
  */
 function doc_import_last_train_processes(&$section, $topic){
-
+dpm($topic,'topic');
     //add the topic ID and original heading level to the container DIV
-    $section = extract_body(htmlqp($section,'div')->attr('topic',$topic->nid)->attr('level',$topic->field_topic_original_heading[LANGUAGE_NONE][0]['value'])->top()->html());
+    $section = extract_body(htmlqp($section,'div')->attr('topic',$topic->nid)->attr('level',$topic->field_topic_initial_heading[LANGUAGE_NONE][0]['value'])->top()->html());
 
     // Get header links
     $head_links = array();
@@ -1356,8 +1355,8 @@ function _doc_import_class_conversion_table(){
 						      'ListTaskIntroduction',
 						      'TaskIntroduction');
   
-  $classes['no-translate'] =		 	array('NoTranslate',
-						      'notranslate');
+  $classes['no-translate'] =		 	array('No_translate',
+						      'no_translate');
   
   $classes['list-number-1'] = 			array('ListNum',
 						      'MsoListNumber',

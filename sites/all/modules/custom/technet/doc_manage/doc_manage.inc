@@ -166,7 +166,7 @@ function doc_manage_metadata_table($ticket = NULL, $options = NULL) {
   $fields[] = array(
     'label' => t('Product(s)'),
     'type' => 'term',
-    'machine_name' => 'field_device_type',
+    'machine_name' => 'field_product_type',
     'missing_tooltip' => 'Documents must be tagged with at least one product to be published',
     'present_tooltip' => NULL,
     'importance' => 'required',
@@ -202,7 +202,7 @@ function doc_manage_metadata_table($ticket = NULL, $options = NULL) {
   $fields[] = array(
     'label' => t('Part number'),
     'type' => 'term',
-    'machine_name' => 'field_part_number',
+    'machine_name' => 'field_document_unique_id',
     'missing_tooltip' => 'Part numbers are not required by Technet, but are almost always required by definio',
     'present_tooltip' => NULL,
     'importance' => 'recommended',
@@ -770,7 +770,7 @@ function doc_manage_display_adaptive_links($ticket){
 
   // Build release-specific link
   if($links['override']){
-    if($controller->field_device_type && $controller->field_document_type){
+    if($controller->field_product_type && $controller->field_document_type){
       $specific = '<p class="text-success">' . $links['override'] . '</p>';
     }
     else{
@@ -782,7 +782,7 @@ function doc_manage_display_adaptive_links($ticket){
   }
 
   // Build adaptive link
-  $adaptive = ($controller->field_device_type && $controller->field_document_type)
+  $adaptive = ($controller->field_product_type && $controller->field_document_type)
       ? '<p class="text-success">' . $links['adaptive']. '</p>'
       : '<p class="text-warning">An adaptive link will be available once the <b>document type</b> and <b>product type</b> have been assigned.</p>';
       
@@ -1156,10 +1156,10 @@ function _doc_manage_metadata_warnings($ticket) {
   if (!isset($wrapper->field_software_release) || count($wrapper->field_software_release->value()) == 0) {
     $warns[] = '<li>' . t('<b>No software release</b> has been specified.') . '</li>';
   }
-  if (!isset($wrapper->field_device_type) || count($wrapper->field_device_type->value()) == 0) {
+  if (!isset($wrapper->field_product_type) || count($wrapper->field_product_type->value()) == 0) {
     $warns[] = '<li>' . t('<b>No product/device type</b> has been specified.') . '</li>';
   }
-  if (!isset($wrapper->field_part_number) || count($wrapper->field_part_number->value()) == 0) {
+  if (!isset($wrapper->field_document_unique_id) || count($wrapper->field_document_unique_id->value()) == 0) {
     $warns[] = '<li>' . t('<b>No part number</b> has been specified.') . '</li>';	
   }
   if (isset($wrapper->field_platform) && count($wrapper->field_platform->value()) == 1) {
@@ -1731,14 +1731,16 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
   }
   $type = $ticket->type;  
 
-  $book = doc_manage_relation_query('ticket_controls_nodes', $ticket);
-  $parent = array_shift($book);
-  $cover = array_shift($book);
+  if ($type != 'import_ticket' && $type != 'book') return FALSE;
+  
+  //$book = doc_manage_relation_query('ticket_controls_nodes', $ticket);
+  //$parent = array_shift($book);
+  //$cover = array_shift($book);
     
-  $stages = _doc_manage_get_all_accordion_states($ticket, $book);
+  //$stages = _doc_manage_get_all_accordion_states($ticket, $book);
 
-  $task_label = '<b>' . array_search(TRUE, $stages) . '</b>';
-  $task_mode = 'btn-info';
+  //$task_label = '<b>' . array_search(TRUE, $stages) . '</b>';
+  //$task_mode = 'btn-info';
   
   // Modify results in two instances: document stub, and already published.
   if ($wf_state == WORKFLOW_TICKET_PUBLISHED_STATE) {
@@ -1784,14 +1786,8 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
   
   $items[] = _doc_manage_toolbar_button_flag_html($ticket);	// "html flag" button
   
-  $items[] = _doc_manage_toolbar_button_approve($ticket); // "approve" form
+  $items[] = _doc_manage_toolbar_button_approve($ticket); 	// "approve" form
   
-  $items[] = drupal_get_form('_doc_manage_toolbar_button_approve_advance', $ticket); // "approve and next" form
-  
-  
-  
-
-
   $render['opts']['list'] = array(
     '#theme' => 'item_list',
     '#items' => $items,
@@ -1862,7 +1858,7 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
     'class' => array('btn','disabled', $publish_mode),
    ),
   );
-  
+  dpm($render,'render');
   return $render;
  
 }
@@ -1876,52 +1872,50 @@ function _doc_manage_toolbar_button_jump_to($node) {
 
     case 'import_ticket':
     
-    // For import tickets, this icon links to the cover page of the document. It's only available after postprocessing.
-    
-    // Get full book relation
-    $endpoints =  doc_manage_relation_query('ticket_controls_nodes', $node);
-    $ticket = array_shift($endpoints);
-    $cover = array_shift($endpoints);
-    $stages = _doc_manage_get_all_accordion_states($node);
-    $tooltip = array(
-      'data-toggle' => 'tooltip',
-      'data-trigger' => 'hover',
-      'data-placement' => 'top',
-      'title' => !$stages['Import'] ? t('Go to the document') : t('Document pages haven\'t been created yet'),
-    );
-    
-    $button = array(
-	      'data' => l(
-		'<span class="glyphicon glyphicon-arrow-right"></span>Cover page',
-		(isset($cover['entity_id']) ? 'node/' . $cover['entity_id'] : ''),
-		array(
-		  'html' => TRUE,
-		  'attributes' => array(
-		    'class' => array($stages['Import'] ? 'disabled':'enabled'),
-		  ))),
-	      ) + $tooltip;
-      
+      // For import tickets, this icon links to the cover page of the document. It's only available after postprocessing.
+      $endpoints =  doc_manage_relation_query('ticket_controls_nodes', $node);
+      if(!empty($endpoints)) {
+	$ticket = array_shift($endpoints);
+	$cover = array_shift($endpoints);
+	$stages = _doc_manage_get_all_accordion_states($node);
+	$tooltip = array(
+	  'data-toggle' => 'tooltip',
+	  'data-trigger' => 'hover',
+	  'data-placement' => 'top',
+	  'title' => !isset($stages['Import']) ? t('Go to the document') : t('Document pages haven\'t been created yet'),
+	);
+	
+	$button = array(
+		  'data' => l(
+		    '<span class="glyphicon glyphicon-arrow-right"></span>Cover page',
+		    (isset($cover['entity_id']) ? 'node/' . $cover['entity_id'] : ''),
+		    array(
+		      'html' => TRUE,
+		      'attributes' => array(
+			'class' => array($stages['Import'] ? 'disabled':'enabled'),
+		      ))),
+		  ) + $tooltip;
+	}
       break;
     
     case 'book':
 
       // For books, this icon sends users back to the import ticket.
-      
-    $ticket = doc_manage_get_ticket_from_page($node);
-    $button = l(
-      '<span class="glyphicon glyphicon-arrow-left"></span>' . t('Ticket'),
-      'node/' . $ticket,
-      array(
-	'html' => TRUE,
-	'attributes' => array(
-	  'class' => array(),
-	'data-toggle' => 'tooltip',
-	'data-trigger' => 'hover',
-	'data-placement' => 'top',
-	'title' => t('Return to ticket'),
-	)));
-    break;
-  }
+      $ticket = doc_manage_get_ticket_from_page($node);
+      $button = l(
+	'<span class="glyphicon glyphicon-arrow-left"></span>' . t('Ticket'),
+	'node/' . $ticket,
+	array(
+	  'html' => TRUE,
+	  'attributes' => array(
+	    'class' => array(),
+	  'data-toggle' => 'tooltip',
+	  'data-trigger' => 'hover',
+	  'data-placement' => 'top',
+	  'title' => t('Return to ticket'),
+	  )));
+      break;
+    }
 
   return $button;
 }
@@ -3865,7 +3859,7 @@ function doc_manage_get_management_menu($node){
 
   $flags = array(
    'problem' => flag_create_link('html_problem_alert', $node->nid),
-   'notranlsate' => flag_create_link('notranslate', $node->nid),
+   'notranlsate' => flag_create_link('no_translate', $node->nid),
    );
   
   // Build list.

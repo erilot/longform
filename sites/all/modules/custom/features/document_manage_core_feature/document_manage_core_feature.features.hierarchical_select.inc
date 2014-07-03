@@ -55,45 +55,6 @@ $config = array(
 
 $configs['taxonomy-12'] = $config;
 $config = array(
-  'config_id'       => 'taxonomy-21',
-  'save_lineage'    => 0,
-  'enforce_deepest' => 0,
-  'entity_count'    => 0,
-  'require_entity'  => 0,
-  'resizable'       => 0,
-  'level_labels' => array(
-    'status' => 0,
-    'labels' => array(
-      0 => '',
-      1 => '',
-      2 => '',
-    ),
-  ),
-  'dropbox' => array(
-    'status'    => 0,
-    'title'     => 'All selections',
-    'limit'     => 0,
-    'reset_hs'  => 1,
-  ),
-  'editability' => array(
-    'status' => 0,
-    'item_types' => array(
-      0 => '',
-      1 => '',
-      2 => '',
-    ),
-    'allowed_levels' => array(
-      0 => 1,
-      1 => 1,
-      2 => 1,
-    ),
-    'allow_new_levels' => 0,
-    'max_levels'       => 2,
-  ),
-);
-
-$configs['taxonomy-21'] = $config;
-$config = array(
   'config_id'       => 'taxonomy-8',
   'save_lineage'    => 0,
   'enforce_deepest' => 0,

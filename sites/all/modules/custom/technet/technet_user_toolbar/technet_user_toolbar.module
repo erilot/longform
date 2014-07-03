@@ -192,7 +192,7 @@ function technet_manage_user_profile_block($node) {
  *
  */
 function technet_manage_user_welcome_block($node) {
-  global $user;
+  global $user, $base_path;
   
   $buttons = array(
     'New Import Ticket' => '<a href="' . $base_path . 'node/add/import-ticket"class="btn btn-primary btn-block major">New Import Ticket</a>',
@@ -236,7 +236,7 @@ $output.='</div>
  */
 function technet_manage_user_self_service_menu($node, $options) {
 
-  global $user;
+  global $user, $base_path;
   
   $theme = $options['theme'] ? $options['theme'] : 'default';
   
@@ -286,7 +286,7 @@ function technet_manage_user_self_service_menu($node, $options) {
  */
 function technet_user_documents_menu($node, $options) {
 
-  global $user;
+  global $user, $base_path;
   
   $theme = $options['theme'] ? $options['theme'] : 'default';
   
@@ -362,7 +362,7 @@ function technet_user_documents_menu($node, $options) {
  */
 function technet_publishing_resources_menu($node, $options) {
 
-  global $user;
+  global $user, $base_path;
   
   $theme = $options['theme'] ? $options['theme'] : 'default';
   
@@ -413,7 +413,7 @@ function technet_user_toolbar_machine($node){
   $output = '<div id="machine-translations" class="translation-block menu-drop-options">';
   
   // If the node is flagged as non-translatable, return without generating anything
-  if ($node->type != 'book' || flag_get_flag('notranslate')->is_flagged($node->nid)) {
+  if ($node->type != 'book' || flag_get_flag('no_translate')->is_flagged($node->nid)) {
     $output .= '<ul class="nav nav-pills nav-stacked"><li class="disabled">This page does not allow machine translations.</li></ul></div>';
     return $output;
   }

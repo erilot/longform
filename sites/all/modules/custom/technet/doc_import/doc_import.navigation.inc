@@ -18,7 +18,8 @@ function doc_import_collapse_tables($section){
 function doc_import_add_page_links(&$content, $heading){
     module_load_include('inc','doc_import');
     module_load_include('inc', 'doc_import', 'doc_import.split');
-    
+    dpm($content,'content');
+    dpm($heading,'heading');
     $in_this_section = t("In this section");
     $on_this_page = t("On this page");
     $next_heading_level = $heading + 1;

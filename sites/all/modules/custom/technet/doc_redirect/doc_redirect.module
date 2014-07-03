@@ -53,7 +53,7 @@ function doc_redirect_permalink_current(){
   $node = menu_get_object();
   if($node->type == 'book' && user_is_logged_in()){
    global $base_url;   
-    $this_device = $node->field_device_type[LANGUAGE_NONE][0]['tid'];
+    $this_device = $node->field_product_type[LANGUAGE_NONE][0]['tid'];
     $this_doctype = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
     $this_platform = $node->field_platform[LANGUAGE_NONE][0]['tid'];
     $this_language = $node->language;
@@ -85,7 +85,7 @@ function doc_redirect_get_adaptive_permalink(){
   $node = menu_get_object();
   if($node->type == 'import_ticket' && user_is_logged_in()){
    global $base_url;   
-    $this_device = $node->field_device_type[LANGUAGE_NONE][0]['tid'];
+    $this_device = $node->field_product_type[LANGUAGE_NONE][0]['tid'];
     $this_doctype = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
     $this_platform = $node->field_platform[LANGUAGE_NONE][0]['tid'];
     $this_language = $node->language;
@@ -182,7 +182,7 @@ function doc_redirect_menu(){
  * Accepts the arguments specified in order:
  *  %1: language code
  *  %2: $doc_type (document type TID)
- *  %3: $device_type (device type TID)
+ *  %3: $product_type (device type TID)
  *  %4: $device_platform (device platform TID) (optional)
  *  %5: $external_role (external user role TID) (optional)
  *  %6: $version_override (string version of software version. Forces the specific release to be displayed) (optional)
@@ -229,7 +229,7 @@ function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $
           break;
         
         case 'vocabulary_12':
-          $device_type = $option;
+          $product_type = $option;
           break;
       }
     }
@@ -270,12 +270,12 @@ function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $
   }
   
   //perform query
-  $destination = doc_redirect_find_target($language, $doc_type, $device_type, $device_platform, $version_override);
+  $destination = doc_redirect_find_target($language, $doc_type, $product_type, $device_platform, $version_override);
   
   //if nothing was returned and the language is not English, reset the language to English and try again.
   if(!isset($destination['target_node']) && $language != 'en'){
     $default_language = 'en';
-    $destination = doc_redirect_find_target($default_language, $doc_type, $device_type, $device_platform, $version_override);
+    $destination = doc_redirect_find_target($default_language, $doc_type, $product_type, $device_platform, $version_override);
     if(isset($destination['target_node'])){
       drupal_set_message('The required document is not available in ' . $languages[$language]->name . ', but it is available in English. Switching to the English-language version.','warning');
     }
@@ -292,7 +292,7 @@ function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $
     if (!$doc_type){
       $errors[] = "No document type was specified.";
     }
-    if (!$device_type){
+    if (!$product_type){
       $errors[] = "No product type was specified.";
     }
     
@@ -592,7 +592,7 @@ function taxonomy_term_get_by_vid($vid) {
  * Returns FALSE if there was an error, or if already on the current version.
  */
 
-function doc_redirect_find_target($language, $doc_type, $device_type, $device_platform = NULL, $version_override = NULL){
+function doc_redirect_find_target($language, $doc_type, $product_type, $device_platform = NULL, $version_override = NULL){
   
   if(isset($device_platform)){
     $query = "
@@ -602,11 +602,11 @@ FROM
 LEFT JOIN {book} book ON node.nid = book.nid
 LEFT JOIN {node} node_book ON book.bid = node_book.nid
 LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
-LEFT JOIN {field_data_field_device_type} field_data_field_device_type ON node.nid = field_data_field_device_type.entity_id AND (field_data_field_device_type.entity_type = 'node' AND field_data_field_device_type.deleted = '0')
+LEFT JOIN {field_data_field_product_type} field_data_field_product_type ON node.nid = field_data_field_product_type.entity_id AND (field_data_field_product_type.entity_type = 'node' AND field_data_field_product_type.deleted = '0')
 LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
 LEFT JOIN {field_data_field_platform} field_data_field_platform ON node.nid = field_data_field_platform.entity_id AND (field_data_field_platform.entity_type = 'node' AND field_data_field_platform.deleted = '0')
 LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
-WHERE (( (node.language = '$language') AND (field_data_field_device_type.field_device_type_tid = '$device_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) AND (field_data_field_platform.field_platform_tid = '$device_platform' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+WHERE (( (node.language = '$language') AND (field_data_field_product_type.field_product_type_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) AND (field_data_field_platform.field_platform_tid = '$device_platform' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
 ORDER BY field_data_field_software_release_field_software_release_tid DESC
 LIMIT 10 OFFSET 0";
   }
@@ -618,10 +618,10 @@ FROM
 LEFT JOIN {book} book ON node.nid = book.nid
 LEFT JOIN {node} node_book ON book.bid = node_book.nid
 LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
-LEFT JOIN {field_data_field_device_type} field_data_field_device_type ON node.nid = field_data_field_device_type.entity_id AND (field_data_field_device_type.entity_type = 'node' AND field_data_field_device_type.deleted = '0')
+LEFT JOIN {field_data_field_product_type} field_data_field_product_type ON node.nid = field_data_field_product_type.entity_id AND (field_data_field_product_type.entity_type = 'node' AND field_data_field_product_type.deleted = '0')
 LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
 LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
-WHERE (( (node.language = '$language') AND (field_data_field_device_type.field_device_type_tid = '$device_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+WHERE (( (node.language = '$language') AND (field_data_field_product_type.field_product_type_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
 ORDER BY field_data_field_software_release_field_software_release_tid DESC
 LIMIT 10 OFFSET 0";
 }

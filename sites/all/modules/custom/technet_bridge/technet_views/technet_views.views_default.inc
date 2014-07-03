@@ -150,7 +150,7 @@ function technet_views_views_default_views() {
       'rendered_strip' => 0,
     ),
     2 => array(
-      'field' => 'field_device_type',
+      'field' => 'field_product_type',
       'rendered' => 0,
       'rendered_strip' => 0,
     ),
@@ -160,7 +160,7 @@ function technet_views_views_default_views() {
     'title' => 'title',
     'field_document_type' => 'field_document_type',
     'field_software_release' => 'field_software_release',
-    'field_device_type' => 'field_device_type',
+    'field_product_type' => 'field_product_type',
     'name' => 'name',
     'name_1' => 'name_1',
   );
@@ -192,7 +192,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -302,15 +302,15 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['hide_alter_empty'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['hide_alter_empty'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: User: Name */
   $handler->display->display_options['fields']['name']['id'] = 'name';
   $handler->display->display_options['fields']['name']['table'] = 'users';
@@ -493,15 +493,15 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['hide_alter_empty'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['hide_alter_empty'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: User: Name */
   $handler->display->display_options['fields']['name']['id'] = 'name';
   $handler->display->display_options['fields']['name']['table'] = 'users';
@@ -693,7 +693,7 @@ function technet_views_views_default_views() {
     'title' => 'title',
     'field_document_type' => 'field_document_type',
     'field_software_release' => 'field_software_release',
-    'field_part_number' => 'field_part_number',
+    'field_document_unique_id' => 'field_document_unique_id',
     'views_bulk_operations' => 'views_bulk_operations',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
@@ -724,7 +724,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_part_number' => array(
+    'field_document_unique_id' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -919,13 +919,13 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['taxonomy_vocabulary_11']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['taxonomy_vocabulary_11']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = 'Device';
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = 'Device';
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -950,11 +950,11 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Part Number */
-  $handler->display->display_options['fields']['field_part_number']['id'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['table'] = 'field_data_field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['field'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['relationship'] = 'bid';
-  $handler->display->display_options['fields']['field_part_number']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_document_unique_id']['id'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['table'] = 'field_data_field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['field'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['relationship'] = 'bid';
+  $handler->display->display_options['fields']['field_document_unique_id']['delta_offset'] = '0';
   /* Field: Content: Audience */
   $handler->display->display_options['fields']['taxonomy_vocabulary_10']['id'] = 'taxonomy_vocabulary_10';
   $handler->display->display_options['fields']['taxonomy_vocabulary_10']['table'] = 'field_data_taxonomy_vocabulary_10';
@@ -1486,11 +1486,11 @@ function technet_views_views_default_views() {
     'nid' => 'nid',
     'title' => 'title',
     'taxonomy_vocabulary_11' => 'taxonomy_vocabulary_11',
-    'field_device_type' => 'field_device_type',
+    'field_product_type' => 'field_product_type',
     'field_platform' => 'field_platform',
     'field_document_type' => 'field_document_type',
     'field_software_release' => 'field_software_release',
-    'field_part_number' => 'field_part_number',
+    'field_document_unique_id' => 'field_document_unique_id',
     'taxonomy_vocabulary_10' => 'taxonomy_vocabulary_10',
     'field_document_author' => 'field_document_author',
     'field_product_manager' => 'field_product_manager',
@@ -1523,7 +1523,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -1547,7 +1547,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_part_number' => array(
+    'field_document_unique_id' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -1678,13 +1678,13 @@ function technet_views_views_default_views() {
           'language' => 'language',
           'status' => 'status',
           'book::taxonomy_vocabulary_10' => 'book::taxonomy_vocabulary_10',
-          'book::field_device_type' => 'book::field_device_type',
+          'book::field_product_type' => 'book::field_product_type',
           'book::field_document_type' => 'book::field_document_type',
           'book::taxonomy_vocabulary_11' => 'book::taxonomy_vocabulary_11',
           'book::body' => 'book::body',
           'book::field_software_release' => 'book::field_software_release',
           'book::field_publish_date' => 'book::field_publish_date',
-          'book::field_part_number' => 'book::field_part_number',
+          'book::field_document_unique_id' => 'book::field_document_unique_id',
           'book::field_document_author' => 'book::field_document_author',
           'book::field_project_name' => 'book::field_project_name',
           'book::field_product_manager' => 'book::field_product_manager',
@@ -1785,13 +1785,13 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['taxonomy_vocabulary_11']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['taxonomy_vocabulary_11']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = 'Device';
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = 'Device';
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -1816,11 +1816,11 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Part Number */
-  $handler->display->display_options['fields']['field_part_number']['id'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['table'] = 'field_data_field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['field'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['relationship'] = 'bid';
-  $handler->display->display_options['fields']['field_part_number']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_document_unique_id']['id'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['table'] = 'field_data_field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['field'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['relationship'] = 'bid';
+  $handler->display->display_options['fields']['field_document_unique_id']['delta_offset'] = '0';
   /* Field: Content: Audience */
   $handler->display->display_options['fields']['taxonomy_vocabulary_10']['id'] = 'taxonomy_vocabulary_10';
   $handler->display->display_options['fields']['taxonomy_vocabulary_10']['table'] = 'field_data_taxonomy_vocabulary_10';
@@ -1940,7 +1940,7 @@ function technet_views_views_default_views() {
     'sid' => 'sid',
     'name' => 'name',
     'field_software_release' => 'title',
-    'field_device_type' => 'title',
+    'field_product_type' => 'title',
     'field_document_type' => 'title',
   );
   $handler->display->display_options['style_options']['default'] = '-1';
@@ -1971,7 +1971,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -2012,17 +2012,17 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['exclude'] = TRUE;
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Document Type */
   $handler->display->display_options['fields']['field_document_type']['id'] = 'field_document_type';
   $handler->display->display_options['fields']['field_document_type']['table'] = 'field_data_field_document_type';
   $handler->display->display_options['fields']['field_document_type']['field'] = 'field_document_type';
   $handler->display->display_options['fields']['field_document_type']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['field_document_type']['alter']['text'] = '[field_device_type] | [field_document_type] | [field_software_release]';
+  $handler->display->display_options['fields']['field_document_type']['alter']['text'] = '[field_product_type] | [field_document_type] | [field_software_release]';
   /* Sort criterion: Content: Post date */
   $handler->display->display_options['sorts']['created']['id'] = 'created';
   $handler->display->display_options['sorts']['created']['table'] = 'node';
@@ -2133,7 +2133,7 @@ function technet_views_views_default_views() {
     t('Software Release'),
     t('Device Type'),
     t('Document Type'),
-    t('[field_device_type] | [field_document_type] | [field_software_release]'),
+    t('[field_product_type] | [field_document_type] | [field_software_release]'),
     t('Page'),
   );
   $views['document_tracking'] = $view;
@@ -2177,7 +2177,7 @@ function technet_views_views_default_views() {
     'sid' => 'sid',
     'name' => 'name',
     'field_software_release' => 'title',
-    'field_device_type' => 'title',
+    'field_product_type' => 'title',
     'field_document_type' => 'title',
     'field_document_author' => 'field_document_author',
     'field_doc_assigned_to' => 'field_doc_assigned_to',
@@ -2210,7 +2210,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -2273,18 +2273,18 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Document Type */
   $handler->display->display_options['fields']['field_document_type']['id'] = 'field_document_type';
   $handler->display->display_options['fields']['field_document_type']['table'] = 'field_data_field_document_type';
   $handler->display->display_options['fields']['field_document_type']['field'] = 'field_document_type';
   $handler->display->display_options['fields']['field_document_type']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['field_document_type']['alter']['text'] = '[field_device_type] | [field_document_type] | [field_software_release]';
+  $handler->display->display_options['fields']['field_document_type']['alter']['text'] = '[field_product_type] | [field_document_type] | [field_software_release]';
   $handler->display->display_options['fields']['field_document_type']['type'] = 'taxonomy_term_reference_plain';
   /* Field: Content: Document Author */
   $handler->display->display_options['fields']['field_document_author']['id'] = 'field_document_author';
@@ -2362,18 +2362,18 @@ function technet_views_views_default_views() {
     2 => array(),
     3 => array(),
   );
-  /* Filter criterion: Content: Device Type (field_device_type) */
-  $handler->display->display_options['filters']['field_device_type_tid']['id'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['filters']['field_device_type_tid']['field'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['value'] = '';
-  $handler->display->display_options['filters']['field_device_type_tid']['group'] = 1;
-  $handler->display->display_options['filters']['field_device_type_tid']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['operator_id'] = 'field_device_type_tid_op';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['label'] = 'Filter by device';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['operator'] = 'field_device_type_tid_op';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['identifier'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['remember_roles'] = array(
+  /* Filter criterion: Content: Device Type (field_product_type) */
+  $handler->display->display_options['filters']['field_product_type_tid']['id'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['filters']['field_product_type_tid']['field'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['value'] = '';
+  $handler->display->display_options['filters']['field_product_type_tid']['group'] = 1;
+  $handler->display->display_options['filters']['field_product_type_tid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['operator_id'] = 'field_product_type_tid_op';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['label'] = 'Filter by device';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['operator'] = 'field_product_type_tid_op';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['identifier'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     14 => 0,
@@ -2386,8 +2386,8 @@ function technet_views_views_default_views() {
     3 => 0,
     16 => 0,
   );
-  $handler->display->display_options['filters']['field_device_type_tid']['vocabulary'] = 'vocabulary_12';
-  $handler->display->display_options['filters']['field_device_type_tid']['hierarchy'] = 1;
+  $handler->display->display_options['filters']['field_product_type_tid']['vocabulary'] = 'vocabulary_12';
+  $handler->display->display_options['filters']['field_product_type_tid']['hierarchy'] = 1;
   /* Filter criterion: Content: Software Release (field_software_release) */
   $handler->display->display_options['filters']['field_software_release_tid']['id'] = 'field_software_release_tid';
   $handler->display->display_options['filters']['field_software_release_tid']['table'] = 'field_data_field_software_release';
@@ -2483,7 +2483,7 @@ function technet_views_views_default_views() {
     'sid' => 'sid',
     'name' => 'name',
     'field_software_release' => 'title',
-    'field_device_type' => 'title',
+    'field_product_type' => 'title',
     'field_document_type' => 'title',
     'field_document_author' => 'field_document_author',
     'field_doc_assigned_to' => 'field_doc_assigned_to',
@@ -2516,7 +2516,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -2575,18 +2575,18 @@ function technet_views_views_default_views() {
     'import_ticket' => 'import_ticket',
   );
   $handler->display->display_options['filters']['type']['group'] = 1;
-  /* Filter criterion: Content: Device Type (field_device_type) */
-  $handler->display->display_options['filters']['field_device_type_tid']['id'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['filters']['field_device_type_tid']['field'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['value'] = '';
-  $handler->display->display_options['filters']['field_device_type_tid']['group'] = 1;
-  $handler->display->display_options['filters']['field_device_type_tid']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['operator_id'] = 'field_device_type_tid_op';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['label'] = 'Filter by device';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['operator'] = 'field_device_type_tid_op';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['identifier'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['expose']['remember_roles'] = array(
+  /* Filter criterion: Content: Device Type (field_product_type) */
+  $handler->display->display_options['filters']['field_product_type_tid']['id'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['filters']['field_product_type_tid']['field'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['value'] = '';
+  $handler->display->display_options['filters']['field_product_type_tid']['group'] = 1;
+  $handler->display->display_options['filters']['field_product_type_tid']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['operator_id'] = 'field_product_type_tid_op';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['label'] = 'Filter by device';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['operator'] = 'field_product_type_tid_op';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['identifier'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     14 => 0,
@@ -2599,8 +2599,8 @@ function technet_views_views_default_views() {
     3 => 0,
     16 => 0,
   );
-  $handler->display->display_options['filters']['field_device_type_tid']['vocabulary'] = 'vocabulary_12';
-  $handler->display->display_options['filters']['field_device_type_tid']['hierarchy'] = 1;
+  $handler->display->display_options['filters']['field_product_type_tid']['vocabulary'] = 'vocabulary_12';
+  $handler->display->display_options['filters']['field_product_type_tid']['hierarchy'] = 1;
   /* Filter criterion: Content: Software Release (field_software_release) */
   $handler->display->display_options['filters']['field_software_release_tid']['id'] = 'field_software_release_tid';
   $handler->display->display_options['filters']['field_software_release_tid']['table'] = 'field_data_field_software_release';
@@ -2713,7 +2713,7 @@ function technet_views_views_default_views() {
     t('Software Release'),
     t('Device Type'),
     t('Document Type'),
-    t('[field_device_type] | [field_document_type] | [field_software_release]'),
+    t('[field_product_type] | [field_document_type] | [field_software_release]'),
     t('Author'),
     t('<div class="btn btn-block disabled">[field_document_author]</div>'),
     t('Assigned To'),
@@ -2776,7 +2776,7 @@ function technet_views_views_default_views() {
   );
   $handler->display->display_options['style_options']['columns'] = array(
     'field_software_release' => 'field_software_release',
-    'field_device_type' => 'field_device_type',
+    'field_product_type' => 'field_product_type',
     'name' => 'name',
     'name_1' => 'name_1',
     'title' => 'title',
@@ -2788,7 +2788,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 1,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 1,
@@ -2878,15 +2878,15 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['hide_alter_empty'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['hide_alter_empty'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: User: Name */
   $handler->display->display_options['fields']['name']['id'] = 'name';
   $handler->display->display_options['fields']['name']['table'] = 'users';
@@ -2911,7 +2911,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['title']['alter']['text'] = '[field_device_type]';
+  $handler->display->display_options['fields']['title']['alter']['text'] = '[field_product_type]';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
@@ -2921,10 +2921,10 @@ function technet_views_views_default_views() {
   $handler->display->display_options['sorts']['name']['table'] = 'taxonomy_term_data';
   $handler->display->display_options['sorts']['name']['field'] = 'name';
   $handler->display->display_options['sorts']['name']['relationship'] = 'parent';
-  /* Sort criterion: Content: Device Type (field_device_type) */
-  $handler->display->display_options['sorts']['field_device_type_tid']['id'] = 'field_device_type_tid';
-  $handler->display->display_options['sorts']['field_device_type_tid']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['sorts']['field_device_type_tid']['field'] = 'field_device_type_tid';
+  /* Sort criterion: Content: Device Type (field_product_type) */
+  $handler->display->display_options['sorts']['field_product_type_tid']['id'] = 'field_product_type_tid';
+  $handler->display->display_options['sorts']['field_product_type_tid']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['sorts']['field_product_type_tid']['field'] = 'field_product_type_tid';
   /* Sort criterion: Content: Title */
   $handler->display->display_options['sorts']['title']['id'] = 'title';
   $handler->display->display_options['sorts']['title']['table'] = 'node';
@@ -3005,7 +3005,7 @@ function technet_views_views_default_views() {
     t('Parent'),
     t('Translations'),
     t('author'),
-    t('[field_device_type]'),
+    t('[field_product_type]'),
     t('Product'),
     t('The product (or product family) to filter by'),
     t('EULA finder (public)'),
@@ -3036,7 +3036,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['style_options']['columns'] = array(
     'title' => 'title',
     'field_software_release' => 'field_software_release',
-    'field_device_type' => 'field_device_type',
+    'field_product_type' => 'field_product_type',
     'field_document_type' => 'field_document_type',
     'name' => 'name',
   );
@@ -3054,7 +3054,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -3096,13 +3096,13 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = 'Device';
-  $handler->display->display_options['fields']['field_device_type']['empty'] = '<span class="btn-danger btn btn-block disabled">&mdash;</span>';
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = 'Device';
+  $handler->display->display_options['fields']['field_product_type']['empty'] = '<span class="btn-danger btn btn-block disabled">&mdash;</span>';
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Document Type */
   $handler->display->display_options['fields']['field_document_type']['id'] = 'field_document_type';
   $handler->display->display_options['fields']['field_document_type']['table'] = 'field_data_field_document_type';
@@ -3154,28 +3154,28 @@ function technet_views_views_default_views() {
     'external_resource' => 'external_resource',
   );
   $handler->display->display_options['filters']['type']['group'] = 1;
-  /* Filter criterion: Content: Device Type (field_device_type) */
-  $handler->display->display_options['filters']['field_device_type_tid']['id'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['filters']['field_device_type_tid']['field'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid']['operator'] = 'not empty';
-  $handler->display->display_options['filters']['field_device_type_tid']['value'] = '';
-  $handler->display->display_options['filters']['field_device_type_tid']['group'] = 1;
-  $handler->display->display_options['filters']['field_device_type_tid']['vocabulary'] = 'vocabulary_12';
-  /* Filter criterion: Content: Device Type (field_device_type) */
-  $handler->display->display_options['filters']['field_device_type_tid_1']['id'] = 'field_device_type_tid_1';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['field'] = 'field_device_type_tid';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['value'] = '';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['group'] = 1;
-  $handler->display->display_options['filters']['field_device_type_tid_1']['exposed'] = TRUE;
-  $handler->display->display_options['filters']['field_device_type_tid_1']['expose']['operator_id'] = 'field_device_type_tid_1_op';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['expose']['label'] = 'Device';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['expose']['operator'] = 'field_device_type_tid_1_op';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['expose']['identifier'] = 'field_device_type_tid_1';
-  $handler->display->display_options['filters']['field_device_type_tid_1']['expose']['remember'] = TRUE;
-  $handler->display->display_options['filters']['field_device_type_tid_1']['expose']['multiple'] = TRUE;
-  $handler->display->display_options['filters']['field_device_type_tid_1']['expose']['remember_roles'] = array(
+  /* Filter criterion: Content: Device Type (field_product_type) */
+  $handler->display->display_options['filters']['field_product_type_tid']['id'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['filters']['field_product_type_tid']['field'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid']['operator'] = 'not empty';
+  $handler->display->display_options['filters']['field_product_type_tid']['value'] = '';
+  $handler->display->display_options['filters']['field_product_type_tid']['group'] = 1;
+  $handler->display->display_options['filters']['field_product_type_tid']['vocabulary'] = 'vocabulary_12';
+  /* Filter criterion: Content: Device Type (field_product_type) */
+  $handler->display->display_options['filters']['field_product_type_tid_1']['id'] = 'field_product_type_tid_1';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['field'] = 'field_product_type_tid';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['value'] = '';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['group'] = 1;
+  $handler->display->display_options['filters']['field_product_type_tid_1']['exposed'] = TRUE;
+  $handler->display->display_options['filters']['field_product_type_tid_1']['expose']['operator_id'] = 'field_product_type_tid_1_op';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['expose']['label'] = 'Device';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['expose']['operator'] = 'field_product_type_tid_1_op';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['expose']['identifier'] = 'field_product_type_tid_1';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['expose']['remember'] = TRUE;
+  $handler->display->display_options['filters']['field_product_type_tid_1']['expose']['multiple'] = TRUE;
+  $handler->display->display_options['filters']['field_product_type_tid_1']['expose']['remember_roles'] = array(
     2 => '2',
     1 => 0,
     14 => 0,
@@ -3188,7 +3188,7 @@ function technet_views_views_default_views() {
     3 => 0,
     16 => 0,
   );
-  $handler->display->display_options['filters']['field_device_type_tid_1']['vocabulary'] = 'vocabulary_12';
+  $handler->display->display_options['filters']['field_product_type_tid_1']['vocabulary'] = 'vocabulary_12';
   /* Filter criterion: Content: Document Type (field_document_type) */
   $handler->display->display_options['filters']['field_document_type_tid']['id'] = 'field_document_type_tid';
   $handler->display->display_options['filters']['field_document_type_tid']['table'] = 'field_data_field_document_type';
@@ -3361,11 +3361,11 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['name']['alter']['text'] = '<div class="slugline"><p>Flagged [timestamp] by [name]</p></div>';
   $handler->display->display_options['fields']['name']['element_label_colon'] = FALSE;
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Document Author */
   $handler->display->display_options['fields']['field_document_author']['id'] = 'field_document_author';
   $handler->display->display_options['fields']['field_document_author']['table'] = 'field_data_field_document_author';
@@ -3387,15 +3387,15 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type_1']['id'] = 'field_device_type_1';
-  $handler->display->display_options['fields']['field_device_type_1']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type_1']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type_1']['relationship'] = 'nid';
-  $handler->display->display_options['fields']['field_device_type_1']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type_1']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type_1']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type_1']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type_1']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type_1']['id'] = 'field_product_type_1';
+  $handler->display->display_options['fields']['field_product_type_1']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type_1']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type_1']['relationship'] = 'nid';
+  $handler->display->display_options['fields']['field_product_type_1']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type_1']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type_1']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type_1']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type_1']['delta_offset'] = '0';
   /* Field: Content: Document Type */
   $handler->display->display_options['fields']['field_document_type']['id'] = 'field_document_type';
   $handler->display->display_options['fields']['field_document_type']['table'] = 'field_data_field_document_type';
@@ -3423,7 +3423,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['title_1']['label'] = '';
   $handler->display->display_options['fields']['title_1']['exclude'] = TRUE;
   $handler->display->display_options['fields']['title_1']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['title_1']['alter']['text'] = '[field_device_type_1] <i>[field_document_type]</i> ([field_software_release])';
+  $handler->display->display_options['fields']['title_1']['alter']['text'] = '[field_product_type_1] <i>[field_document_type]</i> ([field_software_release])';
   $handler->display->display_options['fields']['title_1']['element_label_colon'] = FALSE;
   $handler->display->display_options['fields']['title_1']['link_to_node'] = FALSE;
   /* Sort criterion: Content: Post date */
@@ -3512,7 +3512,7 @@ function technet_views_views_default_views() {
     t('<div class="slugline"><p>Flagged [timestamp] by [name]</p></div>'),
     t('Device Type'),
     t('[title]'),
-    t('[field_device_type_1] <i>[field_document_type]</i> ([field_software_release])'),
+    t('[field_product_type_1] <i>[field_document_type]</i> ([field_software_release])'),
     t('Name'),
     t('Show pages flagged by:'),
     t('Flagged nodes page'),
@@ -3830,7 +3830,7 @@ function technet_views_views_default_views() {
   $views['lsg_documents'] = $view;
 
   $view = new view();
-  $view->name = 'lsg_sites';
+  $view->name = 'document_manager_groups';
   $view->description = 'Displays a grid of LSG sites';
   $view->tag = 'default';
   $view->base_table = 'node';
@@ -3894,12 +3894,12 @@ function technet_views_views_default_views() {
   $handler->display->display_options['filters']['type']['table'] = 'node';
   $handler->display->display_options['filters']['type']['field'] = 'type';
   $handler->display->display_options['filters']['type']['value'] = array(
-    'lsg_site' => 'lsg_site',
+    'documentation_group' => 'documentation_group',
   );
 
   /* Display: LSG Sites */
   $handler = $view->new_display('panel_pane', 'LSG Sites', 'panel_pane_1');
-  $translatables['lsg_sites'] = array(
+  $translatables['document_manager_groups'] = array(
     t('Master'),
     t('Our LSG Sites'),
     t('more'),
@@ -3920,7 +3920,7 @@ function technet_views_views_default_views() {
     t('LSG Sites'),
     t('View panes'),
   );
-  $views['lsg_sites'] = $view;
+  $views['document_manager_groups'] = $view;
 
   $view = new view();
   $view->name = 'my_documents';
@@ -3980,14 +3980,14 @@ function technet_views_views_default_views() {
   $handler->display->display_options['relationships']['uid']['table'] = 'node';
   $handler->display->display_options['relationships']['uid']['field'] = 'uid';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Software Release */
   $handler->display->display_options['fields']['field_software_release']['id'] = 'field_software_release';
   $handler->display->display_options['fields']['field_software_release']['table'] = 'field_data_field_software_release';
@@ -4031,7 +4031,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['title']['alter']['text'] = '[field_device_type] <i>[field_document_type]</i> ([field_software_release])';
+  $handler->display->display_options['fields']['title']['alter']['text'] = '[field_product_type] <i>[field_document_type]</i> ([field_software_release])';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
@@ -4076,7 +4076,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['style_options']['default_row_class'] = FALSE;
   $handler->display->display_options['style_options']['row_class_special'] = FALSE;
   $handler->display->display_options['style_options']['columns'] = array(
-    'field_device_type' => 'field_device_type',
+    'field_product_type' => 'field_product_type',
     'field_software_release' => 'field_software_release',
     'field_document_type' => 'field_document_type',
     'sid' => 'sid',
@@ -4085,7 +4085,7 @@ function technet_views_views_default_views() {
   );
   $handler->display->display_options['style_options']['default'] = '-1';
   $handler->display->display_options['style_options']['info'] = array(
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -4277,7 +4277,7 @@ function technet_views_views_default_views() {
     t('<p>You don\'t have any online documents yet!</p>'),
     t('author'),
     t('<div class="slugline"><p>[changed]</p></div>'),
-    t('[field_device_type] <i>[field_document_type]</i> ([field_software_release])'),
+    t('[field_product_type] <i>[field_document_type]</i> ([field_software_release])'),
     t('My Documents (by name)'),
     t('Intro'),
     t('<p class="alert alert-info">Your most recently changed documents (more recent updates appear first):</p>'),
@@ -4338,14 +4338,14 @@ function technet_views_views_default_views() {
   $handler->display->display_options['relationships']['uid']['table'] = 'node';
   $handler->display->display_options['relationships']['uid']['field'] = 'uid';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Software Release */
   $handler->display->display_options['fields']['field_software_release']['id'] = 'field_software_release';
   $handler->display->display_options['fields']['field_software_release']['table'] = 'field_data_field_software_release';
@@ -4389,7 +4389,7 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['title']['field'] = 'title';
   $handler->display->display_options['fields']['title']['label'] = '';
   $handler->display->display_options['fields']['title']['alter']['alter_text'] = TRUE;
-  $handler->display->display_options['fields']['title']['alter']['text'] = '[field_device_type] <i>[field_document_type]</i> ([field_software_release])';
+  $handler->display->display_options['fields']['title']['alter']['text'] = '[field_product_type] <i>[field_document_type]</i> ([field_software_release])';
   $handler->display->display_options['fields']['title']['alter']['word_boundary'] = FALSE;
   $handler->display->display_options['fields']['title']['alter']['ellipsis'] = FALSE;
   $handler->display->display_options['fields']['title']['element_label_colon'] = FALSE;
@@ -4582,7 +4582,7 @@ function technet_views_views_default_views() {
     t('<p>You don\'t have any online documents yet!</p>'),
     t('author'),
     t('<div class="slugline hide"><p>[changed]</p></div>'),
-    t('[field_device_type] <i>[field_document_type]</i> ([field_software_release])'),
+    t('[field_product_type] <i>[field_document_type]</i> ([field_software_release])'),
     t('My Documents (by name)'),
     t('Intro'),
     t('<p class="comment">You\'ve been working on these documents lately. The most recent changes are shown first.</p>'),
@@ -4629,9 +4629,9 @@ function technet_views_views_default_views() {
     'views_bulk_operations' => 'views_bulk_operations',
     'title' => 'title',
     'field_document_type' => 'field_document_type',
-    'field_device_type' => 'field_device_type',
+    'field_product_type' => 'field_product_type',
     'field_software_release' => 'field_software_release',
-    'field_part_number' => 'field_part_number',
+    'field_document_unique_id' => 'field_document_unique_id',
     'field_platform' => 'title',
     'name' => 'name',
   );
@@ -4656,7 +4656,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_device_type' => array(
+    'field_product_type' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -4666,7 +4666,7 @@ function technet_views_views_default_views() {
       'separator' => '',
       'empty_column' => 0,
     ),
-    'field_part_number' => array(
+    'field_document_unique_id' => array(
       'align' => '',
       'separator' => '',
       'empty_column' => 0,
@@ -4795,9 +4795,9 @@ function technet_views_views_default_views() {
           'title' => 'title',
           'external_resource::body' => 'external_resource::body',
           'external_resource::field_external_content_link' => 'external_resource::field_external_content_link',
-          'external_resource::field_part_number' => 'external_resource::field_part_number',
+          'external_resource::field_document_unique_id' => 'external_resource::field_document_unique_id',
           'external_resource::field_project_name' => 'external_resource::field_project_name',
-          'external_resource::field_device_type' => 'external_resource::field_device_type',
+          'external_resource::field_product_type' => 'external_resource::field_product_type',
           'external_resource::field_document_type' => 'external_resource::field_document_type',
           'external_resource::taxonomy_vocabulary_11' => 'external_resource::taxonomy_vocabulary_11',
           'external_resource::field_software_release' => 'external_resource::field_software_release',
@@ -4897,11 +4897,11 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_document_type']['label'] = 'Type';
   $handler->display->display_options['fields']['field_document_type']['type'] = 'taxonomy_term_reference_plain';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Software Release */
   $handler->display->display_options['fields']['field_software_release']['id'] = 'field_software_release';
   $handler->display->display_options['fields']['field_software_release']['table'] = 'field_data_field_software_release';
@@ -4910,12 +4910,12 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Part Number */
-  $handler->display->display_options['fields']['field_part_number']['id'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['table'] = 'field_data_field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['field'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['label'] = 'Part #';
-  $handler->display->display_options['fields']['field_part_number']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_part_number']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_document_unique_id']['id'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['table'] = 'field_data_field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['field'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['label'] = 'Part #';
+  $handler->display->display_options['fields']['field_document_unique_id']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_document_unique_id']['delta_offset'] = '0';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -5044,9 +5044,9 @@ function technet_views_views_default_views() {
           'title' => 'title',
           'external_resource::body' => 'external_resource::body',
           'external_resource::field_external_content_link' => 'external_resource::field_external_content_link',
-          'external_resource::field_part_number' => 'external_resource::field_part_number',
+          'external_resource::field_document_unique_id' => 'external_resource::field_document_unique_id',
           'external_resource::field_project_name' => 'external_resource::field_project_name',
-          'external_resource::field_device_type' => 'external_resource::field_device_type',
+          'external_resource::field_product_type' => 'external_resource::field_product_type',
           'external_resource::field_document_type' => 'external_resource::field_document_type',
           'external_resource::taxonomy_vocabulary_11' => 'external_resource::taxonomy_vocabulary_11',
           'external_resource::field_software_release' => 'external_resource::field_software_release',
@@ -5146,11 +5146,11 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_document_type']['label'] = 'Type';
   $handler->display->display_options['fields']['field_document_type']['type'] = 'taxonomy_term_reference_plain';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
   /* Field: Content: Software Release */
   $handler->display->display_options['fields']['field_software_release']['id'] = 'field_software_release';
   $handler->display->display_options['fields']['field_software_release']['table'] = 'field_data_field_software_release';
@@ -5159,12 +5159,12 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Part Number */
-  $handler->display->display_options['fields']['field_part_number']['id'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['table'] = 'field_data_field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['field'] = 'field_part_number';
-  $handler->display->display_options['fields']['field_part_number']['label'] = 'Part #';
-  $handler->display->display_options['fields']['field_part_number']['type'] = 'taxonomy_term_reference_plain';
-  $handler->display->display_options['fields']['field_part_number']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_document_unique_id']['id'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['table'] = 'field_data_field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['field'] = 'field_document_unique_id';
+  $handler->display->display_options['fields']['field_document_unique_id']['label'] = 'Part #';
+  $handler->display->display_options['fields']['field_document_unique_id']['type'] = 'taxonomy_term_reference_plain';
+  $handler->display->display_options['fields']['field_document_unique_id']['delta_offset'] = '0';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -5555,16 +5555,16 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
-  $handler->display->display_options['fields']['field_device_type']['separator'] = '  ';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['separator'] = '  ';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -5615,22 +5615,22 @@ function technet_views_views_default_views() {
   $handler->display->display_options['sorts']['title']['id'] = 'title';
   $handler->display->display_options['sorts']['title']['table'] = 'node';
   $handler->display->display_options['sorts']['title']['field'] = 'title';
-  /* Contextual filter: Content: Device Type (field_device_type) */
-  $handler->display->display_options['arguments']['field_device_type_tid']['id'] = 'field_device_type_tid';
-  $handler->display->display_options['arguments']['field_device_type_tid']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['arguments']['field_device_type_tid']['field'] = 'field_device_type_tid';
-  $handler->display->display_options['arguments']['field_device_type_tid']['default_action'] = 'not found';
-  $handler->display->display_options['arguments']['field_device_type_tid']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['field_device_type_tid']['specify_validation'] = TRUE;
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate']['type'] = 'taxonomy_term';
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate_options']['vocabularies'] = array(
+  /* Contextual filter: Content: Device Type (field_product_type) */
+  $handler->display->display_options['arguments']['field_product_type_tid']['id'] = 'field_product_type_tid';
+  $handler->display->display_options['arguments']['field_product_type_tid']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['arguments']['field_product_type_tid']['field'] = 'field_product_type_tid';
+  $handler->display->display_options['arguments']['field_product_type_tid']['default_action'] = 'not found';
+  $handler->display->display_options['arguments']['field_product_type_tid']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['arguments']['field_product_type_tid']['specify_validation'] = TRUE;
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate']['type'] = 'taxonomy_term';
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate_options']['vocabularies'] = array(
     'vocabulary_12' => 'vocabulary_12',
   );
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate_options']['type'] = 'convert';
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate']['fail'] = 'ignore';
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate_options']['type'] = 'convert';
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate']['fail'] = 'ignore';
   /* Contextual filter: Content: Nid */
   $handler->display->display_options['arguments']['nid']['id'] = 'nid';
   $handler->display->display_options['arguments']['nid']['table'] = 'node';
@@ -5665,13 +5665,13 @@ function technet_views_views_default_views() {
   $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
   $handler->display->display_options['display_description'] = 'View for multipass block';
   $handler->display->display_options['argument_input'] = array(
-    'field_device_type_tid' => array(
+    'field_product_type_tid' => array(
       'type' => 'context',
       'context' => 'entity:taxonomy_term.name',
       'context_optional' => 0,
       'panel' => '2',
       'fixed' => 'realpresence mobile',
-      'label' => 'Content: Device Type (field_device_type)',
+      'label' => 'Content: Device Type (field_product_type)',
     ),
     'nid' => array(
       'type' => 'context',
@@ -5810,16 +5810,16 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
-  $handler->display->display_options['fields']['field_device_type']['separator'] = '  ';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['separator'] = '  ';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -6220,16 +6220,16 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
-  $handler->display->display_options['fields']['field_device_type']['separator'] = '  ';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['separator'] = '  ';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -6407,16 +6407,16 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
-  $handler->display->display_options['fields']['field_device_type']['separator'] = '  ';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['separator'] = '  ';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -6593,16 +6593,16 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
-  $handler->display->display_options['fields']['field_device_type']['separator'] = '  ';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['separator'] = '  ';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -6871,16 +6871,16 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
-  $handler->display->display_options['fields']['field_device_type']['separator'] = '  ';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['separator'] = '  ';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -7262,16 +7262,16 @@ function technet_views_views_default_views() {
   $handler->display->display_options['fields']['field_software_release']['type'] = 'taxonomy_term_reference_plain';
   $handler->display->display_options['fields']['field_software_release']['delta_offset'] = '0';
   /* Field: Content: Device Type */
-  $handler->display->display_options['fields']['field_device_type']['id'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['field'] = 'field_device_type';
-  $handler->display->display_options['fields']['field_device_type']['label'] = '';
-  $handler->display->display_options['fields']['field_device_type']['exclude'] = TRUE;
-  $handler->display->display_options['fields']['field_device_type']['element_label_colon'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['element_default_classes'] = FALSE;
-  $handler->display->display_options['fields']['field_device_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
-  $handler->display->display_options['fields']['field_device_type']['delta_offset'] = '0';
-  $handler->display->display_options['fields']['field_device_type']['separator'] = '  ';
+  $handler->display->display_options['fields']['field_product_type']['id'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['field'] = 'field_product_type';
+  $handler->display->display_options['fields']['field_product_type']['label'] = '';
+  $handler->display->display_options['fields']['field_product_type']['exclude'] = TRUE;
+  $handler->display->display_options['fields']['field_product_type']['element_label_colon'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['element_default_classes'] = FALSE;
+  $handler->display->display_options['fields']['field_product_type']['type'] = 'hs_taxonomy_term_reference_hierarchical_text';
+  $handler->display->display_options['fields']['field_product_type']['delta_offset'] = '0';
+  $handler->display->display_options['fields']['field_product_type']['separator'] = '  ';
   /* Field: Content: Platform */
   $handler->display->display_options['fields']['field_platform']['id'] = 'field_platform';
   $handler->display->display_options['fields']['field_platform']['table'] = 'field_data_field_platform';
@@ -7511,21 +7511,21 @@ function technet_views_views_default_views() {
   $handler->display->display_options['sorts']['title']['id'] = 'title';
   $handler->display->display_options['sorts']['title']['table'] = 'node';
   $handler->display->display_options['sorts']['title']['field'] = 'title';
-  /* Contextual filter: Content: Device Type (field_device_type) */
-  $handler->display->display_options['arguments']['field_device_type_tid']['id'] = 'field_device_type_tid';
-  $handler->display->display_options['arguments']['field_device_type_tid']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['arguments']['field_device_type_tid']['field'] = 'field_device_type_tid';
-  $handler->display->display_options['arguments']['field_device_type_tid']['default_action'] = 'not found';
-  $handler->display->display_options['arguments']['field_device_type_tid']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['field_device_type_tid']['specify_validation'] = TRUE;
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate']['type'] = 'taxonomy_term';
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate_options']['vocabularies'] = array(
+  /* Contextual filter: Content: Device Type (field_product_type) */
+  $handler->display->display_options['arguments']['field_product_type_tid']['id'] = 'field_product_type_tid';
+  $handler->display->display_options['arguments']['field_product_type_tid']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['arguments']['field_product_type_tid']['field'] = 'field_product_type_tid';
+  $handler->display->display_options['arguments']['field_product_type_tid']['default_action'] = 'not found';
+  $handler->display->display_options['arguments']['field_product_type_tid']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['arguments']['field_product_type_tid']['specify_validation'] = TRUE;
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate']['type'] = 'taxonomy_term';
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate_options']['vocabularies'] = array(
     'vocabulary_12' => 'vocabulary_12',
   );
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate_options']['type'] = 'convert';
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate_options']['type'] = 'convert';
   /* Contextual filter: Content: Software Release (field_software_release) */
   $handler->display->display_options['arguments']['field_software_release_tid']['id'] = 'field_software_release_tid';
   $handler->display->display_options['arguments']['field_software_release_tid']['table'] = 'field_data_field_software_release';
@@ -7564,13 +7564,13 @@ function technet_views_views_default_views() {
   /* Display: Content pane */
   $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
   $handler->display->display_options['argument_input'] = array(
-    'field_device_type_tid' => array(
+    'field_product_type_tid' => array(
       'type' => 'context',
       'context' => 'entity:taxonomy_term.name',
       'context_optional' => 0,
       'panel' => '0',
       'fixed' => '',
-      'label' => 'Content: Device Type (field_device_type)',
+      'label' => 'Content: Device Type (field_product_type)',
     ),
     'field_software_release_tid' => array(
       'type' => 'context',
@@ -7668,21 +7668,21 @@ function technet_views_views_default_views() {
   $handler->display->display_options['sorts']['created']['table'] = 'node';
   $handler->display->display_options['sorts']['created']['field'] = 'created';
   $handler->display->display_options['sorts']['created']['order'] = 'DESC';
-  /* Contextual filter: Content: Device Type (field_device_type) */
-  $handler->display->display_options['arguments']['field_device_type_tid']['id'] = 'field_device_type_tid';
-  $handler->display->display_options['arguments']['field_device_type_tid']['table'] = 'field_data_field_device_type';
-  $handler->display->display_options['arguments']['field_device_type_tid']['field'] = 'field_device_type_tid';
-  $handler->display->display_options['arguments']['field_device_type_tid']['default_action'] = 'not found';
-  $handler->display->display_options['arguments']['field_device_type_tid']['default_argument_type'] = 'fixed';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary']['number_of_records'] = '0';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary']['format'] = 'default_summary';
-  $handler->display->display_options['arguments']['field_device_type_tid']['summary_options']['items_per_page'] = '25';
-  $handler->display->display_options['arguments']['field_device_type_tid']['specify_validation'] = TRUE;
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate']['type'] = 'taxonomy_term';
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate_options']['vocabularies'] = array(
+  /* Contextual filter: Content: Device Type (field_product_type) */
+  $handler->display->display_options['arguments']['field_product_type_tid']['id'] = 'field_product_type_tid';
+  $handler->display->display_options['arguments']['field_product_type_tid']['table'] = 'field_data_field_product_type';
+  $handler->display->display_options['arguments']['field_product_type_tid']['field'] = 'field_product_type_tid';
+  $handler->display->display_options['arguments']['field_product_type_tid']['default_action'] = 'not found';
+  $handler->display->display_options['arguments']['field_product_type_tid']['default_argument_type'] = 'fixed';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary']['number_of_records'] = '0';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary']['format'] = 'default_summary';
+  $handler->display->display_options['arguments']['field_product_type_tid']['summary_options']['items_per_page'] = '25';
+  $handler->display->display_options['arguments']['field_product_type_tid']['specify_validation'] = TRUE;
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate']['type'] = 'taxonomy_term';
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate_options']['vocabularies'] = array(
     'vocabulary_12' => 'vocabulary_12',
   );
-  $handler->display->display_options['arguments']['field_device_type_tid']['validate_options']['type'] = 'convert';
+  $handler->display->display_options['arguments']['field_product_type_tid']['validate_options']['type'] = 'convert';
   /* Contextual filter: Content: Software Release (field_software_release) */
   $handler->display->display_options['arguments']['field_software_release_tid']['id'] = 'field_software_release_tid';
   $handler->display->display_options['arguments']['field_software_release_tid']['table'] = 'field_data_field_software_release';
@@ -7721,13 +7721,13 @@ function technet_views_views_default_views() {
   /* Display: Content pane */
   $handler = $view->new_display('panel_pane', 'Content pane', 'panel_pane_1');
   $handler->display->display_options['argument_input'] = array(
-    'field_device_type_tid' => array(
+    'field_product_type_tid' => array(
       'type' => 'context',
       'context' => 'entity:taxonomy_term.name',
       'context_optional' => 0,
       'panel' => '0',
       'fixed' => '',
-      'label' => 'Content: Device Type (field_device_type)',
+      'label' => 'Content: Device Type (field_product_type)',
     ),
     'field_software_release_tid' => array(
       'type' => 'context',

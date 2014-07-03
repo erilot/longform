@@ -75,7 +75,7 @@ function document_search_search_block_form_submit($form, &$form_state) {
   //Get book ID of current node
   $node = menu_get_object();
   $wrapper = entity_metadata_wrapper('node', node_load($node->nid));
-  $devices = $wrapper->field_device_type->value();
+  $devices = $wrapper->field_product_type->value();
   $bid = $node->book['bid'];
 
   $releases = $wrapper->field_software_release->value();
@@ -85,7 +85,7 @@ function document_search_search_block_form_submit($form, &$form_state) {
   $i = 0;
   foreach($devices as $device) {
     $tid = $device->tid;
-    $query["f[$i]"]="im_field_device_type:$tid";
+    $query["f[$i]"]="im_field_product_type:$tid";
     $i++;
   }
   

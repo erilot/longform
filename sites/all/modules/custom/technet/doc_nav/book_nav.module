@@ -343,6 +343,8 @@ function book_nav_publish_status(){
     // Supply published status div
     $node = menu_get_object();
     $state = workflow_get_workflow_node_by_nid($node->nid);
+    if(!is_object($state)) return FALSE;
+    
     switch ($state->sid){
 	case 36:
 	    $output = '<div class="publish-status published">' . t('This page is published') . '</div>';   
@@ -450,7 +452,7 @@ function book_nav_workflow_form_create($form, &$form_state, $topic) {
 	);
 	$form['flag']['translate'] = array(
 	    '#type' => 'markup',
-	    '#markup' => flag_create_link('notranslate', $tid),
+	    '#markup' => flag_create_link('no_translate', $tid),
 	);
     }
     $form['topic-workflow-' . $tid]['topic'] = array(
@@ -793,7 +795,7 @@ function book_nav_title_block(){
     // Collect taxonomy terms.
     
     // Device type
-    $devices_array = $node->field_device_type[LANGUAGE_NONE];
+    $devices_array = $node->field_product_type[LANGUAGE_NONE];
     foreach($devices_array as $temp) {
 	$device_tids[] = $temp['tid'];
     }
@@ -803,7 +805,7 @@ function book_nav_title_block(){
 	$device_names[$term->tid] = $term->name;
     }
         
-    $this_device_tid = $node->field_device_type[LANGUAGE_NONE][0]['tid'];
+    $this_device_tid = $node->field_product_type[LANGUAGE_NONE][0]['tid'];
     $this_device_name = taxonomy_term_load($this_device_tid)->name;
   
     // Release
@@ -1197,11 +1199,11 @@ function book_nav_footer_info(){
   $copyright = l('&copy; ' . date('Y') . ' definio, Inc.','documents/en/legal-documents/1846', array('html'=>TRUE));
   $node = menu_get_object();
   $nid = $node->nid;
-  $part_number = taxonomy_term_load($node->field_part_number[LANGUAGE_NONE][0]['tid']);
+  $part_number = isset($node->field_document_unique_id[LANGUAGE_NONE]) ? $node->field_document_unique_id[LANGUAGE_NONE][0]['tid'] : '';
   $tandc = l(t("Terms & Conditions"),"documents/en/terms-and-conditions");
   
   $array = array(
-   'items' => array($copyright, $tandc, $part_number->name, $nid),
+   'items' => array($copyright, $tandc, $part_number, $nid),
    'title' => '',
    'type' => 'ul',
    'attributes' => array(
@@ -1415,8 +1417,9 @@ function book_nav_multipass(){
 function book_nav_page_alter(&$page) {
 
     $use_nav_in_types = array('book', 'topic');
+    $menu_obj = menu_get_object();
     
-    if(!in_array(menu_get_object()->type, $use_nav_in_types)) return;
+    if(!is_object($menu_obj) || !in_array($menu_obj->type, $use_nav_in_types)) return;
 
     // Define base path of book_nav module
     $path = drupal_get_path('module','book_nav');
@@ -1594,6 +1597,8 @@ function technet_toolbar_file_options($node){
 }
 
 function technet_toolbar_print_options($node){
+    if (!module_exists('print')) return FALSE;
+    
   $block_title = t("Print Options");
 
   $print_link_label = t("Print this page");
@@ -1650,7 +1655,7 @@ function _doc_manage_display_tour($node, $book) {
  *
  */
 function book_nav_panels_pane_content_alter($content, $pane, $args, $contexts) {
-    if($content->type == 'node_body') {
+    if(is_object($content) && $content->type == 'node_body') {
 	$body = $content->content[0]['#markup'];
 	
 	//Lazy-loadify images

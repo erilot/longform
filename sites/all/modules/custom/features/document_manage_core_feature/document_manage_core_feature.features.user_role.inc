@@ -52,17 +52,5 @@ function document_manage_core_feature_user_default_roles() {
     'weight' => 8,
   );
 
-  // Exported role: anonymous user.
-  $roles['anonymous user'] = array(
-    'name' => 'anonymous user',
-    'weight' => 0,
-  );
-
-  // Exported role: authenticated user.
-  $roles['authenticated user'] = array(
-    'name' => 'authenticated user',
-    'weight' => 1,
-  );
-
   return $roles;
 }

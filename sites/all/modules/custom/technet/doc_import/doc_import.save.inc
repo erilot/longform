@@ -50,7 +50,7 @@ function doc_import_save_nodes($ticket_node, &$meta, &$log, &$content_array){
     //Top level book nodes have no body content
     $edit['body'][LANGUAGE_NONE][0]['value'] = NULL;
     $edit['body'][LANGUAGE_NONE][0]['summary'] = NULL;
-    $edit['body'][LANGUAGE_NONE][0]['format'] = '2';
+    $edit['body'][LANGUAGE_NONE][0]['format'] = 'full_html';
     $edit['book'] = array('bid' => 'new');
 
    //dpm($edit,'$edit before recording node');
@@ -105,7 +105,7 @@ function doc_import_save_nodes($ticket_node, &$meta, &$log, &$content_array){
 	
 	$book_node->body[LANGUAGE_NONE][0]['value'] = $content;
 	$book_node->body[LANGUAGE_NONE][0]['summary'] = text_summary($content);
-	$book_node->body[LANGUAGE_NONE][0]['format'] = '2';
+	$book_node->body[LANGUAGE_NONE][0]['format'] = 'full_html';
 	$book_node->path['pathauto'] = TRUE;
 	$book_node->teaser = text_summary($content);
 	$book_node->parent = $node->nid;
@@ -183,7 +183,7 @@ function doc_import_save_nodes($ticket_node, &$meta, &$log, &$content_array){
 	$page_uses_topic_relation = relation_create('page_uses_topic',$page_uses_topic);
 	$new_relation_id = relation_save($page_uses_topic_relation);
 
-	_doc_import_save_book_node($book_node, $heading_type);
+	//_doc_import_save_book_node($book_node, $heading_type);
 	$last_book_node = $book_node;
 	$last_heading_type = $heading_type;
 

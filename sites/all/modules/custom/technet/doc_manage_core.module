@@ -4,19 +4,10 @@
  * File: module functions
  */
 
-define ('MAX_IMAGE_HEIGHT',400);
-define ('MAX_IMAGE_WIDTH', 890);
-
 function doc_manage_core_init(){
   //load libraries
   drupal_add_js(drupal_get_path('module','doc_manage_core') . '/includes/technet.js');
   drupal_add_library('system', 'ui');
-  
-  // Load bootstrap on non-administration pages
-  //if(!path_is_admin(current_path())){
-    //drupal_add_js(drupal_get_path('module','doc_manage_core') . '/includes/bootstrap-3.1.0/js/bootstrap.min.js');
-    //drupal_add_css(drupal_get_path('module', 'doc_manage_core') . '/includes/bootstrap-3.1.0/css/bootstrap.min.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
-  //}
 
   // Load tour framework on non-administration pages.
   // Specific tour JS files are added by each module as needed.
@@ -86,79 +77,155 @@ function technet_technet_header($node) {
   }
   
   if($lsg) {
-    $new_menu = drupal_render(menu_tree('menu-create-new-content'));
-    $lsg_menu = drupal_render(menu_tree('menu-technet-administration'));
+    //$new_menu = drupal_render(menu_tree('menu-create-new-content'));
+    //$lsg_menu = drupal_render(menu_tree('menu-technet-administration'));
   }
 
   $home = '<li class="first leaf active">
 	    <a href="' . $base_path . '" class="active">Home</a>
 	  </li>';
 
-  $navbar = '
-
-    <div class="navbar-collapse collapse">
-      <nav role="navigation">
-        <ul class="menu nav navbar-nav">';
-
-  if($lsg) {
-    $navbar.='
-	  <li class="dropdown">
-	    <a href="#" title="Publishing tasks" data-target="#" class="dropdown-toggle" data-toggle="dropdown">Publishing <span class="caret"></span></a>
-	    <div class="dropdown-menu publishing col-md-12 full-width">
-		<div class="col-1 drop-inner col-sm-6 col-md-3 item-list">
-		  <h2>Add New Content</h2>'
-	. 		$new_menu
-	.   	'</div>
-		<div class="col-1 drop-inner col-sm-6 col-md-3 item-list">
-		  <div class="row dropdown-inset">
-		    <div class="col-md-12">
-		      <h2>Document Tracking</h2>'
-	. 	      technet_user_documents_menu($node, array('theme'=>'dropdown-menu')) . '
-		    </div>
-		  </div>
-		  <div class="row dropdown-inset">
-		    <div class="col-md-12">
-		      <h2>Publishing Resources</h2>'
-	. 	      technet_publishing_resources_menu($node, array('theme'=>'dropdown-menu')) . '
-		    </div>
-		  </div>
-	   	</div>
-		<div class="col-1 drop-inner col-sm-11 col-md-6">
-		<h2 class="block-title">My Recent Documents</h2>'
-	. 	views_embed_view('my_documents_menu_version_', 'my_documents_menu_block')
-	.   	'</div>'
-
-	.    '</div>'
-	. '</li>';
-  }
+  $bar = array();
+  $bar['bar'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('navbar-collapse', 'collapse'),
+    ),
+  );
+  $bar['bar']['nav']['prefix'] = array(
+    '#markup' => '<nav role="navigation">',
+  );
+  $bar['bar']['nav']['content'] = array();
+  $bar['bar']['nav']['suffix'] = array(
+    '#markup' => '</nav>',
+  );
   
-  $navbar.='</ul>';
+  
+  // === Publishing menu ===
+  $publishing_menu = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('dropdown-menu', 'publishing', 'col-md-12', 'full-width'),
+    )
+  );
+  
+  // First subpanel (*create new content*)
+  $publishing_menu['first'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-1', 'drop-inner', 'col-sm-6', 'col-md-3', 'item-list'),
+    ),
+  );
+  $publishing_menu['first']['head'] = array(
+    '#markup' => '<h2>' . t('Add New Content') . '</h2>',
+  );
+  $publishing_menu['first']['head']['menu'] = menu_tree('menu-create-new-content');
+  
+  // Second subpanel (*Document Tracking*)
+  $publishing_menu['second'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-2', 'drop-inner', 'col-sm-6', 'col-md-3', 'item-list'),
+    ),
+  );
+  
+  $publishing_menu['second']['top'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('row', 'dropdown-inset'),
+    ),
+  );
+  $publishing_menu['second']['top']['bs'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-12'),
+    ),
+  );
+  $publishing_menu['second']['top']['bs']['head'] = array(
+    '#markup' => '<h2>' . t('Document Tracking') . '</h2>',
+  );
+  $publishing_menu['second']['top']['bs']['content'] = array(
+    '#markup' => technet_user_documents_menu($node, array('theme'=>'dropdown-menu')),
+  );
+  
+  $publishing_menu['second']['bottom'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('row', 'dropdown-inset'),
+    ),
+  );
+  $publishing_menu['second']['bottom']['bs'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-12'),
+    ),
+  );
+  $publishing_menu['second']['bottom']['bs']['head'] = array(
+    '#markup' => '<h2>' . t('Publishing Resources') . '</h2>',
+  );
+  $publishing_menu['second']['bottom']['bs']['content'] = array(
+    '#markup' => technet_publishing_resources_menu($node, array('theme'=>'dropdown-menu')),
+  );
+  
+  // Last subpanel (* Recent content *)
+  $publishing_menu['last'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-3', 'drop-inner', 'col-sm-11', 'col-md-6'),
+    ),
+  );
+  $publishing_menu['last']['head'] = array(
+    '#markup' => '<h2>' . t('My Recent Documents') . '</h2>',
+  );
+  $publishing_menu['last']['head']['menu'] = array(
+    '#markup' => views_embed_view('my_documents_menu_version_', 'my_documents_menu_block'),
+  );
+  
+  // Insert publishing bar into nav. Wrappers are hardcoded (no point sending them through list renderers).
+  $publishing_head = '<a href="#" title="Publishing tasks" data-target="#" class="dropdown-toggle" data-toggle="dropdown">' . t('Publishing') . ' <span class="caret"></span></a>
+';
+  $bar['bar']['nav']['content']['publishing']['#prefix'] = '<ul class="menu nav navbar-nav"><li class="dropdown">' . $publishing_head;
+  $bar['bar']['nav']['content']['publishing']['menu'] = $publishing_menu;
+  $bar['bar']['nav']['content']['publishing']['#suffix'] = '</li></ul>';
   
   if(user_is_logged_in()){
-    $navbar.='
-	<ul class="menu nav navbar-nav navbar-right">
-	
-	  <li class="dropdown">
-	    <a href="#" title="Account" data-target="#" class="dropdown-toggle" data-toggle="dropdown">Account <span class="caret"></span></a>
-	    <div class="dropdown-menu account-menu">
-	      <div class="row dropdown-inset">
-		<div class="col-md-12">
-		  <h3>Account Options</h3>'
-    . 	      		technet_manage_user_self_service_menu($node, array('theme'=>'dropdown-menu')) . '
-		</div>
-	      </div>
-	    </div>
-	  </li>
-	</ul>';
+    
+    $account = array();
+    $account = array(
+      '#type' => 'container',
+      '#attributes' => array(
+	'class' => array('dropdown-menu', 'account-menu'),
+      )
+    );
+    $account['inset'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+	'class' => array('row', 'dropdown-inset'),
+      ),
+    );
+    $account['inset']['bs'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+	'class' => array('col-md-12'),
+      ),
+    );
+    $account['inset']['bs']['head'] = array(
+      '#markup' => '<h2>' . t('Account Options') . '</h2>',
+    );
+    $account['inset']['bs']['head']['content'] = array(
+      '#markup' => technet_manage_user_self_service_menu($node, array('theme'=>'dropdown-menu')),
+    );
+  $account_head = '<a href="#" title="account" data-target="#" class="dropdown-toggle" data-toggle="dropdown">' . t('Account') . ' <span class="caret"></span></a>
+';
+  $bar['bar']['nav']['content']['account']['#prefix'] = '<ul class="menu nav navbar-nav navbar-right"><li class="dropdown">' . $account_head;
+  $bar['bar']['nav']['content']['account']['menu'] = $account;
+  $bar['bar']['nav']['content']['account']['#suffix'] = '</li></ul>';
+
+  
   }
 	
-$navbar.= '
-      </nav>
-    </div>
 
-    ';
-    
-    return array('#type' => 'markup', '#markup' => $navbar);
+  return $bar;
 }
 
 function polycom_docsite_menu_tree($vars) {
@@ -362,10 +429,12 @@ function doc_manage_core_page_alter(&$page){
     //dpm(workflow_get_workflow_states_by_sid(31),'workflow state');
 
     // Add polycom topic editing functions to page if a qualified user
+  if ($page['content']['system_main']['type']['#value'] = 'book') {
     doc_manage_core_topic_editor($page);
+  }
     
     //Whitebranding check
-    if($_GET['partner'] || isset($_SESSION['technet']['partner'])) {
+    if(isset($_GET['partner']) || isset($_SESSION['technet']['partner'])) {
             
       $partner = isset($_GET['partner']) ? $_GET['partner'] : $_SESSION['technet']['partner'];
       $term = reset(taxonomy_get_term_by_name($partner,'vocabulary_11'));
@@ -406,8 +475,11 @@ function doc_manage_core_page_alter(&$page){
 
 function doc_manage_core_topic_editor(&$page) {
   
-  $content = $page['content']['system_main']['main']['#markup'];
-  $content = htmlqp($content);
+  if (isset($page['content']['system_main']['main'])) {
+    $content = $page['content']['system_main']['main']['#markup'];
+    $content = htmlqp($content);
+  }
+  else return FALSE;
   
 }
 
@@ -832,7 +904,7 @@ function doc_manage_core_check_admin(){
   }
   
   $releases = field_get_items('node', $node, 'field_software_release');
-  $devices = field_get_items('node', $node, 'field_device_type');
+  $devices = field_get_items('node', $node, 'field_product_type');
   $doctypes = field_get_items('node', $node, 'field_document_type');
   $platforms = field_get_items('node', $node, 'field_platform');
   
@@ -849,14 +921,14 @@ function doc_manage_core_check_admin(){
 	$query->fieldCondition('field_software_release', 'tid', _technet_shift_array($releases), 'IN');
       }
       if($devices) {
-	$query->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN');
       }
       $query->propertyOrderBy('title', 'ASC');
 
       break;
     case 'releases':
       if($devices){
-	$query->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN');
       }
       if($doctypes && $filters == 'default'){
 	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
@@ -866,7 +938,7 @@ function doc_manage_core_check_admin(){
       break;
     case 'platforms':
       if($devices){
-	$query->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN');
       }
       if($doctypes){
 	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
@@ -903,7 +975,7 @@ function doc_manage_core_check_admin(){
   //  $fps->entityCondition('entity_type', 'node')
   //  ->entityCondition('bundle', 'book')
   //  ->fieldCondition('field_document_type', 'tid', array(1201), 'IN')
-  //  ->fieldCondition('field_device_type', 'tid', _technet_shift_array($devices), 'IN')
+  //  ->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN')
   //  ->propertyCondition('status', $publish_state)
   //  ->propertyOrderBy('title', 'ASC');
   //  
@@ -1039,6 +1111,8 @@ function extract_body(&$content){
 /**
  * Implements hook_save()
  *
+ * @TODO: MOVE THIS TO A NEW OG MANAGER MODULE!!!
+ *
  * If an import ticket is unassigned when saved, attempts to assign it to the creating user.
  *
  * Only fires under the following conditions:
@@ -1050,9 +1124,10 @@ function extract_body(&$content){
  *
  */
 function doc_manage_core_node_presave($node) {
+  
   $wrapper = entity_metadata_wrapper('node', $node);
   
-  if ($wrapper->getBundle() != 'import_ticket') return;
+  if ($wrapper->getBundle() != 'import_ticket' || !isset($wrapper->field_doc_assigned_to)) return;
   $assigned = $wrapper->field_doc_assigned_to->value();
   
   // Only attempt to assign this on initial creation, and if the user didn't already assign the node
@@ -1106,7 +1181,7 @@ function doc_manage_core_node_presave($node) {
       break;
     }
   }
-  return $validate ? TRUE: FALSE;
+  return isset($validate) ? TRUE: FALSE;
  }
 
  /**

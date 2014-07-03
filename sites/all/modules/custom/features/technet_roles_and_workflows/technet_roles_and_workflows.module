@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Technet Roles and workflows feature.
+ */
+
+include_once 'technet_roles_and_workflows.features.inc';
