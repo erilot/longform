@@ -457,8 +457,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-book-field_product_manager'
-  $field_instances['node-book-field_product_manager'] = array(
+  // Exported field_instance: 'node-book-field_products_manager'
+  $field_instances['node-book-field_products_manager'] = array(
     'bundle' => 'book',
     'default_value' => NULL,
     'deleted' => 0,
@@ -504,7 +504,7 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_product_manager',
+    'field_name' => 'field_products_manager',
     'label' => 'Product Manager',
     'required' => 0,
     'settings' => array(
@@ -523,8 +523,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-book-field_product_type'
-  $field_instances['node-book-field_product_type'] = array(
+  // Exported field_instance: 'node-book-field_products'
+  $field_instances['node-book-field_products'] = array(
     'bundle' => 'book',
     'default_value' => NULL,
     'deleted' => 0,
@@ -552,7 +552,7 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'fences_wrapper' => 'div',
-    'field_name' => 'field_product_type',
+    'field_name' => 'field_products',
     'label' => 'Product Type',
     'required' => 0,
     'settings' => array(
@@ -1920,8 +1920,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-field_product_manager'
-  $field_instances['node-import_ticket-field_product_manager'] = array(
+  // Exported field_instance: 'node-import_ticket-field_products_manager'
+  $field_instances['node-import_ticket-field_products_manager'] = array(
     'bundle' => 'import_ticket',
     'default_value' => NULL,
     'deleted' => 0,
@@ -1955,7 +1955,7 @@ function document_manage_core_feature_field_default_field_instances() {
       ),
     ),
     'entity_type' => 'node',
-    'field_name' => 'field_product_manager',
+    'field_name' => 'field_products_manager',
     'label' => 'Product Manager',
     'required' => 0,
     'settings' => array(
@@ -1974,8 +1974,8 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
   );
 
-  // Exported field_instance: 'node-import_ticket-field_product_type'
-  $field_instances['node-import_ticket-field_product_type'] = array(
+  // Exported field_instance: 'node-import_ticket-field_products'
+  $field_instances['node-import_ticket-field_products'] = array(
     'bundle' => 'import_ticket',
     'default_value' => NULL,
     'deleted' => 0,
@@ -2003,7 +2003,7 @@ function document_manage_core_feature_field_default_field_instances() {
     ),
     'entity_type' => 'node',
     'fences_wrapper' => 'div',
-    'field_name' => 'field_product_type',
+    'field_name' => 'field_products',
     'label' => 'Product Type',
     'required' => 0,
     'settings' => array(

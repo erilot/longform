@@ -119,7 +119,7 @@ function technet_field_group_field_group_info() {
     'children' => array(
       0 => 'field_platform',
       1 => 'field_software_release',
-      2 => 'field_product_type',
+      2 => 'field_products',
       3 => 'field_document_type',
       4 => 'field_release_state',
     ),
@@ -185,7 +185,7 @@ function technet_field_group_field_group_info() {
     'children' => array(
       0 => 'field_document_author',
       1 => 'field_document_unique_id',
-      2 => 'field_product_manager',
+      2 => 'field_products_manager',
       3 => 'field_project_name',
       4 => 'taxonomy_vocabulary_11',
       5 => 'field_publish_date',

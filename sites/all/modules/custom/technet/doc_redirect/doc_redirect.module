@@ -53,7 +53,7 @@ function doc_redirect_permalink_current(){
   $node = menu_get_object();
   if($node->type == 'book' && user_is_logged_in()){
    global $base_url;   
-    $this_device = $node->field_product_type[LANGUAGE_NONE][0]['tid'];
+    $this_device = $node->field_products[LANGUAGE_NONE][0]['tid'];
     $this_doctype = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
     $this_platform = $node->field_platform[LANGUAGE_NONE][0]['tid'];
     $this_language = $node->language;
@@ -85,11 +85,11 @@ function doc_redirect_get_adaptive_permalink(){
   $node = menu_get_object();
   if($node->type == 'import_ticket' && user_is_logged_in()){
    global $base_url;   
-    $this_device = $node->field_product_type[LANGUAGE_NONE][0]['tid'];
-    $this_doctype = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
-    $this_platform = $node->field_platform[LANGUAGE_NONE][0]['tid'];
-    $this_language = $node->language;
-    $this_version = taxonomy_term_load($node->field_software_release[LANGUAGE_NONE][0]['tid'])->name;
+    $this_device = isset($node->field_products[LANGUAGE_NONE]) ? $node->field_products[LANGUAGE_NONE][0]['tid'] : NULL;
+    $this_doctype = isset($node->field_document_type[LANGUAGE_NONE]) ? $node->field_document_type[LANGUAGE_NONE ][0]['tid'] : NULL;
+    $this_platform = isset($node->field_platform[LANGUAGE_NONE]) ? $node->field_platform[LANGUAGE_NONE][0]['tid'] : NULL;
+    $this_language = isset($node->language) ? $node->language : NULL;
+    $this_version = isset($node->field_software_release[LANGUAGE_NONE]) ? taxonomy_term_load($node->field_software_release[LANGUAGE_NONE][0]['tid'])->name : NULL;
     $fresh_link = "current/$this_language/$this_doctype/$this_device";
     if(!empty($this_platform)){
       $fresh_link.="/$this_platform";
@@ -118,10 +118,10 @@ function doc_redirect_get_adaptive_permalink(){
     else{
       $cover = FALSE;
     }
-    $link = array('adaptive' => $adaptive,
-                  'override' => $override,
-                  'cover' => $cover,
-                  'alias' => $path,
+    $link = array('adaptive' => isset($adaptive) ? $adaptive : NULL,
+                  'override' => isset($override) ? $override : NULL,
+                  'cover' => isset($cover) ? $cover : NULL,
+                  'alias' => isset($path) ? $path : NULL,
                   );
     return $link;
   }
@@ -602,11 +602,11 @@ FROM
 LEFT JOIN {book} book ON node.nid = book.nid
 LEFT JOIN {node} node_book ON book.bid = node_book.nid
 LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
-LEFT JOIN {field_data_field_product_type} field_data_field_product_type ON node.nid = field_data_field_product_type.entity_id AND (field_data_field_product_type.entity_type = 'node' AND field_data_field_product_type.deleted = '0')
+LEFT JOIN {field_data_field_products} field_data_field_products ON node.nid = field_data_field_products.entity_id AND (field_data_field_products.entity_type = 'node' AND field_data_field_products.deleted = '0')
 LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
 LEFT JOIN {field_data_field_platform} field_data_field_platform ON node.nid = field_data_field_platform.entity_id AND (field_data_field_platform.entity_type = 'node' AND field_data_field_platform.deleted = '0')
 LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
-WHERE (( (node.language = '$language') AND (field_data_field_product_type.field_product_type_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) AND (field_data_field_platform.field_platform_tid = '$device_platform' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+WHERE (( (node.language = '$language') AND (field_data_field_products.field_products_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) AND (field_data_field_platform.field_platform_tid = '$device_platform' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
 ORDER BY field_data_field_software_release_field_software_release_tid DESC
 LIMIT 10 OFFSET 0";
   }
@@ -618,10 +618,10 @@ FROM
 LEFT JOIN {book} book ON node.nid = book.nid
 LEFT JOIN {node} node_book ON book.bid = node_book.nid
 LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
-LEFT JOIN {field_data_field_product_type} field_data_field_product_type ON node.nid = field_data_field_product_type.entity_id AND (field_data_field_product_type.entity_type = 'node' AND field_data_field_product_type.deleted = '0')
+LEFT JOIN {field_data_field_products} field_data_field_products ON node.nid = field_data_field_products.entity_id AND (field_data_field_products.entity_type = 'node' AND field_data_field_products.deleted = '0')
 LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
 LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
-WHERE (( (node.language = '$language') AND (field_data_field_product_type.field_product_type_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+WHERE (( (node.language = '$language') AND (field_data_field_products.field_products_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
 ORDER BY field_data_field_software_release_field_software_release_tid DESC
 LIMIT 10 OFFSET 0";
 }

@@ -643,13 +643,13 @@ function document_manage_core_feature_field_default_field_bases() {
     'type' => 'file',
   );
 
-  // Exported field_base: 'field_product_image'
-  $field_bases['field_product_image'] = array(
+  // Exported field_base: 'field_products_image'
+  $field_bases['field_products_image'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_product_image',
+    'field_name' => 'field_products_image',
     'foreign keys' => array(
       'fid' => array(
         'columns' => array(
@@ -673,13 +673,13 @@ function document_manage_core_feature_field_default_field_bases() {
     'type' => 'image',
   );
 
-  // Exported field_base: 'field_product_manager'
-  $field_bases['field_product_manager'] = array(
+  // Exported field_base: 'field_products_manager'
+  $field_bases['field_products_manager'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_product_manager',
+    'field_name' => 'field_products_manager',
     'foreign keys' => array(
       'tid' => array(
         'columns' => array(
@@ -708,13 +708,13 @@ function document_manage_core_feature_field_default_field_bases() {
     'type' => 'taxonomy_term_reference',
   );
 
-  // Exported field_base: 'field_product_type'
-  $field_bases['field_product_type'] = array(
+  // Exported field_base: 'field_products'
+  $field_bases['field_products'] = array(
     'active' => 1,
     'cardinality' => -1,
     'deleted' => 0,
     'entity_types' => array(),
-    'field_name' => 'field_product_type',
+    'field_name' => 'field_products',
     'foreign keys' => array(
       'tid' => array(
         'columns' => array(

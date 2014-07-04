@@ -1,14 +1,26 @@
 <?php
 
-define('WORKFLOW_PAGE_REVIEW_STATE', 13);
-define('WORKFLOW_PAGE_PUBLISHED_STATE', 36);
-define('WORKFLOW_PAGE_APPROVED_STATE', 14);
+/**
+ * WORKFLOW DEFINITIONS
+ *
+ * These constants define the various workflow state IDs for different content types.
+ * Hardcoding them as constants here is required since labels are unpredictable and can
+ * be changed post-launch.
+ *
+ * These must be redefined here for every launched distribution, until a more flexible solution is found.
+ */
+define('WORKFLOW_PAGE_CREATED_STATE', 1);
+define('WORKFLOW_PAGE_REVIEW_STATE', 2);
+define('WORKFLOW_PAGE_SUBMITTED_STATE', 3);
+define('WORKFLOW_PAGE_APPROVED_STATE', 4);
+define('WORKFLOW_PAGE_PUBLISHED_STATE', 5);
 
-define('WORKFLOW_TICKET_PUBLISHED_STATE', 6);
+define('WORKFLOW_TICKET_PUBLISHED_STATE', 11);
 
-define('WORKFLOW_TOPIC_REVIEW_STATE', 46);
-define('WORKFLOW_TOPIC_APPROVED_STATE', 56);
-define('WORKFLOW_TOPIC_PUBLISHED_STATE', 61);
+define('WORKFLOW_TOPIC_REVIEW_STATE', 13);
+define('WORKFLOW_TOPIC_SUBMITTED_STATE', 14);
+define('WORKFLOW_TOPIC_APPROVED_STATE', 15);
+define('WORKFLOW_TOPIC_PUBLISHED_STATE', 16);
 
 /**
  * Display and control main ticket nav
@@ -166,7 +178,7 @@ function doc_manage_metadata_table($ticket = NULL, $options = NULL) {
   $fields[] = array(
     'label' => t('Product(s)'),
     'type' => 'term',
-    'machine_name' => 'field_product_type',
+    'machine_name' => 'field_products',
     'missing_tooltip' => 'Documents must be tagged with at least one product to be published',
     'present_tooltip' => NULL,
     'importance' => 'required',
@@ -391,6 +403,8 @@ function _doc_manage_build_report_row($ticket, $vars) {
 	  $field = reset($field);
 	}
       }
+      $opts = array();
+      $opts['display_links'] = FALSE;
       
       // Set the return value based on the incoming data type. For now, this is manually declared.
       switch ($type) {
@@ -455,7 +469,7 @@ function _doc_manage_build_report_row($ticket, $vars) {
   // Base row render array
   $row = array(
     'data' => array('<b>' . $label . '</b>', $value),
-    'class' => array($row_class),
+    'class' => isset($row_class) ? array($row_class) : NULL,
   );
 
   // *** Work in progress ***
@@ -758,19 +772,19 @@ function _doc_manage_generic_field_submit ($form, &$form_state, $ticket = NULL, 
  */
 function doc_manage_display_adaptive_links($ticket){
   
-  $controller = menu_get_object();
+  $ticket = menu_get_object();
   $mode = 'in';
   $title = 'Document Links';
   $target = 'document-links';
   $id = $target;
   
-  if($controller->type != 'import_ticket' || !module_exists('doc_redirect')) return FALSE;
+  if($ticket->type != 'import_ticket' || !module_exists('doc_redirect')) return FALSE;
   
   $links = doc_redirect_get_adaptive_permalink();
 
   // Build release-specific link
   if($links['override']){
-    if($controller->field_product_type && $controller->field_document_type){
+    if($ticket->field_products && $ticket->field_document_type){
       $specific = '<p class="text-success">' . $links['override'] . '</p>';
     }
     else{
@@ -782,7 +796,7 @@ function doc_manage_display_adaptive_links($ticket){
   }
 
   // Build adaptive link
-  $adaptive = ($controller->field_product_type && $controller->field_document_type)
+  $adaptive = ($ticket->field_products && $ticket->field_document_type)
       ? '<p class="text-success">' . $links['adaptive']. '</p>'
       : '<p class="text-warning">An adaptive link will be available once the <b>document type</b> and <b>product type</b> have been assigned.</p>';
       
@@ -831,7 +845,7 @@ function doc_manage_display_adaptive_links($ticket){
     ),
   );
   
-  if (!$collapsible) {
+  if (!isset($collapsible)) {
     $render['head'] = array(
       '#markup' => '<h2>'  . t($title) . '</h2>',
     );
@@ -846,7 +860,7 @@ function doc_manage_display_adaptive_links($ticket){
 
   // If in collapsing mode, render this as a triggering link.
   
-  if ($collapsible) {
+  if (isset($collapsible)) {
     // Create heading link element. This will become the panel collapse trigger.
     $link_attrs = array(
       'html' => TRUE,
@@ -915,7 +929,14 @@ function doc_manage_render_workflow($ticket = NULL){
   
   // Check to see if we're ready to move on to publishing. To move forward, all book pages must be in either state 14 (approved) or 36 (published).
   $counts = doc_manage_workflow_entity_counts($ticket, 'book');
-  $ready_to_publish = ($counts[14] + $counts[36] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;  
+  if (!isset($counts[WORKFLOW_PAGE_APPROVED_STATE])) {
+    $counts[WORKFLOW_PAGE_APPROVED_STATE] = 0;
+  }
+  if (!isset($counts[WORKFLOW_PAGE_PUBLISHED_STATE])) {
+    $counts[WORKFLOW_PAGE_PUBLISHED_STATE] = 0;
+  }
+
+  $ready_to_publish = ($counts[WORKFLOW_PAGE_APPROVED_STATE] + $counts[WORKFLOW_PAGE_PUBLISHED_STATE] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;  
   
   // The document may already be published; set a flag if it is
   $published = workflow_node_current_state($ticket) == 6 ? TRUE : FALSE;
@@ -1156,7 +1177,7 @@ function _doc_manage_metadata_warnings($ticket) {
   if (!isset($wrapper->field_software_release) || count($wrapper->field_software_release->value()) == 0) {
     $warns[] = '<li>' . t('<b>No software release</b> has been specified.') . '</li>';
   }
-  if (!isset($wrapper->field_product_type) || count($wrapper->field_product_type->value()) == 0) {
+  if (!isset($wrapper->field_products) || count($wrapper->field_products->value()) == 0) {
     $warns[] = '<li>' . t('<b>No product/device type</b> has been specified.') . '</li>';
   }
   if (!isset($wrapper->field_document_unique_id) || count($wrapper->field_document_unique_id->value()) == 0) {
@@ -1742,16 +1763,16 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
   //$task_label = '<b>' . array_search(TRUE, $stages) . '</b>';
   //$task_mode = 'btn-info';
   
-  // Modify results in two instances: document stub, and already published.
-  if ($wf_state == WORKFLOW_TICKET_PUBLISHED_STATE) {
-   $task_label = '<b>None!</b>';
-   $task_mode = 'btn-success';
-  }
+  //// Modify results in two instances: document stub, and already published.
+  //if ($wf_state == WORKFLOW_TICKET_PUBLISHED_STATE) {
+  // $task_label = '<b>None!</b>';
+  // $task_mode = 'btn-success';
+  //}
   
-  if ($wf_state == 21 && $states['unpack'] == 'pending') {
-   $task_label = '<b>Upload File</b>';
-   $task_mode = 'btn-danger';
-  }
+  //if ($wf_state == 21 && $states['unpack'] == 'pending') {
+  // $task_label = '<b>Upload File</b>';
+  // $task_mode = 'btn-danger';
+  //}
   
   $wrap = entity_metadata_wrapper('node', $ticket);
   if ($type == 'book') {
@@ -1858,7 +1879,6 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
     'class' => array('btn','disabled', $publish_mode),
    ),
   );
-  dpm($render,'render');
   return $render;
  
 }
@@ -1895,6 +1915,9 @@ function _doc_manage_toolbar_button_jump_to($node) {
 			'class' => array($stages['Import'] ? 'disabled':'enabled'),
 		      ))),
 		  ) + $tooltip;
+	}
+	else {
+	  return FALSE;
 	}
       break;
     
@@ -1975,7 +1998,7 @@ function _doc_manage_toolbar_button_flag_html($node) {
       );
       break;
   }    
-  return $button;
+  return isset($button) ? $button : FALSE;
   
 }
 
@@ -1989,7 +2012,7 @@ function _doc_manage_toolbar_button_approve($node) {
       $wf_label = $wf_choices[$wf_state];
       $states = _doc_manage_get_import_state($node);
     
-      $published_state = $node->type == 'import_ticket' ? 6 : 36;
+      $published_state = $node->type == 'import_ticket' ? WORKFLOW_TICKET_PUBLISHED_STATE : WORKFLOW_PAGE_PUBLISHED_STATE;
       
       // Get highest state the current user can move to
       $state = workflow_get_workflow_node_by_nid($node->nid);
@@ -2001,9 +2024,9 @@ function _doc_manage_toolbar_button_approve($node) {
       $highest_workflow_shift = key($wf_choices);
       
       $label = array(
-	14 => t('Approve'),
-	16 => t('Submit'),
-	36 => t('Publish'),
+	WORKFLOW_PAGE_APPROVED_STATE => t('Approve'),
+	WORKFLOW_PAGE_SUBMITTED_STATE => t('Submit'),
+	WORKFLOW_PAGE_PUBLISHED_STATE => t('Publish'),
       );
             
       $approve = array(
@@ -2018,7 +2041,7 @@ function _doc_manage_toolbar_button_approve($node) {
 	  'class' => array(),
 	  ),
 	);
-      if ($state->sid != 14 && $state->sid != 36) {
+      if ($state->sid != WORKFLOW_PAGE_APPROVED_STATE && $state->sid != WORKFLOW_PAGE_PUBLISHED_STATE) {
 	$approve['approve']['alert']['message'] = array(
 	  '#markup' => '<p>To ' . strtolower($label[$highest_workflow_shift]) . ' this content, click
 	    <button class="btn btn-sm disabled"><span class="glyphicon glyphicon-ok"></span></button>.
@@ -2044,7 +2067,7 @@ function _doc_manage_toolbar_button_approve($node) {
       );
       break;
   }
-  return $button;
+  return isset($button) ? $button : FALSE;
 }
 
 function doc_manage_approve_content_form($form, &$form_state, $node, $label, $target) {
@@ -2357,9 +2380,7 @@ function doc_manage_render_pdf_options ($ticket) {
     '#markup' => '<label>' . t('Force generate a PDF') . '</label><br/><p>' . t('To generate a PDF now, click here.') . '<br/><br/></p>',
   );
   
-  $out['pdf_container']['right']['actions_wrapper']['generate_pdf_intro']['force_generate'] = array(
-    '#markup' => drupal_render(drupal_get_form('doc_manage_pdfreactor_button_form')) ,
-  );
+  $out['pdf_container']['right']['actions_wrapper']['generate_pdf_intro']['force_generate'] = drupal_get_form('doc_manage_pdfreactor_button_form');
 
   // If an manually-uploaded PDF is available, make it available for download.
   if (isset($ticket->upload[LANGUAGE_NONE][0])) {
@@ -2458,7 +2479,7 @@ function doc_manage_render_import_actions_panel ($ticket) {
 	'class' => array('col-md-4'),
       ),
     );    
-    $import_steps_info['uploader']['content'] = array('#markup' => drupal_render(drupal_get_form('_doc_manage_upload_archive_form')));
+    $import_steps_info['uploader']['content'] = drupal_get_form('_doc_manage_upload_archive_form');
   }
   else {
     // In progress
@@ -2525,7 +2546,14 @@ function _doc_manage_get_all_accordion_states ($ticket) {
   module_load_include('inc', 'doc_manage', 'doc_manage.workflow');
   $states = _doc_manage_get_import_state($ticket);
   $counts = doc_manage_workflow_entity_counts($ticket, 'book');
-  $ready_to_publish = ($counts[14] + $counts[36] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;
+  if (!isset($counts[WORKFLOW_PAGE_APPROVED_STATE])) {
+    $counts[WORKFLOW_PAGE_APPROVED_STATE] = 0;
+  }
+  if (!isset($counts[WORKFLOW_PAGE_PUBLISHED_STATE])) {
+    $counts[WORKFLOW_PAGE_PUBLISHED_STATE] = 0;
+  }
+  
+  $ready_to_publish = ($counts[WORKFLOW_PAGE_APPROVED_STATE] + $counts[WORKFLOW_PAGE_PUBLISHED_STATE] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;
   
   $stages = array(1 => array('label' => 'Import'), 2 => array('label' => 'Review'), 3 => array('label' => 'Publish'));
   
@@ -2567,7 +2595,7 @@ function doc_manage_bulk_workflow_actions($form, &$form_state) {
     foreach($states as $sid => $state) {
       
       // If the SID maps to "created", ignore it.
-      if($sid == 11) {
+      if($sid == WORKFLOW_PAGE_CREATED_STATE) {
 	continue;
       }
       $form['buttons'][$sid] = array(
@@ -2752,7 +2780,7 @@ function _doc_manage_unpublish_submit($form, &$form_state) {
 function _doc_manage_upload_archive_form($form, &$form_state) {
 
 //dpm($form_state,'file form state');
-  if($form_state['sandbox']['node']) {
+  if(isset($form_state['sandbox']) && $form_state['sandbox']['node']) {
     $node = $form_state['sandbox']['node'];
   }
   else{
@@ -2880,7 +2908,7 @@ function _doc_manage_upload_archive_submit ($form, &$form_state) {
 function _doc_manage_heading_split_form($form, &$form_state) {
   $node = menu_get_object();
   
-  if($form_state['sandbox']['node']) {
+  if(isset($form_state['sandbox']) && $form_state['sandbox']['node']) {
     $node = $form_state['sandbox']['node'];
   }
   else{
@@ -3067,7 +3095,7 @@ function _publishing_actions_import ($node, &$form_state) {
   // possible states are: pending, next, finished, locked
   
   $states = _doc_manage_get_import_state($node);
-  if($states['finished'] && !doc_manage_core_check_admin()){
+  if(isset($states['finished']) && $states['finished'] && !doc_manage_core_check_admin()){
     return;
   }
   
@@ -3227,25 +3255,12 @@ function _publishing_actions_import ($node, &$form_state) {
 					'#submit' => array('doc_manage_undo_postprocess'),
 					),
 				   );
-    
-  //if all steps are done, don't generate the form. Administrators get the form regardless.
-  
-  if($states['finished']){
-    $in = ' collapse';
-    $mode = ' collapsed';
-    $comment = ' (completed)';
-  }
-  else{
-    $in = ' in';
-    $mode = '';
-  }
-    //build form
   
   $form['import'] = array(
   );
   $form['import']['content'] = array(
     '#type' => 'markup',
-    '#prefix' => '<div id="import-actions-content" class=" ' . $toggle . '">',
+    '#prefix' => '<div id="import-actions-content">',
     '#suffix' => '</div>',
 );  
     
@@ -3262,17 +3277,21 @@ function _publishing_actions_import ($node, &$form_state) {
     //submit buttons are only enabled if they are in the next step
     $disabled = FALSE;
 
-    $disabled = $option['state'] != 'next' && !$override ? TRUE : FALSE;
+    if(!isset($option['status'])) {
+      $option['status'] = FALSE;
+    }
+    
+    $disabled = $option['state'] != 'next' ? TRUE : FALSE;
     $undo_enabled = $option['state'] == 'finished' ? TRUE : FALSE;
     
     $form['import']['content'][$name] = array(
-      '#prefix' => '<div class="import-commands row ' . $option['state'] . ' ' . $override . $option['status'] . '">',
+      '#prefix' => '<div class="import-commands row ' . $option['state'] . ' ' . $option['status'] . '">',
       '#suffix' => '</div>',
     );
     $form['import']['content'][$name]['status'] = array(
       '#type' => 'markup',
       '#title' => $option['title'],
-      '#markup' => '<div class="option-state col-sm-1 ' . $override . $option['state'] . '"><span class="image">&nbsp</span></div>',
+      '#markup' => '<div class="option-state col-sm-1 ' . $option['state'] . '"><span class="image">&nbsp</span></div>',
       );   
 
     $form['import']['content'][$name]['number'] = array(
@@ -3313,7 +3332,7 @@ function _publishing_actions_import ($node, &$form_state) {
     $form['import']['content'][$name]['about']['description'] = array(
       '#type' => 'markup',
       '#title' => $option['title'],
-      '#markup' => '<div class="description">' . ($warnings ? render($warnings) : $option['description']) . '</div>',
+      '#markup' => '<div class="description">' . (isset($warnings) ? render($warnings) : $option['description']) . '</div>',
       );
     unset($warnings);
     $form['import']['content'][$name]['about']['note'] = array(
@@ -3334,39 +3353,42 @@ function _publishing_actions_import ($node, &$form_state) {
 /**
  * Returns state of individual processing steps. Assumes the call is from a controller object.
  */
-function _doc_manage_get_import_state($controller = NULL){
+function _doc_manage_get_import_state($ticket = NULL){
 
-  $types = array('unpack','split','convert','save','post','pdf');
+  $types = array('unpack','split','convert','save','post');
   
-  if (!$controller) {
-    $controller = menu_get_object();
+  if (!$ticket) {
+    $ticket = menu_get_object();
   }
-
-  $query = relation_query('node', $controller->nid);
-  $query->entityCondition('bundle', 'uses_topic');
+  $query = relation_query('node', $ticket->nid);
+  $query->entityCondition('bundle', 'ticket_contains_topic');
   
   // Get topic relation
   $topic_relation = $query->execute();
-  $topic_relation = array_shift($topic_relation);
-  $topic_relation = relation_load($topic_relation->rid);
-
+  if(count($topic_relation) != 0) {
+    $topic_relation = array_shift($topic_relation);
+    $topic_relation = relation_load($topic_relation->rid);
+  }
   // Get page relation
-  $new_query = relation_query('node', $controller->nid);
-  $new_query->entityCondition('bundle','ticket_controls_nodes');
+  $new_query = relation_query('node', $ticket->nid);
+  $new_query->entityCondition('bundle','ticket_contains_book_pages');
   
   $page_relation = $new_query->execute();
-  $page_relation = array_shift($page_relation);
-  $page_relation = relation_load($page_relation->rid);
+  if(count($page_relation) != 0) {
+    $page_relation = array_shift($page_relation);
+    $page_relation = relation_load($page_relation->rid);
+  }
   $states = array();
+  
+  $finished_count = 0;
   
   foreach ($types as $type){
     switch($type){
       case 'unpack':
         //unpacking will be the next step if there is no controller directory.
-        if(!file_exists('public://import-source-files/'.$controller->nid)) {
-	  
+        if(!file_exists('public://import-source-files/'.$ticket->nid)) {
 	  // "Unpack" will be active if there is an archive attached. If there is not, it will be pending (along with everything else).
-	  if($controller->field_document_archive[LANGUAGE_NONE][0]['fid']) {	    
+	  if(!empty($ticket->field_document_archive) && $ticket->field_document_archive[LANGUAGE_NONE][0]['fid']) {	    
             $states[$type] = 'next';
 	  }
 	  else {
@@ -3405,7 +3427,7 @@ function _doc_manage_get_import_state($controller = NULL){
         }
         
         //test the first topic node to see if it has been converted. Since conversions are bulk processes, if the first has been done, they all have.
-        if (file_exists("public://import-source-files/".$controller->nid."/converted.lck")) {
+        if (file_exists("public://import-source-files/".$ticket->nid."/converted.lck")) {
           $states[$type] =  'finished';
 	  $states['split'] = 'locked';
           $finished_count++;
@@ -3442,7 +3464,7 @@ function _doc_manage_get_import_state($controller = NULL){
         }
         
         //'post' is either done or not now:
-        if(file_exists("public://import-source-files/".$controller->nid."/postprocessed.lck")) {
+        if(file_exists("public://import-source-files/".$ticket->nid."/postprocessed.lck")) {
           $states[$type] =  'finished';
 	  $states['save'] = 'locked';
           $finished_count++;
@@ -3700,7 +3722,7 @@ function doc_manage_undo_save($form, &$form_state) {
   batch_process();
 }
 
-function _doc_manage_batch_delete_nodes_op($endpoints, $controller, &$context){
+function _doc_manage_batch_delete_nodes_op($endpoints, $ticket, &$context){
   // information needed to track progression between successive calls.
   if (empty($context['sandbox'])) {
     $context['sandbox'] = array();
@@ -3711,7 +3733,7 @@ function _doc_manage_batch_delete_nodes_op($endpoints, $controller, &$context){
     $context['sandbox']['max'] = count($endpoints);
     
     // log controller node
-    $context['results']['controller'] = $controller;
+    $context['results']['controller'] = $ticket;
   }
 
   $result = array_slice($endpoints, $context['sandbox']['current_topic'], 1); //last parameter is $limit. Caps number of jobs that can be run at once.

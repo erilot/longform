@@ -261,10 +261,13 @@ function doc_manage_workflow_entity_counts($ticket, $entity_type = 'book'){
   
   $pages = node_load_multiple($page_ids);
   $counts['total'] = count($page_ids);
-  
   foreach($pages as $page) {
     $state = workflow_node_current_state($page);
-    $counts[$state] = $counts[$state] + 1;
+    // Check to make sure the current state is set before incrementing it
+    if(!isset($counts[$state])) {
+      $counts[$state] = 0;
+    }
+    $counts[$state]++;
   }
 
   return $counts;  

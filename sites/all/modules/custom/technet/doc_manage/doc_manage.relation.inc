@@ -53,7 +53,8 @@ function doc_manage_relation_query($relation_type, $controller = NULL){
  */
 function doc_manage_get_book_pages($ticket, $full = FALSE){
 
-  $relation = doc_manage_relation_query('ticket_controls_nodes', $ticket);
+  $relation = doc_manage_relation_query('ticket_contains_book_pages', $ticket);
+  if (empty($relation)) return FALSE;
   if($full) {
     return $relation;
   }

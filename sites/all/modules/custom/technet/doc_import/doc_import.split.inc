@@ -176,8 +176,8 @@ function _doc_import_save_topics_operation($content_array, $controller, &$contex
     //add topic-specific fields
     if(!$section['title']) drupal_set_message('a topic with an empty title (a heading tag with no content) was found while saving topics. That topic has been discarded.', 'warning');
     $topic->title = html_entity_decode($section['title'], ENT_QUOTES | 'ENT_HTML401', 'UTF-8');
-    $topic->field_topic_raw_content[LANGUAGE_NONE][0]['value'] = $section['content'];
-    $topic->field_topic_raw_content[LANGUAGE_NONE][0]['format'] = 'full_html';
+    $topic->field_topic_source_content[LANGUAGE_NONE][0]['value'] = $section['content'];
+    $topic->field_topic_source_content[LANGUAGE_NONE][0]['format'] = 'full_html';
     $topic->field_topic_initial_weight[LANGUAGE_NONE][0]['value'] = $section['id'];
     $topic->field_topic_initial_heading[LANGUAGE_NONE][0]['value'] = $section['level'];
     
@@ -246,7 +246,7 @@ function _doc_import_save_topics_finished($success, $results, $operations) {
 	    ),
 	$endpoints);
       //now create the new relation, save it, and add it to $controller
-      $new_relation = relation_create('uses_topic',$endpoints);
+      $new_relation = relation_create('ticket_contains_topic',$endpoints);
       $new_relation_id = relation_save($new_relation);
       //load the $controller object, attach the relation, and save.
       $temp = node_load($ticket);

@@ -269,6 +269,7 @@ function doc_manage_field_report() {
 }
 
 function doc_manage_status_summary() {
+ return;
  module_load_include('inc', 'doc_manage'); 
  $node = menu_get_object();
  return doc_manage_render_status_summary($node);

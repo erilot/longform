@@ -904,7 +904,7 @@ function doc_manage_core_check_admin(){
   }
   
   $releases = field_get_items('node', $node, 'field_software_release');
-  $devices = field_get_items('node', $node, 'field_product_type');
+  $devices = field_get_items('node', $node, 'field_products');
   $doctypes = field_get_items('node', $node, 'field_document_type');
   $platforms = field_get_items('node', $node, 'field_platform');
   
@@ -921,14 +921,14 @@ function doc_manage_core_check_admin(){
 	$query->fieldCondition('field_software_release', 'tid', _technet_shift_array($releases), 'IN');
       }
       if($devices) {
-	$query->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN');
       }
       $query->propertyOrderBy('title', 'ASC');
 
       break;
     case 'releases':
       if($devices){
-	$query->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN');
       }
       if($doctypes && $filters == 'default'){
 	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
@@ -938,7 +938,7 @@ function doc_manage_core_check_admin(){
       break;
     case 'platforms':
       if($devices){
-	$query->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN');
+	$query->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN');
       }
       if($doctypes){
 	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
@@ -975,7 +975,7 @@ function doc_manage_core_check_admin(){
   //  $fps->entityCondition('entity_type', 'node')
   //  ->entityCondition('bundle', 'book')
   //  ->fieldCondition('field_document_type', 'tid', array(1201), 'IN')
-  //  ->fieldCondition('field_product_type', 'tid', _technet_shift_array($devices), 'IN')
+  //  ->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN')
   //  ->propertyCondition('status', $publish_state)
   //  ->propertyOrderBy('title', 'ASC');
   //  

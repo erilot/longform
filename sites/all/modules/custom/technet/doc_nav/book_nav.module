@@ -795,7 +795,7 @@ function book_nav_title_block(){
     // Collect taxonomy terms.
     
     // Device type
-    $devices_array = $node->field_product_type[LANGUAGE_NONE];
+    $devices_array = $node->field_products[LANGUAGE_NONE];
     foreach($devices_array as $temp) {
 	$device_tids[] = $temp['tid'];
     }
@@ -805,7 +805,7 @@ function book_nav_title_block(){
 	$device_names[$term->tid] = $term->name;
     }
         
-    $this_device_tid = $node->field_product_type[LANGUAGE_NONE][0]['tid'];
+    $this_device_tid = $node->field_products[LANGUAGE_NONE][0]['tid'];
     $this_device_name = taxonomy_term_load($this_device_tid)->name;
   
     // Release
