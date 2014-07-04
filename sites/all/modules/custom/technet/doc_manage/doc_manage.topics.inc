@@ -271,7 +271,7 @@ function doc_manage_convert_once_submit($form, &$form_state) {
       doc_import_convert_topic($topic, $tool, $controller);
       drupal_set_message('"' . $topic->title . '" has been converted.','status');
       if(module_exists('devel')) {
-	dpm((array)$topic->field_topic_raw_content[LANGUAGE_NONE][0]['value'],'topic raw');
+	dpm((array)$topic->field_topic_source_content[LANGUAGE_NONE][0]['value'],'topic raw');
         dpm((array)$topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'],'topic postprocess');
       }
     }

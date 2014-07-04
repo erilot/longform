@@ -26,7 +26,7 @@ function doc_import_convert_topic($topic, $author_tool, $controller = NULL) {
     if (!$controller) {
 	$controller = menu_get_object();
     }
-    $section = $topic->field_topic_raw_content[LANGUAGE_NONE][0]['value'];
+    $section = $topic->field_topic_source_content[LANGUAGE_NONE][0]['value'];
     
     extract_body($section);
     //run remainder of frame preprocess
@@ -1180,9 +1180,8 @@ function doc_import_process_symbols(&$section) {
  * 	
  */
 function doc_import_last_train_processes(&$section, $topic){
-dpm($topic,'topic');
     //add the topic ID and original heading level to the container DIV
-    $section = extract_body(htmlqp($section,'div')->attr('topic',$topic->nid)->attr('level',$topic->field_topic_initial_heading[LANGUAGE_NONE][0]['value'])->top()->html());
+    $section = extract_body(htmlqp($section,'div')->attr('topic',$topic->nid)->attr('level',$topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'])->top()->html());
 
     // Get header links
     $head_links = array();

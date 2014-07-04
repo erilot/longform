@@ -9,18 +9,18 @@
  * Extract uploaded archive and perform initial file management / grooming.
  * Creates new "raw_html_[nid].html" file and attaches it to the ticket node
  */
-function doc_import_extract_archive($ticket_node) {
+function doc_import_extract_archive($ticket) {
     module_load_include('inc', 'doc_import', 'doc_import.log');
     module_load_include('inc', 'doc_import', 'htmLawed.lib');
-    $temp_directory = "temporary://".$ticket_node->nid."/";
-    $final_directory = "public://import-source-files/".$ticket_node->nid."/";
+    $temp_directory = "temporary://".$ticket->nid."/";
+    $final_directory = "public://import-source-files/".$ticket->nid."/";
   
-    //$log = doc_import_read_log($ticket_node->nid);
+    //$log = doc_import_read_log($ticket->nid);
     add_log_entry('info',"=======================================================", $log);
-    add_log_entry('info',"Started processing for node $node_id: " . $ticket_node->title, $log);
-    $heading_split_level = taxonomy_term_load($ticket_node->field_heading_split_level[LANGUAGE_NONE][0]['tid'])->name;
-    $archive_uri = $ticket_node->field_document_archive[LANGUAGE_NONE][0]['uri'];
-    $archive = $ticket_node->field_document_archive[LANGUAGE_NONE][0]['filename'];
+    add_log_entry('info',"Started processing for node $node_id: " . $ticket->title, $log);
+    $heading_split_level = taxonomy_term_load($ticket->field_granularity[LANGUAGE_NONE][0]['tid'])->name;
+    $archive_uri = $ticket->field_document_archive[LANGUAGE_NONE][0]['uri'];
+    $archive = $ticket->field_document_archive[LANGUAGE_NONE][0]['filename'];
     //extract archive and process HTML
     add_log_entry('info','Extracting master archive',$log);
 
@@ -398,7 +398,7 @@ function doc_import_extract_archive($ticket_node) {
 	if(!$html_file){
 	    add_log_entry('error','No HTML file found in archive. Abandoning import.',$log);
 	    drupal_set_message('No HTML file was found in the uploaded archive. To proceed, edit this page and remove the existing archive. Then upload an archive containing HTML.','error');
-	    doc_import_update_log($log, $ticket_node->nid);
+	    doc_import_update_log($log, $ticket->nid);
 	    return FALSE;
 	}
 	else{
@@ -419,7 +419,7 @@ function doc_import_extract_archive($ticket_node) {
 	if(!$author_tool){
 	  add_log_entry('error','No authoring tool identifiers were found in the HTML file. Abandoning import.',$log);
 	  drupal_set_message('Could not identify the tool used to create this document. This probably means that it was saved using the wrong file format (Word files must be saved as "filtered HTML"). Document was not imported.','error');
-	  doc_import_update_log($log, $ticket_node->nid);
+	  doc_import_update_log($log, $ticket->nid);
 	  return FALSE;
 	}
 	else{
@@ -533,6 +533,7 @@ function doc_import_extract_archive($ticket_node) {
     
     $missing = array();
     foreach($image_sources as $image_source){
+	//@TODO: next line throws a strict warning, passing functions by reference
 	$check = (array_shift(explode('.',array_pop(explode('/',$image_source)))));
 	if(!file_exists($final_directory . $image_source) && !in_array($check, $bad_files)){
 	    $missing[] = "<b>$image_source</b> (should be in <i>$final_directory</i>)";
@@ -555,7 +556,8 @@ function doc_import_extract_archive($ticket_node) {
     foreach($files as $file){
 	
 	$file = _doc_import_groom_string($file);
-	$extension = array_pop(explode('.',$file));
+	$pieces = explode('.', $file);
+	$extension = array_pop($pieces);
 	if (in_array($extension, $filter_extensions)){
 	    if (!in_array($file,$image_sources)){
 		$deleted_files[] = $file;
@@ -588,7 +590,7 @@ function doc_import_extract_archive($ticket_node) {
     // Save updated raw HTML file as a managed file, and add it to the node.
     // If a copy already exists, delete it and save the new one.
 
-    $new_html_uri = $final_directory . 'raw_html_' . $ticket_node->nid . '.html';
+    $new_html_uri = $final_directory . 'raw_html_' . $ticket->nid . '.html';
     
     if(file_exists($new_html_uri)) {
 	file_delete($new_html_uri);
@@ -605,24 +607,23 @@ function doc_import_extract_archive($ticket_node) {
       }
     
     //create field array for new file and attach it
-    $ticket_node->field_raw_html_master[LANGUAGE_NONE][0] = (array)$saved_file;
-    $ticket_node->field_raw_html_master[LANGUAGE_NONE][0]['display'] = 1;
+    $ticket->field_raw_html_master[LANGUAGE_NONE][0] = (array)$saved_file;
+    $ticket->field_raw_html_master[LANGUAGE_NONE][0]['display'] = 1;
     
     $author_tool_array = array('value' => $author_tool['tool'], 'format' => NULL, 'safe_value' => $author_tool['tool']);
-    $ticket_node->field_authoring_tool[LANGUAGE_NONE][0] = $author_tool_array;
-    node_save($ticket_node);
+    $ticket->field_authoring_tool[LANGUAGE_NONE][0] = $author_tool_array;
+    node_save($ticket);
     add_log_entry('info',"Added/updated [$new_html_uri] to field [raw_html_master]",$log);
     add_log_entry('info','Finished processing HTML and file resources. Check this log file for image warnings, if any.',$log);
 
     doc_import_show_log($log);
     
-    doc_import_update_log($log, $ticket_node->nid);
+    doc_import_update_log($log, $ticket->nid);
     
     //document conversion complete, update workflow state
-    $target_state = 26; //26 = "Importing" state
     $comment = t("State changed by import module (unpack archive)");
-    $new_state = workflow_execute_transition($ticket_node, $target_state, $comment, TRUE);
-    entity_get_controller('node')->resetCache((array)$ticket_node->nid);
+    $new_state = workflow_execute_transition($ticket, WORKFLOW_TICKET_IMPORTING_STATE, $comment, TRUE);
+    entity_get_controller('node')->resetCache((array)$ticket->nid);
   
   //dpm($messages,'messages');
     // Report messages

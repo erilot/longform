@@ -123,7 +123,7 @@ function _doc_manage_get_topics($node, $type = NULL){
   
   // If no type is supplied, assume the "uses topic" relation
   if (!$type) {
-    $type = "uses_topic";
+    $type = "ticket_contains_topic";
   }
   
   //get endpoints and split off controller object ([0]).
@@ -157,7 +157,7 @@ function doc_manage_get_page_topics($node, $type = NULL){
   
   // If no type is supplied, assume the "uses topic" relation
   if (!$type) {
-    $type = 'page_uses_topic';
+    $type = 'page_contains_topic';
   }
   
   $endpoints = doc_manage_relation_query($type, $node);

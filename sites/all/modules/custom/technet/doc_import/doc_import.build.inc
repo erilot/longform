@@ -153,14 +153,14 @@ function _doc_import_get_topic_chunk($topic){
     }
     $chunk = array(
 	'topic_nid' => $topic->nid,
-	'level' => $topic->field_topic_original_heading[LANGUAGE_NONE][0]['value'],
+	'level' => $topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'],
 	'title' => $topic->title,
 	'anchors' => $links,
 	'topic' => $topic->nid,
 	'content' => $topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'],
     );
     if(!$chunk['content']) {
-	$chunk['content'] = $topic->field_topic_raw_content[LANGUAGE_NONE][0]['value'];
+	$chunk['content'] = $topic->field_topic_source_content[LANGUAGE_NONE][0]['value'];
     }
     return $chunk;
 }

@@ -15,6 +15,8 @@ define('WORKFLOW_PAGE_SUBMITTED_STATE', 3);
 define('WORKFLOW_PAGE_APPROVED_STATE', 4);
 define('WORKFLOW_PAGE_PUBLISHED_STATE', 5);
 
+define('WORKFLOW_TICKET_CREATED_STATE', 7);
+define('WORKFLOW_TICKET_IMPORTING_STATE', 8);
 define('WORKFLOW_TICKET_PUBLISHED_STATE', 11);
 
 define('WORKFLOW_TOPIC_REVIEW_STATE', 13);
@@ -1340,7 +1342,7 @@ function _doc_manage_render_import_panel($ticket, $states, $counts, $ready_to_pu
     $heading_split_form = drupal_get_form('_doc_manage_heading_split_form');
   }
   else {
-    $level = taxonomy_term_load($ticket->field_heading_split_level[LANGUAGE_NONE][0]['tid']);
+    $level = taxonomy_term_load($ticket->field_granularity[LANGUAGE_NONE][0]['tid']);
     
     $heading_split_form = array(
       '#markup' => '<label>Heading Split Level</label><br/>
@@ -2926,26 +2928,26 @@ function _doc_manage_heading_split_form($form, &$form_state) {
   $form['wrap']['field'] = field_default_form(
 	    'node',
 	    $node,
-	    field_info_field('field_heading_split_level'),
-	    field_info_instance('node', 'field_heading_split_level', 'import_ticket'),
+	    field_info_field('field_granularity'),
+	    field_info_instance('node', 'field_granularity', 'import_ticket'),
 	    LANGUAGE_NONE,
-	    field_get_items('node', $node, 'field_heading_split_level'),
+	    field_get_items('node', $node, 'field_granularity'),
 	    $form,
 	    $form_state
 	    );
     
   // Drop description
-  unset ($form['wrap']['field']['field_heading_split_level'][LANGUAGE_NONE]['#description']);
+  unset ($form['wrap']['field']['field_granularity'][LANGUAGE_NONE]['#description']);
  
   // Drop Heading 3 option
-  unset ($form['wrap']['field']['field_heading_split_level'][LANGUAGE_NONE]['#options'][1108]);
+  unset ($form['wrap']['field']['field_granularity'][LANGUAGE_NONE]['#options'][1108]);
   
   if (empty($form_state['build_info']['files']) || !in_array('modules/node/node.pages.inc', $form_state['build_info']['files'])) {
     form_load_include($form_state, 'inc', 'node', 'node.pages');
     form_load_include($form_state, 'inc', 'doc_manage', 'doc_manage');
   }
   
-  $form['wrap']['field']['field_heading_split_level']['und']['#ajax'] = array(
+  $form['wrap']['field']['field_granularity']['und']['#ajax'] = array(
       'callback' => '_doc_manage_heading_split_submit',
       );
   $form['wrap']['description'] = array(
@@ -2978,19 +2980,19 @@ function _doc_manage_heading_split_submit($form, &$form_state) {
   $ticket = node_load($included_node->nid);
 
   $wrapper = entity_metadata_wrapper('node', $ticket);
-  $raw_level = $wrapper->field_heading_split_level->value();
-  $input_level = $form_state['values']['field_heading_split_level'][LANGUAGE_NONE][0]['tid'];
+  $raw_level = $wrapper->field_granularity->value();
+  $input_level = $form_state['values']['field_granularity'][LANGUAGE_NONE][0]['tid'];
   
   // If the received value is different than the old one, update it.
   // use field_attach_update() instead of node_save() to avoid bumping timestamps, etc.
   if ($input_level != $raw_level->tid) {
-    $wrapper->field_heading_split_level->set($input_level);    
+    $wrapper->field_granularity->set($input_level);    
     $wrapper->save(TRUE);
     field_attach_update('node', $ticket);
   }
   
   $commands[] = ajax_command_replace('#ajax-split-level', drupal_render($form));
-  $commands[] = ajax_command_replace('#ajax-split-feedback', '<p class="alert alert-info">Heading state changed to <b>' . $wrapper->field_heading_split_level->value()->name . '</b>.</p>');
+  $commands[] = ajax_command_replace('#ajax-split-feedback', '<p class="alert alert-info">Heading state changed to <b>' . $wrapper->field_granularity->value()->name . '</b>.</p>');
   return array('#type' => 'ajax', '#commands' => $commands);
 }
 /**
@@ -3516,9 +3518,8 @@ function doc_manage_undo_unpack($form, &$form_state) {
   _rmdir_recursive($resource_directory);
   
   //document conversion complete, update workflow state
-  $target_state = 21; //21 = "Created" state
   $comment = t("State changed by import module (Undo Unpack operation)");
-  $new_state = workflow_execute_transition($ticket, $target_state, $comment, TRUE);
+  $new_state = workflow_execute_transition($ticket, WORKFLOW_TICKET_CREATED_STATE, $comment, TRUE);
   entity_get_controller('node')->resetCache((array)$ticket->nid);
 
   drupal_set_message('Extracted files have been removed and resource directory deleted. The uploaded file archive is still attached to this ticket. <br/>

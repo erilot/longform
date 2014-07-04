@@ -224,8 +224,8 @@ function doc_import_split_document($node, &$meta, &$log, &$content_sectioned){
     module_load_include('inc', 'doc_import', 'doc_import.links');
     module_load_include('inc', 'doc_import', 'doc_import.build');
   $content_sectioned = array();
-  $break_level = array_pop(explode(' ',taxonomy_term_load($node->field_heading_split_level[LANGUAGE_NONE][0]['tid'])->name));
-  $master_file = $node->field_imported_html_master[LANGUAGE_NONE][0]['uri'];
+  $break_level = $node->field_granularity[LANGUAGE_NONE][0]['value'];
+  $master_file = $node->field_raw_html_master[LANGUAGE_NONE][0]['uri'];
   $author_tool = $node->field_authoring_tool[LANGUAGE_NONE][0]['value'];
   
   $content_sectioned = doc_import_construct_document_array($node, $break_level, array('source'=>'doc_split_save'));

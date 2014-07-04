@@ -24,7 +24,7 @@ function technet_field_group_field_group_info() {
     'label' => 'Enter Basic Information',
     'weight' => '43',
     'children' => array(
-      0 => 'field_heading_split_level',
+      0 => 'field_granularity',
       1 => 'field_internal',
       2 => 'field_short_title',
       3 => 'field_doc_assigned_to',

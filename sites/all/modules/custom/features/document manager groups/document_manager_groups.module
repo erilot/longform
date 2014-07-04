@@ -1,7 +1,0 @@
-<?php
-/**
- * @file
- * Code for the Document Manager Groups feature.
- */
-
-include_once 'document_manager_groups.features.inc';

@@ -32,7 +32,7 @@ function doc_manage_preview_form_create($form, &$form_state){
   drupal_add_css($path . '/preview-tabs.css');
   
   $node = menu_get_object();
-  $split_level = array_pop(explode(' ',taxonomy_term_load($node->field_heading_split_level[LANGUAGE_NONE][0]['tid'])->name));
+  $split_level = array_pop(explode(' ',taxonomy_term_load($node->field_granularity[LANGUAGE_NONE][0]['tid'])->name));
   
   $content = doc_import_construct_document_array($node, $split_level);
   //derive list index and content sections

@@ -228,7 +228,7 @@ function book_nav_live_edit_ajax_callback($nid, $mode) {
 	    // Return the requested topic title, level, and processed HTML field in a JSON array
 	    $topic = node_load($nid);
 	    $response['title'] = $topic->title;
-	    $response['level'] = $topic->field_topic_original_heading[LANGUAGE_NONE][0]['value'];
+	    $response['level'] = $topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'];
 	    $response['body'] = $topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'];
 	    
 	    return drupal_json_encode(array('response' => 'success', 'title' => 'Update Topic', 'result' => $response));
@@ -677,7 +677,7 @@ function doc_nav_edit_update_content($form, &$form_state){
     $old_title = $topic->title;
     $new_title = $form_state['input']['title-form'];
     
-    $old_level = $topic->field_topic_original_heading[LANGUAGE_NONE][0]['value'];
+    $old_level = $topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'];
     $new_level = $form_state['input']['heading-form'];
     
     // Update values if they have changed
@@ -690,7 +690,7 @@ function doc_nav_edit_update_content($form, &$form_state){
     }
     
     if($old_level != $new_level) {
-	$topic->field_topic_original_heading[LANGUAGE_NONE][0]['value'] = $form_state['input']['heading-form'];
+	$topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'] = $form_state['input']['heading-form'];
     }
     
     // Update topic node
