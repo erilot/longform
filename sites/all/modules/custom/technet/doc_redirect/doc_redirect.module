@@ -106,7 +106,7 @@ function doc_redirect_get_adaptive_permalink(){
       $override = FALSE;
     }
     
-    $relation = doc_manage_relation_query('ticket_controls_nodes', $node);
+    $relation = doc_manage_relation_query('ticket_contains_book_pages', $node);
 
     //Build canonical link, or display a note if the book has not been imported yet.
     if($relation){

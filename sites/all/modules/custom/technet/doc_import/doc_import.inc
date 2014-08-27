@@ -8,7 +8,6 @@
  */
 
 function protect_special_characters(&$doc){
-
 	// First, replace UTF-8 characters.
 	$doc = str_replace(
 		//left ' quote	right ' quote	left " quote	right " quote	en-dash		em-dash		ellipse		hyphen		bullet		TM		white bullet	em-space	check mark	heavy check mark

@@ -13,32 +13,28 @@
  *  
  */
 function doc_import_postprocess(){
+    $ticket = menu_get_object();
+    
     module_load_include('inc', 'doc_import', 'doc_import.navigation');
     module_load_include('inc', 'doc_import', 'doc_import.links');
-    
     //pick up the entities referenced by this controller, then drop the first element (which is the controller).
-    $endpoints = doc_manage_relation_query('ticket_controls_nodes',$node);
-    $parent_tmp = array_shift($endpoints);
-    $cover_tmp = array_shift($endpoints);
-  
-    $parent = array_shift(entity_load($parent_tmp['entity_type'], array($parent_tmp['entity_id']), TRUE));
-    $cover = array_shift(entity_load($cover_tmp['entity_type'], array($cover_tmp['entity_id']), TRUE));
-    
+    $endpoints = doc_manage_get_book_pages($ticket);
+
+    $cover = node_load(array_shift($endpoints));
+
     //set parent workflow state to "reviewing"
-    $target_state = 31; //31 = "Reviewing" state
-    $comment = t("State changed by import module (postprocess)");
-    $new_state = workflow_execute_transition($parent, $target_state, $comment, TRUE);
+    $new_state = workflow_execute_transition($ticket, WORKFLOW_TICKET_REVIEW_STATE, "State changed by import module (postprocess)", TRUE);
     
     //drupal_set_message('Document state set to ' . $new_state);
-    $state_object = workflow_get_workflow_states_by_sid(workflow_node_current_state($parent));
+    $state_object = workflow_get_workflow_states_by_sid(workflow_node_current_state($ticket));
     $state_name = $state_object->state;
-    drupal_set_message('Document state set to ' . $state_name, 'status');
+    drupal_set_message('Document is now in workflow state <b>' . $state_name . '</b>.','status');
 
-    entity_get_controller('node')->resetCache(array($parent->nid));
+    entity_get_controller('node')->resetCache(array($ticket->nid));
 
     //set up batch
-    $operations[] = array('doc_import_rebuild_page_links', array($endpoints, $parent, $cover));
-    $operations[] = array('_doc_import_postprocess_batch_add_links_operation', array($endpoints, $parent, $cover));
+    $operations[] = array('doc_import_rebuild_page_links', array($endpoints, $ticket, $cover));
+    $operations[] = array('_doc_import_postprocess_batch_add_links_operation', array($endpoints, $ticket, $cover));
     $batch = array(
       'operations' => $operations,
       'file' => drupal_get_path('module', 'doc_import') . '/doc_import.postprocess.inc',
@@ -54,8 +50,7 @@ function doc_import_postprocess(){
     
 }
 
-function _doc_import_postprocess_batch_add_links_operation($endpoints, $controller, $cover, &$context) {
-    
+function _doc_import_postprocess_batch_add_links_operation($endpoints, $ticket, $cover, &$context) {
     module_load_include('inc','doc_import');
     module_load_include('inc', 'doc_manage', 'doc_manage.relation');
     module_load_include('inc', 'doc_import', 'doc_import.links');
@@ -66,7 +61,7 @@ function _doc_import_postprocess_batch_add_links_operation($endpoints, $controll
     $context['sandbox'] = array();
     $context['sandbox']['progress'] = 0;
     $context['sandbox']['current_node'] = 0;
-    $context['results']['controller'] = $controller;
+    $context['results']['ticket'] = $ticket;
     $context['results']['cover'] = $cover;
 
     // Save topic count for the termination message.
@@ -78,11 +73,9 @@ function _doc_import_postprocess_batch_add_links_operation($endpoints, $controll
 
     foreach ($result as $node) {
     
-	$page = node_load($node['entity_id']);
-	$body = $page->body[LANGUAGE_NONE][0]['value'];
-	
-	$page_uses_topics = doc_manage_relation_query('page_uses_topic', $page);
-	dpm($page_uses_topics,'page uses topics');
+	$page = node_load($node);
+	$body = $page->book_body[LANGUAGE_NONE][0]['value'];
+
 	$section = htmlqp($body);
 	$level = $section->find('div.wrapper')->attr('heading');
 	//if heading attribute wasn't found, this is an older document. Get it the hard way.
@@ -100,31 +93,17 @@ function _doc_import_postprocess_batch_add_links_operation($endpoints, $controll
 		$section->attr('heading','3')->addClass('wrapper');
 	    }
 	}
-	  	dpm($section,'section');
-return false;
-	//Add navigation elements
+	//Add navigation links
 	if($level != ''){
-	    $section = doc_import_add_page_links($section->top(), $level);
-	}
-
-	node_save($page);
-	die($page->nid);
-
-	$page->body[LANGUAGE_NONE][0]['value'] = $section;
-	try{
+	    doc_import_add_page_links($body, $level);
+	    $page->book_body[LANGUAGE_NONE][0]['value'] = $body;
 	    node_save($page);
-	}
-	catch (Exception $e) {
-	    dpm($e,'exception!');
-	    dpm((array)$section,'section');
 	}
 	
 	$links = _doc_import_scrape_page_links($section, $page->nid);
 	if ($links) $context['results']['sub_toc'][$page->nid] = $links;
 	
 	// Store some results for post-processing in the 'finished' callback.
-	// The contents of 'results' will be available as $results in the
-	// 'finished' function (in this example, batch_example_finished()).
 	$context['results']['endpoints'][$page->nid] = $page->nid;
     
 	// Update our progress information.
@@ -146,20 +125,9 @@ return false;
  * @param $node (object) The controller (ticket_node) node object.
  */
 function _doc_import_postprocess_rebuild_page_xrefs($node) {
-    
-    // Reconstruct page links
-    $endpoints = relation_load($node->field_document_relation[LANGUAGE_NONE][0]['value']);
-    $endpoints = $endpoints->endpoints[LANGUAGE_NONE];
-    $parent = array_shift($endpoints);
-
-    foreach($endpoints as $endpoint) {
-	$pages_in_book[] = $endpoint['entity_id'];
-    }
-    // Drop cover page
-    array_shift($pages_in_book);
-    
-    doc_import_rebuild_page_links($pages_in_book);
-    
+    $pages = doc_manage_get_book_pages($node);
+    array_shift($pages);
+    doc_import_rebuild_page_links($pages);
 }
 
 function _doc_import_postprocess_batch_add_links_finished($success, $results, $operations) {
@@ -168,16 +136,15 @@ function _doc_import_postprocess_batch_add_links_finished($success, $results, $o
 	$message = count($results['endpoints']) .' pages were processed.';
 	drupal_set_message($message);
 	
-	$parent = $results['controller'];
+	$parent = $results['ticket'];
 	$sub_toc = $results['sub_toc'];
 
 	//create TOC array and attach it to parent node
 	doc_import_create_toc($parent, $sub_toc);
 	
 	//set cover page to approved
-	$sid = 14; // = "Approved" (book node)
 	$cover = $results['cover'];
-	workflow_execute_transition($cover, $sid, t('Book cover page set to approved during postprocessing'), TRUE);
+	workflow_execute_transition($cover, WORKFLOW_PAGE_APPROVED_STATE, t('Book cover page set to approved during postprocessing'), TRUE);
 	entity_get_controller('node')->resetCache(array($cover->nid));
     
 	
@@ -205,10 +172,10 @@ function _doc_import_postprocess_batch_add_links_finished($success, $results, $o
 /**
  * Creates a nested TOC list array, formatted for themeing, and encoded as a JSON object.
  */
-function doc_import_create_toc($parent, $sub_toc = NULL){
+function doc_import_create_toc($ticket, $sub_toc = NULL){
     
-    if ($parent->type == 'book') {
-	$toc_array = doc_import_recursive_book_array_builder($parent->nid);
+    if ($ticket->type == 'book') {
+	$toc_array = doc_import_recursive_book_array_builder($ticket->nid);
 	return false;
     }
     
@@ -218,19 +185,18 @@ function doc_import_create_toc($parent, $sub_toc = NULL){
     if(!$sub_toc){
 	//pick up the entities referenced by this controller, then split off the first two elements (controller & cover page).
 	module_load_include('inc', 'doc_manage', 'doc_manage.relation');
-	$endpoints = doc_manage_relation_query('ticket_controls_nodes',$parent);
-	$parent_tmp = array_shift($endpoints);
-	$cover_tmp = array_shift($endpoints);
+	$endpoints = doc_manage_get_book_pages($ticket);
+	array_shift($endpoints);
 	
 	// Loop through the rest of the pages and get their sub toc's.
 	foreach($endpoints as $endpoint) {
-	    $node = node_load($endpoint['entity_id']);
+	    $node = node_load($endpoint);
 	    $links = _doc_import_scrape_page_links($node);
 	    if($links) $sub_toc[$node->nid] = $links;
 	}
     }
     // Process book TOC, folding in $sub_toc entries where appropriate
-    $index = doc_import_get_page_index($parent);
+    $index = doc_import_get_page_index($ticket);
     $l1 = 0;
     $l2 = 0;
     $l3 = 0;
@@ -282,38 +248,37 @@ function doc_import_create_toc($parent, $sub_toc = NULL){
     }
     $contents = array(
       'items' => $toc,
-      'title' => NULL,//t('Table of Contents'),
+      'title' => NULL,
       'type' => 'ul',
       'attributes' => array('class' => array('toc-list', 'toc')),
       );
-    $parent->field_toc_array[LANGUAGE_NONE][0]['value'] = drupal_json_encode($contents);
-    node_save($parent);
+    $ticket->field_toc_array[LANGUAGE_NONE][0]['value'] = drupal_json_encode($contents);
+    node_save($ticket);
     
 }
 
 /**
  * Helper function to scrape a generated page for inside links. These must already be present on the page.
  */
-function _doc_import_scrape_page_links($section, $nid = NULL) {
+function _doc_import_scrape_page_links($page, $nid = NULL) {
     module_load_include('inc', 'doc_import');
     
-    if ((!$nid && (!gettype($section) == 'object' && $section->type != 'book'))) {
-	drupal_set_message('_doc_import_scrape_links needs either a NID or a node object passed as $section to work, and something is missing.','error');
+    if ((!$nid && (!gettype($page) == 'object' && $page->type != 'book'))) {
+	drupal_set_message('_doc_import_scrape_links needs either a NID or a node object passed as $page to work, and something is missing.','error');
 	return FALSE;
     }
-    
-    if(!$nid) $nid = $section->nid;
-    if(!$nid) {
-	drupal_set_message('Unable to get NID for postprocessing. Dump of $section follows.');
-	dpm($section,'section','error');
+    if ($page->type != 'book') {
+	unset ($page);
+	$page = node_load($nid);
     }
+
     // This function can be called with a string or a node object. If the latter, get the body string.
-    if(gettype($section) == 'object' && $section->type == 'book') {
-	$section = $section->body[LANGUAGE_NONE][0]['value'];
+    if(gettype($page) == 'object' && $page->type == 'book') {
+	$page = $page->book_body[LANGUAGE_NONE][0]['value'];
     }
 
     try{
-        $links = htmlqp(protect_special_characters($section), '#page-links li a');
+        $links = htmlqp(protect_special_characters($page), '#page-links li a');
     }
     catch (Exception $e){
 	// An exception here means no content matched, so there are no page links to scrape.
@@ -342,7 +307,7 @@ function _doc_import_scrape_page_links($section, $nid = NULL) {
  * 
  */
 
- function doc_import_rebuild_page_links($pages, $controller, $cover, &$context){
+ function doc_import_rebuild_page_links($pages, $ticket, $cover, &$context){
     module_load_include('inc', 'doc_manage', 'doc_manage.topics');
     module_load_include('inc', 'doc_import');
     
@@ -360,7 +325,7 @@ function _doc_import_scrape_page_links($section, $nid = NULL) {
     $heads_combined = array();
     foreach ($pages_objects as $page) {
 	$anchors = _doc_manage_get_topic_fields ($page, "field_topic_anchors");
-	$topic_index[$page->nid] = _doc_manage_get_topic_nids($page, 'page_uses_topic');
+	$topic_index[$page->nid] = _doc_manage_get_topic_nids($page, 'topic_used_on_page');
 	$subhead = array();
 	foreach ($anchors as $key => $anchor) {
 	    $anchors_split['head'][$page->nid][$key] = $anchors[$key]['head'];

@@ -232,12 +232,12 @@ function language_selector_print_output($node){
   }
   else $book_node = node_load($node->book['bid']);
   
-  if(count($book_node->upload) >= 1) {
+  if(count($book_node->field_manual_pdf) >= 1) {
   
     //assemble array of uploaded files
   
     $file_array = array();
-    foreach ($book_node->upload['und'] as $file){
+    foreach ($book_node->field_manual_pdf['und'] as $file){
       $temp = array();
       $temp['filename'] = $file['filename'];
       $temp['url'] = file_create_url($file['uri']);

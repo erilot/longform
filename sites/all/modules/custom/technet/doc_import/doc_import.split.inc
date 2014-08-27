@@ -151,8 +151,8 @@ function doc_import_split(){
 /**
  * Batch operation to save topic nodes
  */
-function _doc_import_save_topics_operation($content_array, $controller, &$context){
-    if(!$controller) {
+function _doc_import_save_topics_operation($content_array, $ticket, &$context){
+    if(!$ticket) {
 	watchdog('IMPORT', 'No controller passed to doc_import_save_topics_operation', 'error');
     }
   // information needed to track progression between successive calls.
@@ -180,7 +180,8 @@ function _doc_import_save_topics_operation($content_array, $controller, &$contex
     $topic->field_topic_source_content[LANGUAGE_NONE][0]['format'] = 'full_html';
     $topic->field_topic_initial_weight[LANGUAGE_NONE][0]['value'] = $section['id'];
     $topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'] = $section['level'];
-    
+    $topic->language = $ticket->language;
+
     //dpm($section['anchors'],'targets to save');
     if(!empty($section['anchors'])){
       $targets = json_encode($section['anchors']);
@@ -201,13 +202,14 @@ function _doc_import_save_topics_operation($content_array, $controller, &$contex
 	});
     
     foreach($target_fields as $name=>$field){
-      $topic->$name = $controller->$name;
+      $topic->$name = $ticket->$name;
     }
+    
     //dpm($topic,'topic to save');
     //all fields have been added, so save the new node. Add the resulting nid to the relation array builder.
     node_save($topic);
     
-    //if this is the last pass, prepend the $controller to the relation array and create the relation. Add it to the $controller and save.
+    //if this is the last pass, prepend the $ticket to the relation array and create the relation. Add it to the $ticket and save.
     $context['sandbox']['relation_endpoints'][] = array('entity_type' => 'node', 'entity_id' => $topic->nid);
     if($context['sandbox']['current_topic'] == $context['sandbox']['max'] -1){
 	$context['results']['endpoints'] = $context['sandbox']['relation_endpoints'];
@@ -216,7 +218,7 @@ function _doc_import_save_topics_operation($content_array, $controller, &$contex
     // Store some results for post-processing in the 'finished' callback.
     // The contents of 'results' will be available as $results in the
     // 'finished' function (in this example, batch_example_finished()).
-    $context['results']['ticket'] = $controller->nid;
+    $context['results']['ticket'] = $ticket->nid;
     
     // Update our progress information.
     $context['sandbox']['progress']++;
@@ -245,10 +247,10 @@ function _doc_import_save_topics_finished($success, $results, $operations) {
 		),
 	    ),
 	$endpoints);
-      //now create the new relation, save it, and add it to $controller
-      $new_relation = relation_create('ticket_contains_topic',$endpoints);
+      //now create the new relation, save it, and add it to $ticket
+      $new_relation = relation_create('ticket_contains_topics',$endpoints);
       $new_relation_id = relation_save($new_relation);
-      //load the $controller object, attach the relation, and save.
+      //load the $ticket object, attach the relation, and save.
       $temp = node_load($ticket);
       
       $temp->field_topic_used_in_[LANGUAGE_NONE][0] = $new_relation;

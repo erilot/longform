@@ -342,6 +342,7 @@ function book_nav_publish_status(){
     
     // Supply published status div
     $node = menu_get_object();
+    dpm($node,'node');
     $state = workflow_get_workflow_node_by_nid($node->nid);
     if(!is_object($state)) return FALSE;
     
@@ -1161,16 +1162,16 @@ function book_nav_title_block(){
 	    </div>';
         
     // Assemble all the pieces into left and right justified groupings
-    $left_block = '<div class="btn-group navbar-left col-sm-3">'
+    $left_block = '<div class="btn-group navbar-left col-sm-4">'
 	. $actions_button
 	. $warning_button
 	. $search
 	. $downloads
-	. $on_page_button
+	. ($node->nid != $node->book['bid'] ? $on_page_button : '')
 	. '</div>';
 	
     //$middle_block = $search;
-    $right_block = '<div class="btn-group hidden-xs col-sm-9 navbar-right related"><div class="pull-right">'
+    $right_block = '<div class="btn-group hidden-xs col-sm-8 navbar-right related"><div class="pull-right">'
 	. $device_button
 	. $platform_button
 	. $doctype_button
@@ -1533,12 +1534,12 @@ function technet_toolbar_file_options($node){
   }
   else $book_node = node_load($node->book['bid']);
   
-  if(count($book_node->upload) >= 1 || isset($book_node->field_auto_pdf)) {
+  if(count($book_node->field_manual_pdf) >= 1 || isset($book_node->field_auto_pdf)) {
   
     //assemble array of uploaded files
   
     $file_array = array();
-    foreach ($book_node->upload[LANGUAGE_NONE] as $file){
+    foreach ($book_node->field_manual_pdf[LANGUAGE_NONE] as $file){
       $temp = array();
       $temp['filename'] = $file['filename'];
       $temp['url'] = file_create_url($file['uri']);
@@ -1655,7 +1656,8 @@ function _doc_manage_display_tour($node, $book) {
  *
  */
 function book_nav_panels_pane_content_alter($content, $pane, $args, $contexts) {
-    if(is_object($content) && $content->type == 'node_body') {
+
+    if(is_object($content) && $content->subtype == 'node:field_book_body') {
 	$body = $content->content[0]['#markup'];
 	
 	//Lazy-loadify images
@@ -1678,6 +1680,7 @@ function book_nav_panels_pane_content_alter($content, $pane, $args, $contexts) {
  * 	The updated render array.
  */
 function book_nav_lazyload_images($content) {
+
     if (module_exists('lazyloader')) {
 	$placeholder_src = drupal_get_path('module','lazyloader') . '/loader/loader-3.gif';
 	$regex = '/<img.*?\ssrc="(.*?)".*?\/>/ui';
@@ -1685,6 +1688,7 @@ function book_nav_lazyload_images($content) {
 	    $regex,
 	    function($matches) use ($placeholder_src){
 		if(stripos($matches[0], 'data-src') !== FALSE) return $matches[0];
+		return qp($matches[0],'img')->attr('data-src', $matches[1])->attr('src', $placeholder_src)->html();//->attr('src', $placeholder_src)->html();
 		return str_replace('src="' . $matches[1] . '"', 'src="' . $placeholder_src . '" data-src="' . $matches[1] . '"', $matches[0]);
 	    },
 	    $content);

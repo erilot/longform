@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Technet Translation Tools feature.
+ */
+
+include_once 'technet_translation_tools.features.inc';

@@ -297,7 +297,7 @@ function _doc_manage_get_topic_nids($node, $type = NULL){
   if (!$type) {
     switch ($node->type){
       case 'book':
-        $type = 'page_uses_topic';
+        $type = 'topic_used_on_page';
         break;
       case 'import_ticket':
         $type = 'uses_topic';

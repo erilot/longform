@@ -18,7 +18,6 @@
 function doc_manage_relation_query($relation_type, $controller = NULL){
   //code adapted from relation_get_related_entity() in relation.module
   if (!$controller) $controller = menu_get_object();
-  
     $query = relation_query('node', $controller->nid, 0)->range(0, 1);
     if ($relation_type) {
       $query->entityCondition('bundle', $relation_type);
@@ -123,7 +122,7 @@ function _doc_manage_get_topics($node, $type = NULL){
   
   // If no type is supplied, assume the "uses topic" relation
   if (!$type) {
-    $type = "ticket_contains_topic";
+    $type = "ticket_contains_topics";
   }
   
   //get endpoints and split off controller object ([0]).
@@ -147,20 +146,15 @@ function _doc_manage_get_topics($node, $type = NULL){
  *
  * @param $type
  * 	Optional. The machine name of the relation to use.
- * 	If not supplied, 'page_uses_topic' is assumed.
+ * 	If not supplied, 'topic_used_on_page' is assumed.
  *
  * @return
  * 	An associative array of topic titles, keyed by node ID.
  * 	
  */
-function doc_manage_get_page_topics($node, $type = NULL){
+function doc_manage_get_page_topics($node){
   
-  // If no type is supplied, assume the "uses topic" relation
-  if (!$type) {
-    $type = 'page_contains_topic';
-  }
-  
-  $endpoints = doc_manage_relation_query($type, $node);
+  $endpoints = doc_manage_relation_query('page_contains_topic', $node);
 
   foreach($endpoints as $ep){
     $nids[] = $ep['entity_id'];
@@ -213,7 +207,7 @@ function _doc_manage_get_orphaned_topics($relation_type = NULL){
 }
 
 /**
- * Get the import ticket NID given a component book page.
+ * Get the import ticket NID given another endpoint.
  *
  * @var $page
  * 	The page object.
@@ -221,19 +215,8 @@ function _doc_manage_get_orphaned_topics($relation_type = NULL){
  * @return (int)
  * 	The import ticket NID.
  */
-function doc_manage_get_ticket_from_page($page) {
-
-  $wrap = entity_metadata_wrapper('node', $page);
-  // Get the book relation ID. Confusingly, this is the relation named 'ticket_controls_nodes', and the field is 'field_document_relation'.
-  try {
-    $rid = $wrap->field_document_relation->value();
-    $relation = relation_load($rid);
-    $endpoints = $relation->endpoints[LANGUAGE_NONE];
-    $ticket = array_shift($endpoints);
-  }
-  catch (Exception $e) {
-    watchdog('doc_manage', 'Entity metadata wrapper error: field "field_document_relation" probably has no value.', WATCHDOG_WARNING);
-    return FALSE;
-  }
-  return $ticket['entity_id'];
+function doc_manage_relation_get_ticket($page) {
+  $relation = doc_manage_relation_query('entity_is_on_ticket', $page);
+  $ticket = reset($relation);
+  return $ticket['entity_id'];  
 }

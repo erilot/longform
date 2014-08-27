@@ -17,6 +17,7 @@ define('WORKFLOW_PAGE_PUBLISHED_STATE', 5);
 
 define('WORKFLOW_TICKET_CREATED_STATE', 7);
 define('WORKFLOW_TICKET_IMPORTING_STATE', 8);
+define('WORKFLOW_TICKET_REVIEW_STATE', 9);
 define('WORKFLOW_TICKET_PUBLISHED_STATE', 11);
 
 define('WORKFLOW_TOPIC_REVIEW_STATE', 13);
@@ -941,7 +942,7 @@ function doc_manage_render_workflow($ticket = NULL){
   $ready_to_publish = ($counts[WORKFLOW_PAGE_APPROVED_STATE] + $counts[WORKFLOW_PAGE_PUBLISHED_STATE] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;  
   
   // The document may already be published; set a flag if it is
-  $published = workflow_node_current_state($ticket) == 6 ? TRUE : FALSE;
+  $published = workflow_node_current_state($ticket) == WORKFLOW_TICKET_PUBLISHED_STATE ? TRUE : FALSE;
   
   // Build HTML render arrays
   
@@ -1171,7 +1172,7 @@ function _doc_manage_render_publish_panel($ticket, $states, $counts, $ready_to_p
 function _doc_manage_metadata_warnings($ticket) {
   $wrapper = entity_metadata_wrapper('node', $ticket);
 
-  if ((!isset($wrapper->field_auto_pdf) || count($wrapper->field_auto_pdf->value()) == 0) && (!isset($wrapper->upload) || count($wrapper->upload->value()) == 0)) {
+  if ((!isset($wrapper->field_auto_pdf) || count($wrapper->field_auto_pdf->value()) == 0) && (!isset($wrapper->field_manual_pdf) || count($wrapper->field_manual_pdf->value()) == 0)) {
     $warns[] = '<li>' . t('<b>No PDFs have been uploaded</b>, and PDF Reactor is not set to automatically generate one.') . '</li>';
   }
     //dpm($wrapper->field_software_release->value(),'value test');
@@ -1342,7 +1343,7 @@ function _doc_manage_render_import_panel($ticket, $states, $counts, $ready_to_pu
     $heading_split_form = drupal_get_form('_doc_manage_heading_split_form');
   }
   else {
-    $level = taxonomy_term_load($ticket->field_granularity[LANGUAGE_NONE][0]['tid']);
+    $level = $ticket->field_granularity[LANGUAGE_NONE][0];
     
     $heading_split_form = array(
       '#markup' => '<label>Heading Split Level</label><br/>
@@ -1564,8 +1565,8 @@ function doc_manage_render_document_status($ticket) {
   );
 
   // PDF status
-  if(isset($m->upload)) {
-    $man_pdf = reset($m->upload->value());    
+  if(isset($m->field_manual_pdf)) {
+    $man_pdf = reset($m->field_manual_pdf->value());    
   }
   
   $statii['man_pdf'] = array(
@@ -1756,31 +1757,7 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
 
   if ($type != 'import_ticket' && $type != 'book') return FALSE;
   
-  //$book = doc_manage_relation_query('ticket_controls_nodes', $ticket);
-  //$parent = array_shift($book);
-  //$cover = array_shift($book);
-    
-  //$stages = _doc_manage_get_all_accordion_states($ticket, $book);
-
-  //$task_label = '<b>' . array_search(TRUE, $stages) . '</b>';
-  //$task_mode = 'btn-info';
-  
-  //// Modify results in two instances: document stub, and already published.
-  //if ($wf_state == WORKFLOW_TICKET_PUBLISHED_STATE) {
-  // $task_label = '<b>None!</b>';
-  // $task_mode = 'btn-success';
-  //}
-  
-  //if ($wf_state == 21 && $states['unpack'] == 'pending') {
-  // $task_label = '<b>Upload File</b>';
-  // $task_mode = 'btn-danger';
-  //}
-  
   $wrap = entity_metadata_wrapper('node', $ticket);
-  if ($type == 'book') {
-    $relation = isset($wrap->field_document_relation) ? relation_load($wrap->field_document_relation->value()) : FALSE;
-    $parent = $relation->endpoints[LANGUAGE_NONE][0]['entity_id'];
-  }
   
   $render = array(
    '#type' => 'container',
@@ -1842,7 +1819,7 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
   );
 
   // PDF Status
-  $pdf_ok = (isset($wrap->upload) && count($wrap->upload) > 0) || (isset($wrap->field_auto_pdf) && count($wrap->field_auto_pdf) > 0);
+  $pdf_ok = (isset($wrap->field_manual_pdf) && count($wrap->field_manual_pdf) > 0) || (isset($wrap->field_auto_pdf) && count($wrap->field_auto_pdf) > 0);
 	     
   $render['opts']['status']['pdf_status']['content']['value'] = array(
    '#type' => 'button',
@@ -1886,7 +1863,7 @@ function doc_manage_render_manage_toolbar($ticket = NULL) {
 }
 
 function _doc_manage_toolbar_button_jump_to($node) {
-
+  
   $wrap = entity_metadata_wrapper('node', $node);
   
   // Go to Book/Return to ticket icon
@@ -1895,10 +1872,10 @@ function _doc_manage_toolbar_button_jump_to($node) {
     case 'import_ticket':
     
       // For import tickets, this icon links to the cover page of the document. It's only available after postprocessing.
-      $endpoints =  doc_manage_relation_query('ticket_controls_nodes', $node);
+      $endpoints =  doc_manage_relation_query('ticket_contains_book_pages', $node);
       if(!empty($endpoints)) {
-	$ticket = array_shift($endpoints);
-	$cover = array_shift($endpoints);
+	array_shift($endpoints);
+	$cover = reset($endpoints);
 	$stages = _doc_manage_get_all_accordion_states($node);
 	$tooltip = array(
 	  'data-toggle' => 'tooltip',
@@ -1926,7 +1903,7 @@ function _doc_manage_toolbar_button_jump_to($node) {
     case 'book':
 
       // For books, this icon sends users back to the import ticket.
-      $ticket = doc_manage_get_ticket_from_page($node);
+      $ticket = doc_manage_relation_get_ticket($node);
       $button = l(
 	'<span class="glyphicon glyphicon-arrow-left"></span>' . t('Ticket'),
 	'node/' . $ticket,
@@ -2007,6 +1984,7 @@ function _doc_manage_toolbar_button_flag_html($node) {
 function _doc_manage_toolbar_button_approve($node) {
   // Approval button
   
+  $approved = FALSE;
   switch ($node->type){
     case 'book':
       $wf_choices = workflow_field_choices($node);
@@ -2385,7 +2363,7 @@ function doc_manage_render_pdf_options ($ticket) {
   $out['pdf_container']['right']['actions_wrapper']['generate_pdf_intro']['force_generate'] = drupal_get_form('doc_manage_pdfreactor_button_form');
 
   // If an manually-uploaded PDF is available, make it available for download.
-  if (isset($ticket->upload[LANGUAGE_NONE][0])) {
+  if (isset($ticket->field_manual_pdf[LANGUAGE_NONE][0])) {
     $manual_upload = TRUE;
     
     $out['pdf_container']['right']['downloads'] = array(
@@ -2395,7 +2373,7 @@ function doc_manage_render_pdf_options ($ticket) {
       ),
     );
 
-    $file = $ticket->upload[LANGUAGE_NONE][0];
+    $file = $ticket->field_manual_pdf[LANGUAGE_NONE][0];
     $out['pdf_container']['right']['downloads']['download'] = array(
       '#markup' => l('<span class="glyphicon glyphicon-download"></span> ' . t('Download manual PDF'), file_create_url($file['uri']), array ('html' => TRUE, 'attributes' => array('class' => array('btn','btn-default','btn-block')))),
     );
@@ -2513,7 +2491,7 @@ function doc_manage_render_import_actions_panel ($ticket) {
  * 	The importing states report array
  *
  * @param $ready_to_publish
- * 	Boolean value: can publishing go?
+ * 	Boolean value: can publishing proceed?
  *
  * @return
  * 	Returns TRUE if the panel should be open.
@@ -2557,7 +2535,7 @@ function _doc_manage_get_all_accordion_states ($ticket) {
   
   $ready_to_publish = ($counts[WORKFLOW_PAGE_APPROVED_STATE] + $counts[WORKFLOW_PAGE_PUBLISHED_STATE] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;
   
-  $stages = array(1 => array('label' => 'Import'), 2 => array('label' => 'Review'), 3 => array('label' => 'Publish'));
+  $stages = array(1 => array('label' => t('Import')), 2 => array('label' => t('Review')), 3 => array('label' => t('Publish')));
   
   $return = array();
   
@@ -3109,7 +3087,6 @@ function _publishing_actions_import ($node, &$form_state) {
     'next' => array('btn-success','col-md-2'),
     'pending' => array('btn-warning','col-md-2', 'disabled'),
     'undo' => array('btn-danger', 'col-md-2'),
-    'pdf' => array('btn-primary', 'col-md-2'),
   );
   
   $options_array['unpack'] = array('title' => 'Unpack',
@@ -3353,7 +3330,15 @@ function _publishing_actions_import ($node, &$form_state) {
 
 
 /**
- * Returns state of individual processing steps. Assumes the call is from a controller object.
+ * Returns state of individual processing steps.
+ *
+ * This call must originate from an import ticket form.
+ *
+ * @param $ticket
+ * 	The ticket object to check. If not supplied, the current page will be loaded.
+ *
+ * @return
+ * 	An associative array of steps and corresponding states.
  */
 function _doc_manage_get_import_state($ticket = NULL){
 
@@ -3363,7 +3348,7 @@ function _doc_manage_get_import_state($ticket = NULL){
     $ticket = menu_get_object();
   }
   $query = relation_query('node', $ticket->nid);
-  $query->entityCondition('bundle', 'ticket_contains_topic');
+  $query->entityCondition('bundle', 'ticket_contains_topics');
   
   // Get topic relation
   $topic_relation = $query->execute();
@@ -3380,6 +3365,7 @@ function _doc_manage_get_import_state($ticket = NULL){
     $page_relation = array_shift($page_relation);
     $page_relation = relation_load($page_relation->rid);
   }
+  
   $states = array();
   
   $finished_count = 0;
@@ -3701,7 +3687,7 @@ function _doc_manage_batch_unconvert_finished($success, $results, $operations){
  */
 function doc_manage_undo_save($form, &$form_state) {
   //pick up the entities referenced by this controller, then drop the first element (which is the controller).
-  $endpoints = doc_manage_relation_query('ticket_controls_nodes',$ticket);
+  $endpoints = doc_manage_relation_query('ticket_contains_book_pages',$ticket);
   $dump = array_shift($endpoints);
 
   $operations = array();
@@ -3759,7 +3745,7 @@ function _doc_manage_batch_delete_nodes_op($endpoints, $ticket, &$context){
 
 function _doc_manage_batch_delete_nodes_finished($success, $results, $operations){
   if($success){
-  //$query = relation_query('node', $results['controller']['entity_id'], 'ticket_controls_nodes');
+  //$query = relation_query('node', $results['controller']['entity_id'], 'ticket_contains_book_pages');
   //$topic_relation = $query->execute();
   //$topic_relation = array_shift($topic_relation);
   //relation_delete($topic_relation->rid);
@@ -3780,7 +3766,7 @@ function _doc_manage_batch_delete_nodes_finished($success, $results, $operations
 function doc_manage_undo_postprocess($form, &$form_state) {
   $ticket = menu_get_object();
   //pick up the entities referenced by this controller, then drop the first element (which is the controller).
-  $endpoints = doc_manage_relation_query('ticket_controls_nodes',$ticket);
+  $endpoints = doc_manage_relation_query('ticket_contains_book_pages',$ticket);
   $parent_tmp = array_shift($endpoints);
   $cover_tmp = array_shift($endpoints);
 

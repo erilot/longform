@@ -8,23 +8,14 @@
  * 
  */
 
-
-function doc_import_collapse_procedures($section){
-}
-
-function doc_import_collapse_tables($section){
-}
-
 function doc_import_add_page_links(&$content, $heading){
     module_load_include('inc','doc_import');
     module_load_include('inc', 'doc_import', 'doc_import.split');
-    dpm($content,'content');
-    dpm($heading,'heading');
+
     $in_this_section = t("In this section");
     $on_this_page = t("On this page");
     $next_heading_level = $heading + 1;
     $time = time();
-    $content = extract_body($content->top()->html());
     //Add anchor links to headings, if there are any
     
     // Quit if there are no subheadings on this page.
@@ -45,9 +36,7 @@ function doc_import_add_page_links(&$content, $heading){
 
     $link_list_insert_prefix = '<div id="page-links" class="page-links"><h2>' . $on_this_page . '</h2>' . PHP_EOL . '<div id="link-list" class="link-list">' . PHP_EOL . '<ul>' . PHP_EOL;
     $link_list_insert_suffix = '</ul>' . PHP_EOL . '</div>' . PHP_EOL . '</div><!--end link insert-->';
-    
-    //$content->top()->find('div.wrapper')->prepend('<div id="page-links" class="page-links"><div id="link-list" class="link-list"><ul></ul></div></div>')->end();
-          
+              
     // Collect all the next-level headings in $headings
     $headings = array();
     $regex = "/<h$next_heading_level.*?>(.*?)<\/h$next_heading_level>/ui";    
@@ -76,25 +65,25 @@ function doc_import_add_page_links(&$content, $heading){
     return $section;
 }
 
-function doc_import_lazy_loadify_images($section){
-    $node = menu_get_object();
-    $pass['placeholder'] = drupal_get_path('module','lazyloader') . '/image_placeholder.gif';	  
-        
-    $temp = qp($section, 'img')->each(function($index, $item) use ($pass){
-        $image = qp($item);
-        $href = $image->attr('src');
-        $image->attr('data-source', $href)
-                ->attr('storedval', $href)
-                ->attr('src',$pass['placeholder'])   
-                ->wrap('<span class="image-container"/>');
-    });
-    
-    $section = $temp->top()->html();
-    //}
-    //else{
-    //    drupal_set_message('Images have already been lazy-loadified. Skipping modification.','warning');
-    //}
-}
+//function doc_import_lazy_loadify_images($section){
+//    $node = menu_get_object();
+//    $pass['placeholder'] = drupal_get_path('module','lazyloader') . '/image_placeholder.gif';	  
+//        
+//    $temp = qp($section, 'img')->each(function($index, $item) use ($pass){
+//        $image = qp($item);
+//        $href = $image->attr('src');
+//        $image->attr('data-source', $href)
+//                ->attr('storedval', $href)
+//                ->attr('src',$pass['placeholder'])   
+//                ->wrap('<span class="image-container"/>');
+//    });
+//    
+//    $section = $temp->top()->html();
+//    //}
+//    //else{
+//    //    drupal_set_message('Images have already been lazy-loadified. Skipping modification.','warning');
+//    //}
+//}
 
 /**
  * The following two functions are adapted from Advanced Book Blocks.

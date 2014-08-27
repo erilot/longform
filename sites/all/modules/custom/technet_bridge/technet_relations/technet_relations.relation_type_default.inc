@@ -14,7 +14,7 @@ function technet_relations_relation_default_relation_types() {
   $relation_type = new stdClass();
   $relation_type->disabled = FALSE; /* Edit this to true to make a default relation_type disabled initially */
   $relation_type->api_version = 1;
-  $relation_type->relation_type = 'ticket_controls_nodes';
+  $relation_type->relation_type = 'ticket_contains_book_pages';
   $relation_type->label = 'is a record in';
   $relation_type->reverse_label = 'is a record in';
   $relation_type->directional = 0;
@@ -27,14 +27,14 @@ function technet_relations_relation_default_relation_types() {
     1 => 'node:import_ticket',
   );
   $relation_type->target_bundles = array();
-  $relation_types['ticket_controls_nodes'] = $relation_type;
+  $relation_types['ticket_contains_book_pages'] = $relation_type;
 
   $relation_type = new stdClass();
   $relation_type->disabled = FALSE; /* Edit this to true to make a default relation_type disabled initially */
   $relation_type->api_version = 1;
-  $relation_type->relation_type = 'page_uses_topic';
+  $relation_type->relation_type = 'topic_used_on_page';
   $relation_type->label = 'Page uses topic';
-  $relation_type->reverse_label = 'page_uses_topic';
+  $relation_type->reverse_label = 'topic_used_on_page';
   $relation_type->directional = 0;
   $relation_type->transitive = 0;
   $relation_type->r_unique = 0;
@@ -47,7 +47,7 @@ function technet_relations_relation_default_relation_types() {
     3 => 'node:topic',
   );
   $relation_type->target_bundles = array();
-  $relation_types['page_uses_topic'] = $relation_type;
+  $relation_types['topic_used_on_page'] = $relation_type;
 
   $relation_type = new stdClass();
   $relation_type->disabled = FALSE; /* Edit this to true to make a default relation_type disabled initially */
