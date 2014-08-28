@@ -243,24 +243,24 @@ function doc_manage_block_view($delta) {
 }
 
 function doc_manage_toolbar() {
- module_load_include('inc', 'doc_manage');
- return doc_manage_render_manage_toolbar(); 
+  module_load_include('inc', 'doc_manage');
+  return doc_manage_render_manage_toolbar(); 
 }
 
 function doc_manage_main_nav() {
- module_load_include('inc', 'doc_manage');
- return doc_manage_render_main_nav(); 
+  module_load_include('inc', 'doc_manage');
+  return doc_manage_render_main_nav(); 
 }
 
 function doc_manage_field_report() {
   module_load_include('inc','doc_manage');
   $report['head'] = array(
-   '#markup' => '<h2>Ticket Information</h2>',
+    '#markup' => '<h2>Ticket Information</h2>',
   );
   
   $report['panel'] = array(
-   '#type' => 'container',
-   '#attributes' => array(),
+    '#type' => 'container',
+    '#attributes' => array(),
   );
   
   $report['panel']['table'] = doc_manage_metadata_table();
@@ -269,17 +269,17 @@ function doc_manage_field_report() {
 }
 
 function doc_manage_status_summary() {
- return;
- module_load_include('inc', 'doc_manage'); 
- $node = menu_get_object();
- return doc_manage_render_status_summary($node);
+  return;
+  module_load_include('inc', 'doc_manage'); 
+  $node = menu_get_object();
+  return doc_manage_render_status_summary($node);
 }
 
 
 function doc_manage_show_management_menu() {
- module_load_include('inc', 'doc_manage');
- $node = menu_get_object();
- return doc_manage_get_management_menu($node);
+  module_load_include('inc', 'doc_manage');
+  $node = menu_get_object();
+  return doc_manage_get_management_menu($node);
 }
 
 function doc_manage_display_related_topics_block() {

@@ -3374,14 +3374,14 @@ function _doc_manage_get_import_state($ticket = NULL){
     switch($type){
       case 'unpack':
         //unpacking will be the next step if there is no controller directory.
-        if(!file_exists('public://import-source-files/'.$ticket->nid)) {
-	  // "Unpack" will be active if there is an archive attached. If there is not, it will be pending (along with everything else).
-	  if(!empty($ticket->field_document_archive) && $ticket->field_document_archive[LANGUAGE_NONE][0]['fid']) {	    
+        if(!isset($ticket->field_raw_html_master[LANGUAGE_NONE][0])) {
+										// "Unpack" will be active if there is an archive attached. If there is not, it will be pending (along with everything else).
+										if(!empty($ticket->field_document_archive) && $ticket->field_document_archive[LANGUAGE_NONE][0]['fid']) {	    
             $states[$type] = 'next';
-	  }
-	  else {
-	    $states[$type] = 'pending';
-	  }
+										}
+										else {
+												$states[$type] = 'pending';
+										}
         }
         else {
           $states[$type] = 'finished';
@@ -3396,7 +3396,7 @@ function _doc_manage_get_import_state($ticket = NULL){
         }
         
         if ($topic_relation) {
-	  $states['unpack'] = 'locked';
+										$states['unpack'] = 'locked';
           $states[$type] =  'finished';
           $finished_count++;
           continue;
@@ -3415,9 +3415,9 @@ function _doc_manage_get_import_state($ticket = NULL){
         }
         
         //test the first topic node to see if it has been converted. Since conversions are bulk processes, if the first has been done, they all have.
-        if (file_exists("public://import-source-files/".$ticket->nid."/converted.lck")) {
+        if (file_exists("public://longform/imports/expanded/".$ticket->nid."/converted.lck")) {
           $states[$type] =  'finished';
-	  $states['split'] = 'locked';
+										$states['split'] = 'locked';
           $finished_count++;
         }
         else {
@@ -3436,8 +3436,8 @@ function _doc_manage_get_import_state($ticket = NULL){
 
           if ($page_relation) {
             $states[$type] =  'finished';
-	    $states['convert'] = 'locked';
-          $finished_count++;
+												$states['convert'] = 'locked';
+												$finished_count++;
           }
           else {
             $states[$type] =  'next';
@@ -3452,9 +3452,9 @@ function _doc_manage_get_import_state($ticket = NULL){
         }
         
         //'post' is either done or not now:
-        if(file_exists("public://import-source-files/".$ticket->nid."/postprocessed.lck")) {
+        if(file_exists("public://longform/imports/expanded/".$ticket->nid."/postprocessed.lck")) {
           $states[$type] =  'finished';
-	  $states['save'] = 'locked';
+										$states['save'] = 'locked';
           $finished_count++;
         }
         else {
@@ -3665,7 +3665,7 @@ function _doc_manage_batch_unconvert_finished($success, $results, $operations){
   if($success){
     $ticket = $results['ticket'];
     // Remove lock file
-    $lock = "public://import-source-files/".$ticket->nid."/converted.lck";
+    $lock = "public://longform/imports/expanded/".$ticket->nid."/converted.lck";
     if(file_exists($lock)) {
       $hooray = file_unmanaged_delete($lock);
     }
@@ -3785,7 +3785,7 @@ function doc_manage_undo_postprocess($form, &$form_state) {
   $wrap->save();
   
   // Remove lock file
-  $lock = "public://import-source-files/".$ticket->nid."/postprocessed.lck";
+  $lock = "public://longform/imports/expanded/".$ticket->nid."/postprocessed.lck";
   if(file_exists($lock)) {
     $success = file_unmanaged_delete($lock);
   }

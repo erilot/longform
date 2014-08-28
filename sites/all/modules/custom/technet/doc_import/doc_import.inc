@@ -193,6 +193,9 @@ function recursive_array_search($needle,$haystack) {
  * 
  */
  function _rmdir_recursive($dir) {
+		if (!file_exists($dir)){
+				return;
+		};
   foreach(scandir($dir) as $file) {
     if ('.' === $file || '..' === $file) continue;
     if (is_dir("$dir/$file")) _rmdir_recursive("$dir/$file");

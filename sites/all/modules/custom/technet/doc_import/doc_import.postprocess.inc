@@ -151,7 +151,7 @@ function _doc_import_postprocess_batch_add_links_finished($success, $results, $o
 	//add lock file to resources, indicating this process has been completed.
 	$timestamp = time();
 	global $user;
-	$file = "public://import-source-files/".$parent->nid."/postprocessed.lck";
+	$file = "public://longform/imports/expanded/".$parent->nid."/postprocessed.lck";
 	file_unmanaged_save_data('Converted by ' . $user->name . ' at ' . $timestamp, $file, FILE_EXISTS_REPLACE);
 	
 	//$new_state = workflow_execute_transition($parent, 31, 'State set by postprocess function', TRUE);

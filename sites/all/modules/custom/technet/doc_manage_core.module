@@ -998,46 +998,46 @@ function doc_manage_core_check_admin(){
   if ($find == 'releases' && $filters == 'full') {
     $full_array = array();
     
+		$nested = array();
+		$grouped = array();
     $full = entity_load('node', $related);
     foreach ($full as $match) {
-	$match_wrapper = entity_metadata_wrapper('node', $match);
-	$release = $match_wrapper->field_software_release->value();
-	$release = $release[0]->tid;
+			$match_wrapper = entity_metadata_wrapper('node', $match);
+			$release = $match_wrapper->field_software_release->value();
+			$release = $release[0]->tid;
+			
+			$name = taxonomy_term_load($release)->name;
+			if(!array_key_exists($release, $nested)) {
+				$nested[$name]['data'] = '<a href="#term-' . $release . '" onclick="return false">' . taxonomy_term_load($release)->name . '</a>';
+				$nested[$name]['class'] = array('group-release');
+			}
+			if($options['grouped'] ){
+				$category = array_shift(taxonomy_get_parents($match_wrapper->field_document_type->value()->tid));
+				if(!array_key_exists('term-' . $release, $grouped[$release])){
+					$grouped['term-' . $release][$category->tid]['data'] = $category->name;
+					$grouped['term-' . $release][$category->tid]['class'] = array('nav', 'nav-pills', 'nav-stacked');
+		
+				}
+				$grouped['term-' . $release][$category->tid]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+				$grouped['term-' . $release][$category->tid]['children'][$match->nid]['class'] = array('group-document');
+			}
+			else {
+				$nested[$name]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+			}
+    }
+      
+		switch ($options['grouped']) {
+			case TRUE:
+				arsort($grouped);
+				arsort($nested);
+				return array('parents' => $nested, 'children' => $grouped);
+				break;
 	
-	$name = taxonomy_term_load($release)->name;
-	if(!array_key_exists($release, $nested)) {
-	  $nested[$name]['data'] = '<a href="#term-' . $release . '" onclick="return false">' . taxonomy_term_load($release)->name . '</a>';
-	  $nested[$name]['class'] = array('group-release');
-
-	}
-	if($options['grouped'] ){
-	  $category = array_shift(taxonomy_get_parents($match_wrapper->field_document_type->value()->tid));
-	  if(!array_key_exists('term-' . $release, $grouped[$release])){
-	    $grouped['term-' . $release][$category->tid]['data'] = $category->name;
-	    $grouped['term-' . $release][$category->tid]['class'] = array('nav', 'nav-pills', 'nav-stacked');
-
-	  }
-	  $grouped['term-' . $release][$category->tid]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
-	  $grouped['term-' . $release][$category->tid]['children'][$match->nid]['class'] = array('group-document');
-	}
-	else {
-	$nested[$name]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
-	}
+			default:
+				arsort ($nested);
+				return $nested;
+				break;
       }
-      switch ($options['grouped']) {
-	case TRUE:
-	  arsort($grouped);
-	  arsort($nested);
-	  return array('parents' => $nested, 'children' => $grouped);
-	  
-	  break;
-	
-	default:
-	  arsort ($nested);
-	  return $nested;
-	  break;
-      }
-
     }
   
   

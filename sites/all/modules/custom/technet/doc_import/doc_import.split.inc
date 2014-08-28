@@ -299,34 +299,34 @@ function get_split_points($highest_split_level){
  */ 
 function push_section($title, $links, $contents, $heading_level, &$content_array = array()){
 
-    //skip sections with no title (empty title tags). These are authoring errors.
-    $title_trim = htmlentities(trim(str_replace("  ", " ", str_replace(array("\r", "\n", "\r\n", "\n\r"), " ", $title))));
-    if($title_trim == '&Acirc;&nbsp;' || $title_trim == "&amp;nbsp;") {
-	drupal_set_message('Skipping section with no text in heading tag.','warning');
-	return;
-    }
+		//skip sections with no title (empty title tags). These are authoring errors.
+		$title_trim = htmlentities(trim(str_replace("  ", " ", str_replace(array("\r", "\n", "\r\n", "\n\r"), " ", $title))));
+		if($title_trim == '&Acirc;&nbsp;' || $title_trim == "&amp;nbsp;") {
+				drupal_set_message('Skipping section with no text in heading tag.','warning');
+				return;
+		}
+		
+		//clear out added content shims
+				
+		$contents = extract_body(htmlqp($contents)->top()->html());
+		unprotect_special_characters($contents);
+		$section['level'] = $heading_level;
+		$section['title'] = $title;
+		$section['anchors'] = $links;
+		
+		$last = isset($content_array) ? end($content_array) : NULL;
+		if(!empty($last)){
+				$section['id'] = $last['id'] + 1;
+		}
+		else {
+				$section['id'] = 0;
+		}
+		$section['content'] = preg_replace(
+				array('/<p class="placeholder"><\/p>/',   '/<div id=".*?"/'),
+				array('', '<div id="section-'.$section['id'] . '"'),
+				$contents); //removes placeholder <p> tags
     
-    //clear out added content shims
-      
-    $contents = extract_body(htmlqp($contents)->top()->html());
-    unprotect_special_characters($contents);
-    $section['level'] = $heading_level;
-    $section['title'] = $title;
-    $section['anchors'] = $links;
-    
-    $last = end($content_array);
-    if(!empty($last)){
-	$section['id'] = $last['id'] + 1;
-	}
-    else {
-	$section['id'] = 0;
-    }
-    $section['content'] = preg_replace(
-	array('/<p class="placeholder"><\/p>/',   '/<div id=".*?"/'),
-	array('', '<div id="section-'.$section['id'] . '"'),
-	$contents); //removes placeholder <p> tags
-    
-      $content_array[] = $section;
+  $content_array[] = $section;
 }
 
 

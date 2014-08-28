@@ -244,19 +244,19 @@ function _doc_import_convert_operation($pages, &$context){
 }
 
 function _doc_import_convert_finished($success, $results, $operations){
-    if($success){
+  if($success){
 	
-	//add lock file to resources, indicating this process has been completed.
-	$timestamp = time();
-	global $user;
-	$file = "public://import-source-files/".$results['ticket']."/converted.lck";
-	file_unmanaged_save_data('Converted by ' . $user->name . ' at ' . $timestamp, $file, FILE_EXISTS_REPLACE);
+				//add lock file to resources, indicating this process has been completed.
+				$timestamp = time();
+				global $user;
+				$file = "public://longform/imports/expanded/".$results['ticket']."/converted.lck";
+				file_unmanaged_save_data('Converted by ' . $user->name . ' at ' . $timestamp, $file, FILE_EXISTS_REPLACE);
 
-	drupal_set_message('Content conversion completed successfully.');
-    }
-    else{
-	drupal_set_message('Error while converting content.','error');
-    }
+				drupal_set_message('Content conversion completed successfully.');
+  }
+  else{
+				drupal_set_message('Error while converting content.','error');
+  }
 }
 
 /**
@@ -1031,28 +1031,28 @@ function doc_import_final_images(&$content, &$node) {
     $found_images = htmlqp($content, 'img');
 
     //base_uri is the uri for the html_master field without the filename (i.e. public://path/to/file/example.html -> $public://path/to/file)
-    $base_prefix = 'public://import-source-files/' . $node->nid .'/';
+    $base_prefix = 'public://longform/imports/expanded/' . $node->nid .'/';
     //dpm($_SERVER,'server array');
     global $base_url;
     global $base_path;
     
     foreach ($found_images as $img){  	
-	$href = $img->attr('src');
-	//dpm($href,'initial image source');
-	//update the URL, stripping out the site's base_url (http://mysite.com). Creates a relative src path.
-      
-	if($_SERVER['HTTP_HOST'] == 'localhost'){
-	  $new_href = $base_url . '/sites/default/files/import-source-files/' . $node->nid . '/' . $href;
-	  //dpm($new_href,'new href');
-	}
-	else{
-	  $new_href = file_create_url($base_prefix . $href);
-	}
-	
-	// NOTE: Lazyloading has been moved to an outgoing hook. It is no longer done here.
-	
-	// Update image source.
-	$img->attr('src', $new_href);
+						$href = $img->attr('src');
+						//dpm($href,'initial image source');
+						//update the URL, stripping out the site's base_url (http://mysite.com). Creates a relative src path.
+											
+						if($_SERVER['HTTP_HOST'] == 'localhost'){
+								$new_href = $base_url . '/sites/default/files/longform/imports/expanded/' . $node->nid . '/' . $href;
+								//dpm($new_href,'new href');
+						}
+						else{
+								$new_href = file_create_url($base_prefix . $href);
+						}
+						
+						// NOTE: Lazyloading has been moved to an outgoing hook. It is no longer done here.
+						
+						// Update image source.
+						$img->attr('src', $new_href);
     }
   
     //Update contents

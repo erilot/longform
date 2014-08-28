@@ -797,10 +797,13 @@ function book_nav_title_block(){
     
     // Device type
     $devices_array = $node->field_products[LANGUAGE_NONE];
-    foreach($devices_array as $temp) {
-	$device_tids[] = $temp['tid'];
-    }
-
+		
+		if(isset($devices_array)) {
+				foreach($devices_array as $temp) {
+						$device_tids[] = $temp['tid'];
+				}
+		}
+		
     $device_terms = taxonomy_term_load_multiple($device_tids);
     foreach($device_terms as $term) {
 	$device_names[$term->tid] = $term->name;
