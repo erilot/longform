@@ -356,15 +356,13 @@ function doc_manage_unpack(){
  */
 function doc_manage_save_nodes(){
 
-  $log = array();
-  $meta = array();
   $content_array = array();
   
   $node = menu_get_object();
   doc_import_initialize_import($node);
-  doc_import_split_document($node, $meta, $log, $content_array);
-
-  doc_import_save_nodes($node, $meta, $log, $content_array);
+  doc_import_split_document($node, $content_array);
+  
+  doc_import_save_nodes($node, $content_array);
   drupal_set_message('Finished saving pages. ','status');  
 }
 

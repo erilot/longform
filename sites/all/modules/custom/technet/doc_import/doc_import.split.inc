@@ -13,139 +13,139 @@
  * Returns jscon_encoded data or FALSE.
  */
 function doc_import_split(){
-    module_load_include('inc', 'doc_import');
-    module_load_include('inc', 'doc_import', 'doc_import.log');
-    module_load_include('inc', 'doc_manage', 'doc_manage.relation');
-    module_load_include('inc', 'doc_manage', 'doc_manage.workflow');
-    module_load_include('inc', 'doc_import', 'htmLawed.lib');
-  
-    $node = menu_get_object();
-    $start = time();
-    add_log_entry('info',"Starting content splitting for node $node_id",$log);
-  
-    $meta['final_dir'] = "public://import-source-files/".$node->nid."/";
-    $meta['author_tool'] = $node->field_authoring_tool[LANGUAGE_NONE][0]['value'];
-    if(!isset($node->field_raw_html_master)){
-      add_log_entry('error',"Node " . $node->nid . " does not have a raw_html file to work with!");
-      drupal_set_message('There is no raw HTML file to work with. Nothing was done.','error');
-    }
-    $author_tool = $meta['author_tool'];
-    $content = file_get_contents($node->field_raw_html_master[LANGUAGE_NONE][0]['uri']);
-    if(strlen(trim($content)) == 0) {
-	drupal_set_message('The raw HTML file is empty. There was likely an error in the unpacking process.
-			  Try unpacking the archive again; if that fails, contact Eric Lotze for help.','error');
-	return FALSE;
-    }
-    
-    add_log_entry('info',"Read file contents from " . $node->field_raw_html_master[LANGUAGE_NONE][0]['uri'], $log);
-    
-    // Adjust headings
-    _doc_import_reorder_headings($content, $author_tool);
+		module_load_include('inc', 'doc_import');
+		module_load_include('inc', 'doc_import', 'doc_import.log');
+		module_load_include('inc', 'doc_manage', 'doc_manage.relation');
+		module_load_include('inc', 'doc_manage', 'doc_manage.workflow');
+		module_load_include('inc', 'doc_import', 'htmLawed.lib');
 
-    // Document preprocessing
-    add_log_entry('info',"Beginning [$author_tool] preprocessing", $log);
-    
-    if($author_tool == 'msword'){ //word
-	$content = doc_import_word_preprocess(extract_body($content));
-    }
-    
-    if ($author_tool == 'frame' || $author_tool == 'mif2go'){ //frame or mif2go
-	$content = doc_import_frame_prepare($content, $author_tool);
-    }
-    
-    add_log_entry('info',"Completed [$author_tool] preprocessing",$log);
-    extract_body($content);
-    // Strip existing <div> elements
-  
-    if(strpos($content, '</div') !== FALSE){
-	$content = preg_replace('/<\/*?div.*?>/i','',$content);
-    }
-    // if there are no heading 1s in the content, bump everything up a level
-    if(stripos($content,'</h1>') === FALSE){
-	//return false;
-	drupal_set_message('No head1 tags are in this document. Shifting tags up one level (h2=>h1...).','warning');
-	foreach(array(2,3,4,5,6) as $heading){
-	    $head_tag['old'] = 'h' . $heading;
-	    $head_tag['new'] = 'h' . ($heading - 1);
-	    $content = str_ireplace('<' . $head_tag['old'], '<' . $head_tag['new'], $content);
-	    $content = str_ireplace('</' . $head_tag['old'] . '>', '</' . $head_tag['new'] . '>', $content);
-	}
+		$node = menu_get_object();
+		$start = time();
+		add_log_entry('info',"Starting content splitting for node $node_id",$log);
 
-	// if, after that, there are still no H1 elements, abandon ship.
-	if(stripos($content,'</h1>') === FALSE){
-	    drupal_set_message('Unable to safely promote headings to reach a Head1. Check your source file to make sure the highest heading level is either Heading 1 or Heading 2.','error');
-	    return FALSE;
-	}
-    }
-    
-    // If there are head1s present, but a head2 comes first, insert a new section before the first H2.
-    $first_h1 = stripos($content, '<h1');
-    $first_h2 = stripos($content, '<h2');
-    if ($first_h2 < $first_h1) {
-	$insert = '<h1 class="inserted">Introduction</h1>';
-	$content = substr($content, 0, $first_h2) . $insert . substr($content, $first_h2);
-	drupal_set_message('This document\'s structure contains Head2 elements without a preceding Head1. These are most likely introductory sections.
-			   Since a leading Heading 1 is required for navigation, a blank Heading 1 called "Introduction" has been inserted immediately prior to the first Heading 2.
-			   This title may be changed prior to publication.','warning');
-    }
-    
-    // To avoid causing querypath problems with sections that contain no content, inject an temporary placeholder after each heading level.
-    $insert = '<p class="placeholder">===REMOVE THIS PLACEHOLDER===</p>';
-    $content = str_ireplace(array('</h1>','</h2>','</h3>'), array ('</h1>' . $insert,'</h2>' . $insert,'</h3>' . $insert), $content);
-  
-    add_log_entry('info',"Converting content to heading-based array",$log);
-    
-    // Split document into topics
-    doc_import_split_headings($content, $content_sectioned, 1, 3, $author_tool);
-    // Pull together an array to summarize progress. This is for debugging purposes only at present.
-    foreach($content_sectioned as $bit) {
-	$summary[] = $bit['level'];
-	switch ($bit['level']) {
-	    case 1:
-		$one++;
-		break;
-	    case 2:
-		$two++;
-		break;
-	    case 3:
-		$three++;
-		break;
-	}
-    }
-    //dpm($content_sectioned,'content sectioned');
-    if(!empty($content_sectioned)){
-	add_log_entry('info',"Finished creating content array. [" . count($content_sectioned) . "] sections were found.",$log);
-    }
-    else{
-	add_log_entry('error',"Content was not converted. Error in _doc_import_split_headings.",$log);
-	doc_import_update_log($log, $node_id);
-	drupal_set_message('An error occurred in _doc_import_split_headings.','error');
-	return FALSE;
-    }
+		$meta['final_dir'] = "public://import-source-files/".$node->nid."/";
+		$meta['author_tool'] = $node->field_authoring_tool[LANGUAGE_NONE][0]['value'];
+		if(!isset($node->field_raw_html_master)){
+				add_log_entry('error',"Node " . $node->nid . " does not have a raw_html file to work with!");
+				drupal_set_message('There is no raw HTML file to work with. Nothing was done.','error');
+		}
+		$author_tool = $meta['author_tool'];
+		$content = file_get_contents($node->field_raw_html_master[LANGUAGE_NONE][0]['uri']);
+		if(strlen(trim($content)) == 0) {
+				drupal_set_message('The raw HTML file is empty. There was likely an error in the unpacking process.
+				Try unpacking the archive again; if that fails, contact Eric Lotze for help.','error');
+				return FALSE;
+		}
+		
+		add_log_entry('info',"Read file contents from " . $node->field_raw_html_master[LANGUAGE_NONE][0]['uri'], $log);
+		
+		// Adjust headings
+		_doc_import_reorder_headings($content, $author_tool);
 
-    // Drop pre-existing relations
-    $query = relation_query('node', $node->nid, 'is_a_topic_in_');
-    $result = $query->execute();
-    
-    foreach ($result as $kill) {
-	relation_delete($kill->rid);
-	drupal_set_message('Deleted outdated relation #' . $kill->rid . ' .', 'status');
-    }
-    
-    // Set up batch  
-    $operations[] = array('_doc_import_save_topics_operation', array($content_sectioned, $node));
-    $batch = array(
-	'operations' => $operations,
-	'file' => drupal_get_path('module', 'doc_import') . '/doc_import.split.inc',
-	'finished' => '_doc_import_save_topics_finished',
-	'title' => t('Creating topics...'),
-	'init_message' => t('Initializing...'),
-	'progress_message' => t('Created @current out of @total.'),
-	'error_message' => t('Error while saving topics.'),
-    );
-    
-    batch_set($batch);
-    batch_process();
+		// Document preprocessing
+		add_log_entry('info',"Beginning [$author_tool] preprocessing", $log);
+		
+		if($author_tool == 'msword'){ //word
+				$content = doc_import_word_preprocess(extract_body($content));
+		}
+		
+		if ($author_tool == 'frame' || $author_tool == 'mif2go'){ //frame or mif2go
+				$content = doc_import_frame_prepare($content, $author_tool);
+		}
+		
+		add_log_entry('info',"Completed [$author_tool] preprocessing",$log);
+		extract_body($content);
+		// Strip existing <div> elements
+
+		if(strpos($content, '</div') !== FALSE){
+				$content = preg_replace('/<\/*?div.*?>/i','',$content);
+		}
+		// if there are no heading 1s in the content, bump everything up a level
+		if(stripos($content,'</h1>') === FALSE){
+				//return false;
+				drupal_set_message('No head1 tags are in this document. Shifting tags up one level (h2=>h1...).','warning');
+				foreach(array(2,3,4,5,6) as $heading){
+						$head_tag['old'] = 'h' . $heading;
+						$head_tag['new'] = 'h' . ($heading - 1);
+						$content = str_ireplace('<' . $head_tag['old'], '<' . $head_tag['new'], $content);
+						$content = str_ireplace('</' . $head_tag['old'] . '>', '</' . $head_tag['new'] . '>', $content);
+				}
+
+				// if, after that, there are still no H1 elements, abandon ship.
+				if(stripos($content,'</h1>') === FALSE){
+						drupal_set_message('Unable to safely promote headings to reach a Head1. Check your source file to make sure the highest heading level is either Heading 1 or Heading 2.','error');
+						return FALSE;
+				}
+		}
+		
+		// If there are head1s present, but a head2 comes first, insert a new section before the first H2.
+		$first_h1 = stripos($content, '<h1');
+		$first_h2 = stripos($content, '<h2');
+		if ($first_h2 < $first_h1) {
+				$insert = '<h1 class="inserted">Introduction</h1>';
+				$content = substr($content, 0, $first_h2) . $insert . substr($content, $first_h2);
+				drupal_set_message('This document\'s structure contains Head2 elements without a preceding Head1. These are most likely introductory sections.
+									Since a leading Heading 1 is required for navigation, a blank Heading 1 called "Introduction" has been inserted immediately prior to the first Heading 2.
+									This title may be changed prior to publication.','warning');
+		}
+		
+		// To avoid causing querypath problems with sections that contain no content, inject an temporary placeholder after each heading level.
+		$insert = '<p class="placeholder">===REMOVE THIS PLACEHOLDER===</p>';
+		$content = str_ireplace(array('</h1>','</h2>','</h3>'), array ('</h1>' . $insert,'</h2>' . $insert,'</h3>' . $insert), $content);
+
+		add_log_entry('info',"Converting content to heading-based array",$log);
+		
+		// Split document into topics
+		doc_import_split_headings($content, $content_sectioned, 1, 3, $author_tool);
+		// Pull together an array to summarize progress. This is for debugging purposes only at present.
+		foreach($content_sectioned as $bit) {
+				$summary[] = $bit['level'];
+				switch ($bit['level']) {
+								case 1:
+					$one++;
+					break;
+								case 2:
+					$two++;
+					break;
+								case 3:
+					$three++;
+					break;
+				}
+		}
+		//dpm($content_sectioned,'content sectioned');
+		if(!empty($content_sectioned)){
+				add_log_entry('info',"Finished creating content array. [" . count($content_sectioned) . "] sections were found.",$log);
+		}
+		else{
+				add_log_entry('error',"Content was not converted. Error in _doc_import_split_headings.",$log);
+				doc_import_update_log($log, $node_id);
+				drupal_set_message('An error occurred in _doc_import_split_headings.','error');
+				return FALSE;
+		}
+
+		// Drop pre-existing relations
+		$query = relation_query('node', $node->nid, 'is_a_topic_in_');
+		$result = $query->execute();
+		
+		foreach ($result as $kill) {
+				relation_delete($kill->rid);
+				drupal_set_message('Deleted outdated relation #' . $kill->rid . ' .', 'status');
+		}
+		
+		// Set up batch  
+		$operations[] = array('_doc_import_save_topics_operation', array($content_sectioned, $node));
+		$batch = array(
+				'operations' => $operations,
+				'file' => drupal_get_path('module', 'doc_import') . '/doc_import.split.inc',
+				'finished' => '_doc_import_save_topics_finished',
+				'title' => t('Creating topics...'),
+				'init_message' => t('Initializing...'),
+				'progress_message' => t('Created @current out of @total.'),
+				'error_message' => t('Error while saving topics.'),
+		);
+		
+		batch_set($batch);
+		batch_process();
 }
 
 /**
@@ -164,7 +164,6 @@ function _doc_import_save_topics_operation($content_array, $ticket, &$context){
     // Save topic count for the termination message.
     $context['sandbox']['max'] = count($content_array);
   }
-//dpm($context,' context array');
   // Retrieve the next group of sections
   $result = array_slice($content_array,$context['sandbox']['current_topic'],1); //last parameter is $limit. Caps number of jobs that can be run at once.
 
@@ -191,15 +190,15 @@ function _doc_import_save_topics_operation($content_array, $ticket, &$context){
     
     //add fields from controller: get fields that exist both in the import_ticket and topic bundles.
     $target_fields = array_filter(
-	field_info_field_map(),
-	function($array){
-	    if(in_array('import_ticket', $array['bundles']['node']) && in_array('topic', $array['bundles']['node'])) {
-		return TRUE;
-	    }
-	    else {
-		return FALSE;
-	    }    
-	});
+						field_info_field_map(),
+						function($array){
+								if(in_array('import_ticket', $array['bundles']['node']) && in_array('topic', $array['bundles']['node'])) {
+										return TRUE;
+								}
+								else {
+										return FALSE;
+								}    
+						});
     
     foreach($target_fields as $name=>$field){
       $topic->$name = $ticket->$name;
@@ -212,7 +211,7 @@ function _doc_import_save_topics_operation($content_array, $ticket, &$context){
     //if this is the last pass, prepend the $ticket to the relation array and create the relation. Add it to the $ticket and save.
     $context['sandbox']['relation_endpoints'][] = array('entity_type' => 'node', 'entity_id' => $topic->nid);
     if($context['sandbox']['current_topic'] == $context['sandbox']['max'] -1){
-	$context['results']['endpoints'] = $context['sandbox']['relation_endpoints'];
+						$context['results']['endpoints'] = $context['sandbox']['relation_endpoints'];
     }
     
     // Store some results for post-processing in the 'finished' callback.
@@ -240,25 +239,24 @@ function _doc_import_save_topics_finished($success, $results, $operations) {
     $endpoints = $results['endpoints'];
     $ticket = $results['ticket'];
     $endpoints = array_merge(
-	array(
-	    array(
-		'entity_type' => 'node',
-		'entity_id' => $ticket,
-		),
-	    ),
-	$endpoints);
-      //now create the new relation, save it, and add it to $ticket
-      $new_relation = relation_create('ticket_contains_topics',$endpoints);
-      $new_relation_id = relation_save($new_relation);
-      //load the $ticket object, attach the relation, and save.
-      $temp = node_load($ticket);
-      
-      $temp->field_topic_used_in_[LANGUAGE_NONE][0] = $new_relation;
-      node_save($temp);
+						array(
+								array(
+										'entity_type' => 'node',
+										'entity_id' => $ticket,
+								),
+						),
+						$endpoints);
+				//now create the new relation, save it, and add it to $ticket
+				$new_relation = relation_create('ticket_contains_topics',$endpoints);
+				$new_relation_id = relation_save($new_relation);
+				//load the $ticket object, attach the relation, and save.
+				$temp = node_load($ticket);
+				
+				$temp->field_topic_used_in_[LANGUAGE_NONE][0] = $new_relation;
+				node_save($temp);
 
-    // Here we do something meaningful with the results.
-    $message = count($results) .' processed.';
-    $message .= theme('item_list', $results);  // D6 syntax
+    $message = count($results) .' topics processed.';
+    $message .= theme('item_list', $results); 
     drupal_set_message($message);
   }
   else {
@@ -436,19 +434,19 @@ function _doc_import_parse_section($content, $current_split, $splits) {
     $i = 0;
     
     foreach($matches[0] as $key => $match) {
-	$positions[$key]['heading'] = strpos($content, $match);
-	$positions[$key]['start'] = $positions[$key]['heading'] + strlen($match);
-	if($i == count($matches[0])-1) continue;	
-	$positions[$key]['length'] = strpos($content,$matches[0][$i+1]) - $positions[$key]['start'];
-	$i++;
+						$positions[$key]['heading'] = strpos($content, $match);
+						$positions[$key]['start'] = $positions[$key]['heading'] + strlen($match);
+						if($i == count($matches[0])-1) continue;	
+						$positions[$key]['length'] = strpos($content,$matches[0][$i+1]) - $positions[$key]['start'];
+						$i++;
     }
     $positions[count($matches[0])-1]['length'] = strlen($content) - $positions[count($matches[0])-1]['start'];
 
     $return = array();
     
     foreach($matches[0] as $key => $match) {
-	$return[$key]['header'] = $match;
-	$return[$key]['content'] = substr($content,$positions[$key]['start'],$positions[$key]['length']);
+						$return[$key]['header'] = $match;
+						$return[$key]['content'] = substr($content,$positions[$key]['start'],$positions[$key]['length']);
     }
     //return array_combine(array('all','heading','content'),$matches);
     return $return;

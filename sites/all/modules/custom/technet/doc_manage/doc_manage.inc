@@ -51,7 +51,6 @@ function doc_manage_render_main_nav($ticket = NULL, $opts = NULL) {
   if (!$ticket) {
     $ticket = menu_get_object();
   }
-  
   // Insert status summary bar at top
   
   $bar['summary'] = doc_manage_render_manage_toolbar($ticket);

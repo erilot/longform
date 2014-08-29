@@ -342,7 +342,6 @@ function book_nav_publish_status(){
     
     // Supply published status div
     $node = menu_get_object();
-    dpm($node,'node');
     $state = workflow_get_workflow_node_by_nid($node->nid);
     if(!is_object($state)) return FALSE;
     
@@ -806,7 +805,7 @@ function book_nav_title_block(){
 		
     $device_terms = taxonomy_term_load_multiple($device_tids);
     foreach($device_terms as $term) {
-	$device_names[$term->tid] = $term->name;
+						$device_names[$term->tid] = $term->name;
     }
         
     $this_device_tid = $node->field_products[LANGUAGE_NONE][0]['tid'];
@@ -832,18 +831,18 @@ function book_nav_title_block(){
     $bid = $book->nid;
     $book_title = $book->title;
     if($book->field_short_title){
-	$complete_title = $book->field_short_title[LANGUAGE_NONE]['0']['value'];
+								$complete_title = $book->field_short_title[LANGUAGE_NONE]['0']['value'];
     }
     else {
-	$complete_title = $book_title;
+								$complete_title = $book_title;
     }
     
     // Linkify book title
     if($node->book['depth'] == 1) {
-        $complete_title_linked = l($complete_title,"node/$bid", array('attributes' => array('title' => t('Return to the front page.'))));	
+      $complete_title_linked = l($complete_title,"node/$bid", array('attributes' => array('title' => t('Return to the front page.'))));	
     }
     else {
-        $complete_title_linked = l($book_title,"node/$bid", array('attributes' => array('title' => t('Return to the front page.'))));
+      $complete_title_linked = l($book_title,"node/$bid", array('attributes' => array('title' => t('Return to the front page.'))));
     }
     
     // Build warnings
@@ -867,9 +866,9 @@ function book_nav_title_block(){
 
     // Attach warning metadata to JS for cookies
     $pass_to_js = array(
-	'bid' => $bid,
-	'thisRelease' => $this_release_name,
-	'targetRelease' => $target_release_name,
+						'bid' => $bid,
+						'thisRelease' => $this_release_name,
+						'targetRelease' => $target_release_name,
     );
     drupal_add_js(array('book_nav' => $pass_to_js), 'setting');
 
@@ -879,65 +878,63 @@ function book_nav_title_block(){
     // Build render arrays for multiple-term dropdowns
     
     $devices = array(
-	'title' => NULL,
-	'type' => 'ul',
-	'items' => $device_names,
-	'attributes' => array(
-	    'class' => array('devices'),
-	),
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => $device_names,
+						'attributes' => array(
+										'class' => array('devices'),
+						),
     );
     
     $docs_by_release_array = technet_get_related_releases($node->nid, array('links' => TRUE, 'scope' => 'full', 'grouped' => TRUE));
     $docs_by_release_parents = array(
-	'title' => NULL,
-	'type' => 'ul',
-	'items' => $docs_by_release_array['parents'],
-	'attributes' => array(
-	    'class' => array('doctypes-by-release-parents', 'nav', 'nav-pills', 'nav-stacked'),
-	),
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => $docs_by_release_array['parents'],
+						'attributes' => array(
+										'class' => array('doctypes-by-release-parents', 'nav', 'nav-pills', 'nav-stacked'),
+						),
     );
     
     foreach($docs_by_release_array['children'] as $key=>$child) {
-	$list = theme_item_list(array(
-	    'title' => NULL,
-	    'type' => 'ul',
-	    'items' => $child,
-	    'attributes' => array(
-		'class' => array('doctypes-by-release-children', 'nav', 'nav-pills', 'nav-stacked', 'btn-sm'),
-		),
-	    )
-	);
-	$docs_by_release_children.=
-	    '<div id="'. $key .'" class="group-child">' . $list . '</div>';
-				
+						$list = theme_item_list(array(
+							'title' => NULL,
+							'type' => 'ul',
+							'items' => $child,
+							'attributes' => array(
+									'class' => array('doctypes-by-release-children', 'nav', 'nav-pills', 'nav-stacked', 'btn-sm'),
+							),
+										)
+						);
+						$docs_by_release_children .= '<div id="'. $key .'" class="group-child">' . $list . '</div>';
     }
     
     $doctype_items = technet_get_related_doctypes($node->nid, array('links' => TRUE));
     $doctypes = array(
-	'title' => NULL,
-	'type' => 'ul',
-	'items' => ($doctype_items == FALSE) ? array(t('None in this release')) : $doctype_items,
-	'attributes' => array(
-	    'class' => array('doctypes', 'nav', 'nav-stacked', 'nav-pills'),
-	),
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => ($doctype_items == FALSE) ? array(t('None in this release')) : $doctype_items,
+						'attributes' => array(
+										'class' => array('doctypes', 'nav', 'nav-stacked', 'nav-pills'),
+						),
     );
     
     $releases = array(
-	'title' => NULL,
-	'type' => 'ul',
-	'items' => technet_get_related_releases($node->nid, array('links' => TRUE)),
-	'attributes' => array(
-	    'class' => array('releases', 'nav', 'nav-stacked', 'nav-pills'),
-	),
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => technet_get_related_releases($node->nid, array('links' => TRUE)),
+						'attributes' => array(
+										'class' => array('releases', 'nav', 'nav-stacked', 'nav-pills'),
+						),
     );
     
     $platforms = array(
-	'title' => NULL,
-	'type' => 'ul',
-	'items' => technet_get_related_platforms($node->nid, array('links' => TRUE)),
-	'attributes' => array(
-	    'class' => array('platforms', 'nav', 'nav-stacked', 'nav-pills'),
-	),
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => technet_get_related_platforms($node->nid, array('links' => TRUE)),
+						'attributes' => array(
+										'class' => array('platforms', 'nav', 'nav-stacked', 'nav-pills'),
+						),
     );
     
     // Create link to device page
@@ -945,30 +942,29 @@ function book_nav_title_block(){
     // @TODO: When device pages are fully impemented, remove 'disabled' from the class array below.
     
     foreach($device_names as $tid => $name) {    
-	$term_uri = taxonomy_term_uri($device_terms[$tid]);
-	$options = array(
-	    'attributes' => array(
-		'class' => array(
-		    'btn', 'btn-tb-fixed', 'navbar-btn', 'title', 'disabled'),
-		),
-	    'html'=>TRUE);
-	$term_path[] = l($name, $term_uri['path'], $options);
+						$term_uri = taxonomy_term_uri($device_terms[$tid]);
+						$options = array(
+											'attributes' => array(
+													'class' => array(
+															'btn', 'btn-tb-fixed', 'navbar-btn', 'title', 'disabled'),
+											),
+										'html'=>TRUE);
+						$term_path[] = l($name, $term_uri['path'], $options);
     }
     if (count($term_path) == 1) {
-	$device_button = '
-	<div class="btn-group"><button class="btn btn-tb-fixed navbar-btn disabled">'
-	. reset($device_names)
-	. '</button></div>';
+						$device_button = '
+						<div class="btn-group"><button class="btn btn-tb-fixed navbar-btn disabled">'
+						. reset($device_names)
+						. '</button></div>';
     }
     else {
-	$device_button = '
-	<div class="btn-group">
-		<a href="#" class="device-group btn btn-tb-fixed navbar-btn"
-		    rel="popover">'
-	    . reset($device_names) . '...</a>'
-	. '<div class="hidden"><div class="device-list">' . theme_item_list($devices) . '</div></div>'
-	.'</div>';
-	
+						$device_button = '
+						<div class="btn-group">
+							<a href="#" class="device-group btn btn-tb-fixed navbar-btn"
+											rel="popover">'
+										. reset($device_names) . '...</a>'
+						. '<div class="hidden"><div class="device-list">' . theme_item_list($devices) . '</div></div>'
+						.'</div>';
     }
     
     // HTML construction for navbar widgets

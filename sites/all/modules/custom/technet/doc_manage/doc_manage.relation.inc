@@ -132,9 +132,15 @@ function _doc_manage_get_topics($node, $type = NULL){
   foreach($endpoints as $ep){
     $nids[] = $ep['entity_id'];
   }
-    
   $query = db_query("SELECT nid, title FROM {node} WHERE nid IN (:nids)", array(':nids' => $nids));
-  return $query->fetchAllAssoc('nid');
+		
+		// This softshoe is needed to re-order the nodes correctly.
+		// This didn't used to be needed and I'm not sure why it's needed now!
+		$raw = $query->fetchAllAssoc('nid');
+		foreach($nids as $id) {
+				$result[$id] = $raw[$id];
+		}
+  return $result;
 
 }
 

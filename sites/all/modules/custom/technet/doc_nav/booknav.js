@@ -363,16 +363,16 @@ Drupal.behaviors.docManage = {
     
 	  // Event handlers for fly-in divs. Set the in/out class based on footer visibility.
 	  $(window).scroll(function(){
-	       if (isScrolledIntoView('.technet-section-last .views-table') && !$('.nav-flyin').hasClass('in')) {
-		    $('.nav-flyin').toggleClass('in');
-		    $('.side-nav-bars').toggleClass('out');
-	       }
-	       else if(!isScrolledIntoView('.technet-section-last .views-table') && $('.nav-flyin').hasClass('in')) {
-		    $('.nav-flyin').toggleClass('in');
-		    $('.side-nav-bars').toggleClass('out');
-	       }
-	  })
-     }
+	     if (isScrolledIntoView('.footer.container') && !$('.nav-flyin').hasClass('in')) {
+        $('.nav-flyin').toggleClass('in');
+        $('.side-nav-bars').toggleClass('out');
+	     }
+	     else if(!isScrolledIntoView('.footer.container') && $('.nav-flyin').hasClass('in')) {
+        $('.nav-flyin').toggleClass('in');
+        $('.side-nav-bars').toggleClass('out');
+	     }
+    })
+  }
    
        
 // ===== Document UI Nav Bar =====
