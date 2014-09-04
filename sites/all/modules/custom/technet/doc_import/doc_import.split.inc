@@ -255,7 +255,7 @@ function _doc_import_save_topics_finished($success, $results, $operations) {
 				$temp->field_topic_used_in_[LANGUAGE_NONE][0] = $new_relation;
 				node_save($temp);
 
-    $message = count($results) .' topics processed.';
+    $message = count($results) .' tasks processed. ' . count($endpoints) . ' topics were created.';
     $message .= theme('item_list', $results); 
     drupal_set_message($message);
   }

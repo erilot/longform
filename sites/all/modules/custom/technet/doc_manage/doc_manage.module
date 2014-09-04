@@ -407,12 +407,12 @@ function doc_manage_bulk_publish($node = NULL,$action = "flag") {
     
   }
   
-  //get the flag object and then run through all endpoints, either setting or unsetting the flag ($action).  
-  $flag_publish = flag_get_flag('book_page_is_published');
-  foreach($endpoints as $endpoint){
-    if($action == 'flag') $flag_publish->flag('flag',$endpoint['entity_id'], NULL, TRUE);
-    else $flag_publish->flag('unflag',$endpoint['entity_id'], NULL, TRUE);
-  }
+  ////get the flag object and then run through all endpoints, either setting or unsetting the flag ($action).  
+  //$flag_publish = flag_get_flag('book_page_is_published');
+  //foreach($endpoints as $endpoint){
+  //  if($action == 'flag') $flag_publish->flag('flag',$endpoint['entity_id'], NULL, TRUE);
+  //  else $flag_publish->flag('unflag',$endpoint['entity_id'], NULL, TRUE);
+  //}
   
   watchdog('doc manage','Finished performing operation ['.$action.'] on node ['.$node->nid.']');
   return TRUE;

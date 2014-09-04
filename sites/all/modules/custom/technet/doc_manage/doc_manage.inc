@@ -2685,7 +2685,7 @@ function _doc_manage_publish_submit($form, &$form_state) {
   $node = $form_state['sandbox']['node'];
   $published_state = 6;
   $pdf_mode = flag_get_flag('pdf_reactor_mode');
-  $pdf_mode_set = $pdf_mode->is_flagged($node->nid);
+  $pdf_mode_set = is_object($pdf_mode) ? $pdf_mode->is_flagged($node->nid) : FALSE;
 
 
   // @TODO: The next few statements (up to the batch) will execute even if the batch fails.
