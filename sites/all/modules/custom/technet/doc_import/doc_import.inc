@@ -204,7 +204,31 @@ function recursive_array_search($needle,$haystack) {
   rmdir($dir);
  }
  
- 
+	/**
+	 * Recursively copies a directory and its contents
+	 *
+	 * @param $src
+	 * 	Source file path
+	 *
+	 * @param $dst
+	 *  Destination file path
+	 */
+	function copy_recursive($src,$dst) { 
+    $dir = opendir($src); 
+    @mkdir($dst); 
+    while(false !== ( $file = readdir($dir)) ) { 
+        if (( $file != '.' ) && ( $file != '..' )) { 
+            if ( is_dir($src . '/' . $file) ) { 
+                copy_recursive($src . '/' . $file,$dst . '/' . $file); 
+            } 
+            else { 
+                copy($src . '/' . $file,$dst . '/' . $file); 
+            } 
+        } 
+    } 
+    closedir($dir); 
+	}
+	
 /**
  * Function that inserts $element into a provided &$array at $position.
  * 

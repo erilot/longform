@@ -1565,7 +1565,8 @@ function doc_manage_render_document_status($ticket) {
 
   // PDF status
   if(isset($m->field_manual_pdf)) {
-    $man_pdf = reset($m->field_manual_pdf->value());    
+				$pdf_value = $m->field_manual_pdf->value();
+				$man_pdf = isset($pdf_value) ? $pdf_value : NULL;
   }
   
   $statii['man_pdf'] = array(

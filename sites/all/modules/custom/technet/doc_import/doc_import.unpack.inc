@@ -622,18 +622,40 @@ function _doc_import_groom_filenames($directory) {
   if(!is_dir($directory)) {
     return FALSE;
   }
-    foreach(scandir($directory) as $dir) {
-    if ($dir == '.' || $dir == '..') continue;
- 
-    $dir_renamed = _doc_import_groom_string($dir);
- 
-    if (!is_dir($directory . $dir)) {
-      $prefix = '/';
-    }
-    $success = rename ($directory . $prefix . $dir, $directory . $prefix . $dir_renamed);
- 
-    _doc_import_groom_filenames($directory . $prefix . $dir_renamed);
-    }
+  foreach(scandir($directory) as $file) {
+				if ($file == '.' || $file == '..') continue;
+				
+				
+				// Normal files can be renamed directly
+				if (!is_dir($directory . $file)) {
+						$file_renamed = _doc_import_groom_string($file);
+						$success = rename ($directory . '/' . $file, $directory . '/' . $file_renamed);
+				}
+				else {				
+						// Directories cannot be renamed, and must be re-created with a new name.
+						// This is a limitation of Pantheon's file system.
+						$file_renamed = _doc_import_groom_string($file);
+						if ($file_renamed != $file) {
+								$tempdir = '/temp_rename_dir';
+								// Copy the directory to a temp location
+								copy_recursive($directory . '/' . $file, $directory . $tempdir);
+								
+								// Remove the original (whoa)
+								_rmdir_recursive($directory . '/' . $file);
+								
+								// Copy the temp directory to the renamed location
+								copy_recursive($directory . $tempdir, $directory . '/' . $file_renamed);
+								
+								// Dispose of the temp directory
+								_rmdir_recursive($directory . $tempdir);
+						}
+						
+				}
+				if ($success === FALSE) {
+						drupal_set_message('Directory could not be created: ' . $directory . $prefix . $file_renamed, 'error');
+				}
+				_doc_import_groom_filenames($directory . $prefix . $file_renamed);
+		}
 }
 
 /**
