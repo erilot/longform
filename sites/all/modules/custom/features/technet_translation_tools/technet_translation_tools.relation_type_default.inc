@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * technet_translation_tools.relation_type_default.inc
+ * longform_translation_tools.relation_type_default.inc
  */
 
 /**
  * Implements hook_relation_default_relation_types().
  */
-function technet_translation_tools_relation_default_relation_types() {
+function longform_translation_tools_relation_default_relation_types() {
   $export = array();
 
   $relation_type = new stdClass();

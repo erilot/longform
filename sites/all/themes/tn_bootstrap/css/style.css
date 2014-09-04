@@ -132,7 +132,7 @@ ul li .glyphicon {
 
 .book-top .technet-col-last {
     min-height: 700px;
-    background: url('images/branding/title-background.png') left bottom no-repeat #FFF;
+    background: url('images/branding/title-background.png') center center no-repeat #FFF;
 }
 
 .book-top .technet-col-last h2 {
@@ -783,4 +783,11 @@ a.disabled {
   filter: alpha(opacity=65);
   -webkit-box-shadow: none;
   box-shadow: none;
+}
+
+/* Krumo overrides */
+
+div.krumo-preview,
+.krumo-element {
+  color: #000;
 }

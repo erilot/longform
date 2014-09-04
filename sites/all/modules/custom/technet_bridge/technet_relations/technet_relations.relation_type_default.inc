@@ -8,7 +8,7 @@
 /**
  * Implements hook_relation_default_relation_types().
  */
-function technet_relations_relation_default_relation_types() {
+function longform_relations_relation_default_relation_types() {
   $relation_types = array();
 
   $relation_type = new stdClass();

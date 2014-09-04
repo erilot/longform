@@ -102,10 +102,8 @@ function doc_import_reconstruct_links($ticket){
   }
   
   //Get related nodes
-  foreach ($ticket->field_publish_ticket_relation[LANGUAGE_NONE] as $delta => $item){
-    foreach($item['endpoints'][LANGUAGE_NONE] as $element){
-      $nodes[] = $element['entity_id'];
-    }
+  
+    $nodes = doc_manage_get_book_pages($ticket);
     $parent = array_shift($nodes);    
     $lf = doc_import_read_link_file($parent);
     //dpm($nodes,'nodes');
@@ -119,21 +117,21 @@ function doc_import_reconstruct_links($ticket){
     foreach ($sources as &$source){
       $key = recursive_array_search($source['target'], $targets); //recursive_array_search in _book.inc, from php.net
       if($key !== FALSE){
-	$source['node'] = $nodes[$source['section']];
-	$source['target_section'] = $targets[$key]['section'];
-	$source['target_node'] = $targets[$key]['node'];
-        
-	if($targets[$key]['find'] == 'head'){
-	  $source['type'] = 'head';
-	}
-	else{
-	  if($source['target_section'] == $source['section']){
-	    $source['type'] = 'same';
-	  }
-	  else{
-	    $source['type'] = 'content';
-	  }
-	}
+        $source['node'] = $nodes[$source['section']];
+        $source['target_section'] = $targets[$key]['section'];
+        $source['target_node'] = $targets[$key]['node'];
+               
+        if($targets[$key]['find'] == 'head'){
+          $source['type'] = 'head';
+        }
+        else{
+          if($source['target_section'] == $source['section']){
+            $source['type'] = 'same';
+          }
+          else{
+            $source['type'] = 'content';
+          }
+        }
       }
     }
     
@@ -153,41 +151,39 @@ function doc_import_reconstruct_links($ticket){
     foreach ($sources as &$source){
       $new_node = $source['node'];
       if ($new_node != $last_node){
-	if($last_node != 0){
-	  node_save($node);
-	}
-	$node = node_load($new_node);
-	$last_node = $new_node;
+        if($last_node != 0){
+          node_save($node);
+        }
+        $node = node_load($new_node);
+        $last_node = $new_node;
       }
       $content = $node->body[LANGUAGE_NONE][0]['value'];
       $find = $source['href'];
       
       //source and target are in the same section
       if($source['section'] == $source['target_section']){
-	$content = str_replace($find,$source['href'],$content);
-	$node->body[LANGUAGE_NONE][0]['value'] = $content;
-	continue;
+        $content = str_replace($find,$source['href'],$content);
+        $node->body[LANGUAGE_NONE][0]['value'] = $content;
+        continue;
       }
       
       if($source['type'] == 'head'){
-	//dpm('link target is in the heading of another section (source["type"] == "head")');
-	$content = str_replace($find, "/node/" . $source['target_node'], $content);
-	$node->body[LANGUAGE_NONE][0]['value'] = $content;
-	continue;
+        //dpm('link target is in the heading of another section (source["type"] == "head")');
+        $content = str_replace($find, "/node/" . $source['target_node'], $content);
+        $node->body[LANGUAGE_NONE][0]['value'] = $content;
+        continue;
       }
       
       //target is in the body of another section
       if($source['type'] == 'content'){
-	      $content = str_replace($find, "/node/" . $source['target_node'] . $source['href'], $content);
-	      $node->body[LANGUAGE_NONE][0]['value'] = $content;
+        $content = str_replace($find, "/node/" . $source['target_node'] . $source['href'], $content);
+        $node->body[LANGUAGE_NONE][0]['value'] = $content;
       }
     }
     //if there are no sources, the node will not have been loaded and there will be nothing to save
     if(count($sources) != 0){
-	    node_save($node);
+      node_save($node);
     }
-  }
-  
   drupal_set_message('Document postprocessing completed successfully.','status');
 }
 

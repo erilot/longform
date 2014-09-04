@@ -312,69 +312,65 @@ function _doc_import_scrape_page_links($page, $nid = NULL) {
     module_load_include('inc', 'doc_import');
     
     if (empty($context['sandbox'])) {
-	$context['sandbox'] = array();
-	$context['sandbox']['progress'] = 0;
-	$context['sandbox']['current_topic'] = 0;
+						$context['sandbox'] = array();
+						$context['sandbox']['progress'] = 0;
+						$context['sandbox']['current_topic'] = 0;
 
-	// Save topic count for the termination message.
-	$context['sandbox']['max'] = 1;
+						// Save topic count for the termination message.
+						$context['sandbox']['max'] = 1;
     }
     
     // First, get the array of head & body links from topic nodes
     $pages_objects = node_load_multiple($pages);
     $heads_combined = array();
     foreach ($pages_objects as $page) {
-	$anchors = _doc_manage_get_topic_fields ($page, "field_topic_anchors");
-	$topic_index[$page->nid] = _doc_manage_get_topic_nids($page, 'topic_used_on_page');
-	$subhead = array();
-	foreach ($anchors as $key => $anchor) {
-	    $anchors_split['head'][$page->nid][$key] = $anchors[$key]['head'];
-	    $anchors_split['body'][$page->nid][$key] = $anchor[$key]['body'];
-	}
+						$anchors = _doc_manage_get_topic_fields ($page, "field_topic_anchors");
+						$topic_index[$page->nid] = _doc_manage_get_topic_nids($page);
+						$subhead = array();
+						foreach ($anchors as $key => $anchor) {
+										$anchors_split['head'][$page->nid][$key] = $anchors[$key]['head'];
+										$anchors_split['body'][$page->nid][$key] = $anchor[$key]['body'];
+						}
 	
     }
-    // Strip empty values
-    //$anchors_split['head'] = array_filter($anchors_split['head']);
-    //$anchors_split['body'] = array_filter($anchors_split['body']);
 
     // Cycle through page content, replacing topic hrefs with page hrefs
     global $base_path;
-    foreach ($pages_objects as $page) {
-	$content = $page->body[LANGUAGE_NONE][0]['value'];
-	$content = extract_body(htmlqp($content, 'a.matched.other-section.topic-link-processed')
-    	->each(function($index, $item) use ($topic_index, $anchors_split, $base_path) {
-		$link = qp($item);
-		$ref = $link->attr('ref');
-		$topic_nid = $link->attr('topic');
-		$href = $link->attr('href');
-		
-		$topic = $link->attr('topic');
-		//@TODO: Create fallback if topic attribute is not available
-		
-		$page_id = recursive_array_search($topic, $topic_index);
-		$index = array_search($topic, array_keys($anchors_split['head'][$page_id]));
-		//dpm($anchors_split['head'][$page_id],'heads subsection');
-		if ($index === FALSE) {
-		    return $link->addClass('link-error page-link-error')->removeClass('match');
-		}
-		
-		if ($index === 0) {
-		    $new_href = $base_path . "node/$page_id";
-		    		    
-		}
-		else {
-		    $new_href = $base_path . "node/$page_id#$ref";
-		}
-		$link->attr('href', $new_href)
-			->attr('topic', $topic)
-			->removeClass('link-topic')->removeClass('topic-link-processed')
-			->addClass('page-link page-link-processed');
-		
-	})->top()->html());
-	
-	$page->body[LANGUAGE_NONE][0]['value'] = substr($content, strpos($content, '<div class="wrapper"'));
-	//dpm((array)$page->body[LANGUAGE_NONE][0]['value'],'updated page');
-	 node_save($page);
+				foreach ($pages_objects as $page) {
+						$content = $page->field_book_body[LANGUAGE_NONE][0]['value'];
+						$content = extract_body(htmlqp($content, 'a.matched.other-section.topic-link-processed')
+										->each(function($index, $item) use ($topic_index, $anchors_split, $base_path) {
+												$link = qp($item);
+												$ref = $link->attr('ref');
+												$topic_nid = $link->attr('topic');
+												$href = $link->attr('href');
+												
+												$topic = $link->attr('topic');
+												//@TODO: Create fallback if topic attribute is not available
+												
+												$page_id = recursive_array_search($topic, $topic_index);
+												$index = array_search($topic, array_keys($anchors_split['head'][$page_id]));
+												//dpm($anchors_split['head'][$page_id],'heads subsection');
+												if ($index === FALSE) {
+																return $link->addClass('link-error page-link-error')->removeClass('match');
+												}
+												
+												if ($index === 0) {
+																$new_href = $base_path . "node/$page_id";
+																						
+												}
+												else {
+																$new_href = $base_path . "node/$page_id#$ref";
+												}
+												$link->attr('href', $new_href)
+													->attr('topic', $topic)
+													->removeClass('link-topic')->removeClass('topic-link-processed')
+													->addClass('page-link page-link-processed');
+							
+						})->top()->html());
+						
+						$page->field_book_body[LANGUAGE_NONE][0]['value'] = substr($content, strpos($content, '<div class="wrapper"'));
+							node_save($page);
     }
 
     drupal_set_message('Cross-reference links rebuilt.','status');

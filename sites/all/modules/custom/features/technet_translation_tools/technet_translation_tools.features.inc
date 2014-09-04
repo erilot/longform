@@ -1,13 +1,13 @@
 <?php
 /**
  * @file
- * technet_translation_tools.features.inc
+ * longform_translation_tools.features.inc
  */
 
 /**
  * Implements hook_ctools_plugin_api().
  */
-function technet_translation_tools_ctools_plugin_api($module = NULL, $api = NULL) {
+function longform_translation_tools_ctools_plugin_api($module = NULL, $api = NULL) {
   if ($module == "relation" && $api == "relation_type_default") {
     return array("version" => "1");
   }
@@ -16,7 +16,7 @@ function technet_translation_tools_ctools_plugin_api($module = NULL, $api = NULL
 /**
  * Implements hook_default_tmgmt_translator().
  */
-function technet_translation_tools_default_tmgmt_translator() {
+function longform_translation_tools_default_tmgmt_translator() {
   $items = array();
   $items['file'] = entity_import('tmgmt_translator', '{
     "name" : "file",

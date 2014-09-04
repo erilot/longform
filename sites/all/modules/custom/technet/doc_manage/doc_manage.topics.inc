@@ -297,10 +297,10 @@ function _doc_manage_get_topic_nids($node, $type = NULL){
   if (!$type) {
     switch ($node->type){
       case 'book':
-        $type = 'topic_used_on_page';
+        $type = 'page_uses_topics';
         break;
       case 'import_ticket':
-        $type = 'uses_topic';
+        $type = 'ticket_contains_topics';
         break;
     }
   }
@@ -329,7 +329,6 @@ function _doc_manage_get_topic_fields ($controller, $field_name) {
     $entity_type = 'node';
     $bundle = 'topic';
     $nids = _doc_manage_get_topic_nids($controller);
-
    if (!$nids) return FALSE;
    
    // Load all nodes and get the topic_anchors field values into an array.
@@ -342,7 +341,7 @@ function _doc_manage_get_topic_fields ($controller, $field_name) {
       ->condition('deleted', 0)
       ->execute()
       ->fetchAllKeyed();
-
+						
    foreach($field_values as &$anchor) {
       $anchor = json_decode($anchor, TRUE);
    }

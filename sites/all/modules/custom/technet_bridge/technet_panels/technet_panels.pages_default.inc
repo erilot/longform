@@ -8,7 +8,7 @@
 /**
  * Implements hook_default_page_manager_handlers().
  */
-function technet_panels_default_page_manager_handlers() {
+function longform_panels_default_page_manager_handlers() {
   $handlers = array();
 
   $handler = new stdClass();
@@ -46,7 +46,7 @@ function technet_panels_default_page_manager_handlers() {
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_33_66_stacked';
+  $display->layout = 'longform_33_66_stacked';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -198,7 +198,7 @@ function technet_panels_default_page_manager_handlers() {
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_33_66_stacked_well';
+  $display->layout = 'longform_33_66_stacked_well';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -375,7 +375,7 @@ function technet_panels_default_page_manager_handlers() {
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_33_66_stacked';
+  $display->layout = 'longform_33_66_stacked';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -601,7 +601,7 @@ if ($nid == $bid){
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_33_66_stacked';
+  $display->layout = 'longform_33_66_stacked';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -1033,7 +1033,7 @@ if ($nid == $bid){
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_5_band';
+  $display->layout = 'longform_5_band';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -1457,7 +1457,7 @@ if ($nid == $bid){
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_5_band';
+  $display->layout = 'longform_5_band';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -1997,7 +1997,7 @@ if ($nid == $bid){
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_5_band';
+  $display->layout = 'longform_5_band';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -2054,7 +2054,7 @@ if ($nid == $bid){
     $pane->pid = 'new-a8a00fa2-15d6-4190-9203-c67d8589150e';
     $pane->panel = 'header';
     $pane->type = 'block';
-    $pane->subtype = 'technet_user_toolbar-profile_block';
+    $pane->subtype = 'longform_user_toolbar-profile_block';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
@@ -2101,7 +2101,7 @@ if ($nid == $bid){
 /**
  * Implements hook_default_page_manager_pages()
  */
-function technet_panels_default_page_manager_pages() {
+function longform_panels_default_page_manager_pages() {
   $page = new stdClass();
   $page->disabled = FALSE; /* Edit this to true to make a default page disabled initially */
   $page->api_version = 1;
@@ -2137,7 +2137,7 @@ function technet_panels_default_page_manager_pages() {
     'relationships' => array(),
   );
   $display = new panels_display();
-  $display->layout = 'technet_33_66_stacked';
+  $display->layout = 'longform_33_66_stacked';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -2228,7 +2228,7 @@ function technet_panels_default_page_manager_pages() {
     'relationships' => array(),
   );
   $display = new panels_display();
-  $display->layout = 'technet_33_66_stacked';
+  $display->layout = 'longform_33_66_stacked';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -2745,7 +2745,7 @@ function technet_panels_default_page_manager_pages() {
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_5_band_2col_head';
+  $display->layout = 'longform_5_band_2col_head';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -2990,7 +2990,7 @@ function technet_panels_default_page_manager_pages() {
     'relationships' => array(),
   );
   $display = new panels_display();
-  $display->layout = 'technet_33_66_stacked';
+  $display->layout = 'longform_33_66_stacked';
   $display->layout_settings = array();
   $display->panel_settings = array(
     'style_settings' => array(
@@ -3213,7 +3213,7 @@ function technet_panels_default_page_manager_pages() {
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_5_band';
+  $display->layout = 'longform_5_band';
   $display->layout_settings = array(
     'items' => array(
       'canvas' => array(
@@ -3432,7 +3432,7 @@ function technet_panels_default_page_manager_pages() {
     $pane->pid = 'new-86214ff4-9f9d-405b-916c-2a04dd2e3cdf';
     $pane->panel = 'row-1';
     $pane->type = 'block';
-    $pane->subtype = 'technet_user_toolbar-welcome_block';
+    $pane->subtype = 'longform_user_toolbar-welcome_block';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
@@ -3503,7 +3503,7 @@ function technet_panels_default_page_manager_pages() {
     $pane->pid = 'new-4a2fa4e8-2808-4ae4-b9d1-ee7e37fbf74f';
     $pane->panel = 'row-3';
     $pane->type = 'views_panes';
-    $pane->subtype = 'technet_software_downloads-panel_pane_1';
+    $pane->subtype = 'longform_software_downloads-panel_pane_1';
     $pane->shown = TRUE;
     $pane->access = array();
     $pane->configuration = array(
@@ -3605,7 +3605,7 @@ function technet_panels_default_page_manager_pages() {
     ),
   );
   $display = new panels_display();
-  $display->layout = 'technet_5_band';
+  $display->layout = 'longform_5_band';
   $display->layout_settings = array(
     'items' => array(
       'canvas' => array(
@@ -3824,7 +3824,7 @@ function technet_panels_default_page_manager_pages() {
     $pane->pid = 'new-86214ff4-9f9d-405b-916c-2a04dd2e3cdf';
     $pane->panel = 'row-1';
     $pane->type = 'block';
-    $pane->subtype = 'technet_user_toolbar-welcome_block';
+    $pane->subtype = 'longform_user_toolbar-welcome_block';
     $pane->shown = FALSE;
     $pane->access = array();
     $pane->configuration = array(
@@ -3920,7 +3920,7 @@ function technet_panels_default_page_manager_pages() {
     $pane->pid = 'new-4a2fa4e8-2808-4ae4-b9d1-ee7e37fbf74f';
     $pane->panel = 'row-3';
     $pane->type = 'views_panes';
-    $pane->subtype = 'technet_software_downloads-panel_pane_1';
+    $pane->subtype = 'longform_software_downloads-panel_pane_1';
     $pane->shown = FALSE;
     $pane->access = array();
     $pane->configuration = array(

@@ -8,7 +8,7 @@
 /**
  * Implements hook_views_api().
  */
-function technet_views_views_api($module, $api) {
+function longform_views_views_api($module, $api) {
   if ($module == 'views' && $api == 'views_default') {
     return array('version' => 2);
   }

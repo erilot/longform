@@ -1904,17 +1904,17 @@ function _doc_manage_toolbar_button_jump_to($node) {
       // For books, this icon sends users back to the import ticket.
       $ticket = doc_manage_relation_get_ticket($node);
       $button = l(
-	'<span class="glyphicon glyphicon-arrow-left"></span>' . t('Ticket'),
-	'node/' . $ticket,
-	array(
-	  'html' => TRUE,
-	  'attributes' => array(
-	    'class' => array(),
-	  'data-toggle' => 'tooltip',
-	  'data-trigger' => 'hover',
-	  'data-placement' => 'top',
-	  'title' => t('Return to ticket'),
-	  )));
+								'<span class="glyphicon glyphicon-arrow-left"></span>' . t('Ticket'),
+								'node/' . $ticket,
+								array(
+										'html' => TRUE,
+										'attributes' => array(
+												'class' => array(),
+										'data-toggle' => 'tooltip',
+										'data-trigger' => 'hover',
+										'data-placement' => 'top',
+										'title' => t('Return to ticket'),
+										)));
       break;
     }
 

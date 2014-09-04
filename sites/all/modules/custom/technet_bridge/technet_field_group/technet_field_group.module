@@ -8,7 +8,7 @@
 /**
  * Implements hook_ctools_plugin_api().
  */
-function technet_field_group_ctools_plugin_api($module, $api) {
+function longform_field_group_ctools_plugin_api($module, $api) {
   if ($module == 'field_group' && $api == 'field_group') {
     return array('version' => 1);
   }

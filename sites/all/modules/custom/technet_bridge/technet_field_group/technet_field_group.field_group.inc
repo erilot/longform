@@ -8,7 +8,7 @@
 /**
  * Implements hook_field_group_info().
  */
-function technet_field_group_field_group_info() {
+function longform_field_group_field_group_info() {
   $field_groups = array();
 
   $field_group = new stdClass();

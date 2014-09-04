@@ -252,7 +252,7 @@ function doc_import_construct_html_file($content_array){
     if($section['target']['head']){
       $target = '<a name="'.$section['target']['head'].'"></a>';
     }
-    $final.= extract_body(htmlqp(technet_html($section['content']),'div')->prepend("$target<h$level>$title</h$level>")->top()->html()) . PHP_EOL;
+    $final.= extract_body(htmlqp(longform_html($section['content']),'div')->prepend("$target<h$level>$title</h$level>")->top()->html()) . PHP_EOL;
   }
   
   return $final;
@@ -261,7 +261,7 @@ function doc_import_construct_html_file($content_array){
 /**
  * Wrap an HTML string in HTML headers. Use this before passing a string to QueryPath to preserve UTF-8 character sets.
  */
-function technet_html($string) {
+function longform_html($string) {
     if(gettype($string) != 'string') return;
     $prefix = '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
     <html lang="en"><head><meta http-equiv="Content-Type" content="text/html; charset=utf-8" /></head><body>';

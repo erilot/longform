@@ -3,9 +3,9 @@
 /**
  * Implements hook_action_info().
  */
-function technet_translation_action_info() {
+function longform_translation_action_info() {
   return array(
-    'technet_translation_generate_job_action' => array(
+    'longform_translation_generate_job_action' => array(
       'type' => 'entity',
       'label' => t('Technet shortcut to add jobs'),
       'configurable' => FALSE,
@@ -23,7 +23,7 @@ function technet_translation_action_info() {
  * When the last one is read, call the routine to add tmgmt jobs.
  *
  */
-function technet_translation_generate_job_action(&$entity, $context = array()) {
+function longform_translation_generate_job_action(&$entity, $context = array()) {
   global $selected_counter, $selected_nodes;
   $selected_counter++;
   $selected_total = $context['progress']['total'];
@@ -37,7 +37,7 @@ function technet_translation_generate_job_action(&$entity, $context = array()) {
   if ($selected_counter == $selected_total){
     // NOTE: HARDCODED for testing!
     $target_languages = array("fr", "zh-hans");
-    $jobs = technet_translation_add_tmgmt_jobs($selected_nodes, $target_languages);
+    $jobs = longform_translation_add_tmgmt_jobs($selected_nodes, $target_languages);
     // dpm("Jobs created: " . print_r($jobs, TRUE));
   }
 }
@@ -61,7 +61,7 @@ function technet_translation_generate_job_action(&$entity, $context = array()) {
  *   Array of strings of language codes (example: 'fr', 'es', 'zh-hans').
  *
  */
-function technet_translation_add_tmgmt_jobs($nodes, $target_languages) {
+function longform_translation_add_tmgmt_jobs($nodes, $target_languages) {
   $jobs = array();
   foreach ($target_languages as $target_language){
     try{

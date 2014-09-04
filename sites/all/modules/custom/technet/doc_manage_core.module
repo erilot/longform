@@ -30,7 +30,7 @@ function doc_manage_core_block_info(){
     'info' => t('Feedback form'),
     'cache' => DRUPAL_CACHE_PER_PAGE,
   );
-  $blocks['technet_header'] = array(
+  $blocks['longform_header'] = array(
     'info' => t('Technet Header and Menu'),
     'cache' => DRUPAL_CACHE_PER_PAGE,
   );
@@ -49,9 +49,9 @@ function doc_manage_core_block_view($delta){
       $blocks['content'] = drupal_get_form('feedback_form');    
       break;
     
-    case 'technet_header':
+    case 'longform_header':
       $blocks['subject'] = t('Technet Header');
-      $blocks['content'] = technet_technet_header($node);    
+      $blocks['content'] = longform_longform_header($node);    
       break;
   }
   
@@ -62,7 +62,7 @@ function doc_manage_core_block_view($delta){
  * Generate technet header, with logo and main menu options
  *
  */
-function technet_technet_header($node) {
+function longform_longform_header($node) {
 
   global $user;
   global $base_path;
@@ -145,7 +145,7 @@ function technet_technet_header($node) {
     '#markup' => '<h2>' . t('Document Tracking') . '</h2>',
   );
   $publishing_menu['second']['top']['bs']['content'] = array(
-    '#markup' => technet_user_documents_menu($node, array('theme'=>'dropdown-menu')),
+    '#markup' => longform_user_documents_menu($node, array('theme'=>'dropdown-menu')),
   );
   
   $publishing_menu['second']['bottom'] = array(
@@ -164,7 +164,7 @@ function technet_technet_header($node) {
     '#markup' => '<h2>' . t('Publishing Resources') . '</h2>',
   );
   $publishing_menu['second']['bottom']['bs']['content'] = array(
-    '#markup' => technet_publishing_resources_menu($node, array('theme'=>'dropdown-menu')),
+    '#markup' => longform_publishing_resources_menu($node, array('theme'=>'dropdown-menu')),
   );
   
   // Last subpanel (* Recent content *)
@@ -213,7 +213,7 @@ function technet_technet_header($node) {
       '#markup' => '<h2>' . t('Account Options') . '</h2>',
     );
     $account['inset']['bs']['head']['content'] = array(
-      '#markup' => technet_manage_user_self_service_menu($node, array('theme'=>'dropdown-menu')),
+      '#markup' => longform_manage_user_self_service_menu($node, array('theme'=>'dropdown-menu')),
     );
   $account_head = '<a href="#" title="account" data-target="#" class="dropdown-toggle" data-toggle="dropdown">' . t('Account') . ' <span class="caret"></span></a>
 ';
@@ -232,11 +232,11 @@ function polycom_docsite_menu_tree($vars) {
   //dpm($vars,'vars menu_ree');
 }
 
-function polycom_docsite_menu_tree__menu_technet_publishing($variables) {
+function polycom_docsite_menu_tree__menu_longform_publishing($variables) {
   return '<ul class="menu-publish ' . $variables['menu_parent'] . '">' . $variables['tree'] . '</ul>';
 }
 
-function polycom_docsite_menu_tree__menu_technet_administration($variables) {
+function polycom_docsite_menu_tree__menu_longform_administration($variables) {
   return '<ul class="menu-lsg ' . $variables['menu_parent'] . '">' . $variables['tree'] . '</ul>';
 }
 
@@ -446,8 +446,8 @@ function doc_manage_core_page_alter(&$page){
       }
     
       // The term is matched -- load JS and CSS files, get logo display HTML, and send it through to JS.
-      drupal_add_css(drupal_get_path('module','doc_manage_core') . '/technet_whitebrand.css');
-      drupal_add_js(drupal_get_path('module','doc_manage_core'). '/technet_whitebrand.js');
+      drupal_add_css(drupal_get_path('module','doc_manage_core') . '/longform_whitebrand.css');
+      drupal_add_js(drupal_get_path('module','doc_manage_core'). '/longform_whitebrand.js');
       $image = array(
 	'style_name' => 'whitebranded_logo',
 	'path' => $term->field_whitebrand_logo[LANGUAGE_NONE][0]['uri'],
@@ -897,7 +897,7 @@ function doc_manage_core_check_admin(){
   *
   * @return: an array of documents with matching release tags. 
   */
- function technet_get_related($node, $find, $options = NULL) {
+ function longform_get_related($node, $find, $options = NULL) {
   
   if(!is_object($node) && is_numeric($node)) {
     $node = node_load($node);
@@ -912,39 +912,40 @@ function doc_manage_core_check_admin(){
   
   // Build query
   $query = new EntityFieldQuery();
-  $query->entityCondition('entity_type', 'node')
-    ->entityCondition('bundle', 'book');
+  $query
+				->entityCondition('entity_type', 'node')
+				->entityCondition('bundle', 'book');
   
   switch ($find) {
     case 'doctypes':
       if($releases){
-	$query->fieldCondition('field_software_release', 'tid', _technet_shift_array($releases), 'IN');
+								$query->fieldCondition('field_software_release', 'tid', _longform_shift_array($releases), 'IN');
       }
       if($devices) {
-	$query->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN');
+								$query->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN');
       }
       $query->propertyOrderBy('title', 'ASC');
-
-      break;
-    case 'releases':
+						break;
+    
+				case 'releases':
       if($devices){
-	$query->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN');
+								$query->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN');
       }
       if($doctypes && $filters == 'default'){
-	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
+								$query->fieldCondition('field_document_type', 'tid', _longform_shift_array($doctypes), 'IN');
       }
       $query->propertyOrderBy('nid', 'DESC');
-
       break;
+				
     case 'platforms':
       if($devices){
-	$query->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN');
+								$query->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN');
       }
       if($doctypes){
-	$query->fieldCondition('field_document_type', 'tid', _technet_shift_array($doctypes), 'IN');
+								$query->fieldCondition('field_document_type', 'tid', _longform_shift_array($doctypes), 'IN');
       }
       if($releases){
-	$query->fieldCondition('field_software_release', 'tid', _technet_shift_array($releases), 'IN');
+								$query->fieldCondition('field_software_release', 'tid', _longform_shift_array($releases), 'IN');
       }
       $query->propertyOrderBy('title', 'ASC');
       break;
@@ -952,7 +953,7 @@ function doc_manage_core_check_admin(){
 
   // If the platform field exists and this is not a platform search, include it as a condition.
   if($platforms && $find != 'platforms'){
-    $query ->fieldCondition('field_platform', 'tid', _technet_shift_array($platforms), 'IN');   
+    $query ->fieldCondition('field_platform', 'tid', _longform_shift_array($platforms), 'IN');   
   }
   
   // Set publish filters:
@@ -975,7 +976,7 @@ function doc_manage_core_check_admin(){
   //  $fps->entityCondition('entity_type', 'node')
   //  ->entityCondition('bundle', 'book')
   //  ->fieldCondition('field_document_type', 'tid', array(1201), 'IN')
-  //  ->fieldCondition('field_products', 'tid', _technet_shift_array($devices), 'IN')
+  //  ->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN')
   //  ->propertyCondition('status', $publish_state)
   //  ->propertyOrderBy('title', 'ASC');
   //  
@@ -1000,31 +1001,30 @@ function doc_manage_core_check_admin(){
     
 		$nested = array();
 		$grouped = array();
-    $full = entity_load('node', $related);
-    foreach ($full as $match) {
-			$match_wrapper = entity_metadata_wrapper('node', $match);
-			$release = $match_wrapper->field_software_release->value();
-			$release = $release[0]->tid;
+  $full = entity_load('node', $related);
+  foreach ($full as $match) {
+				$match_wrapper = entity_metadata_wrapper('node', $match);
+				$release = $match_wrapper->field_software_release->value();
+				$release = $release[0]->tid;
 			
-			$name = taxonomy_term_load($release)->name;
-			if(!array_key_exists($release, $nested)) {
-				$nested[$name]['data'] = '<a href="#term-' . $release . '" onclick="return false">' . taxonomy_term_load($release)->name . '</a>';
-				$nested[$name]['class'] = array('group-release');
-			}
-			if($options['grouped'] ){
-				$category = array_shift(taxonomy_get_parents($match_wrapper->field_document_type->value()->tid));
-				if(!array_key_exists('term-' . $release, $grouped[$release])){
-					$grouped['term-' . $release][$category->tid]['data'] = $category->name;
-					$grouped['term-' . $release][$category->tid]['class'] = array('nav', 'nav-pills', 'nav-stacked');
-		
+				$name = taxonomy_term_load($release)->name;
+				if(!array_key_exists($release, $nested)) {
+						$nested[$name]['data'] = '<a href="#term-' . $release . '" onclick="return false">' . taxonomy_term_load($release)->name . '</a>';
+						$nested[$name]['class'] = array('group-release');
 				}
-				$grouped['term-' . $release][$category->tid]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
-				$grouped['term-' . $release][$category->tid]['children'][$match->nid]['class'] = array('group-document');
-			}
-			else {
-				$nested[$name]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
-			}
-    }
+				if($options['grouped'] ){
+						$category = array_shift(taxonomy_get_parents($match_wrapper->field_document_type->value()->tid));
+						if(isset($grouped[$release]) && !array_key_exists('term-' . $release, $grouped[$release])){
+								$grouped['term-' . $release][$category->tid]['data'] = $category->name;
+								$grouped['term-' . $release][$category->tid]['class'] = array('nav', 'nav-pills', 'nav-stacked');
+						}
+						$grouped['term-' . $release][$category->tid]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+						$grouped['term-' . $release][$category->tid]['children'][$match->nid]['class'] = array('group-document');
+				}
+				else {
+						$nested[$name]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+				}
+  }
       
 		switch ($options['grouped']) {
 			case TRUE:
@@ -1048,15 +1048,15 @@ function doc_manage_core_check_admin(){
       if($node->book['bid'] == $target->nid) continue;
       
       switch ($find) {
-	case 'doctypes':
-	  $links[] = l(taxonomy_term_load($target->field_document_type[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
-	  break;
-	case 'releases':
-	  $links[] = l(taxonomy_term_load($target->field_software_release[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
-	  break;
-	case 'platforms':
-	  $links[] = l(taxonomy_term_load($target->field_platform[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
-	  break;
+								case 'doctypes':
+										$links[] = l(taxonomy_term_load($target->field_document_type[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
+										break;
+								case 'releases':
+										$links[] = l(taxonomy_term_load($target->field_software_release[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
+										break;
+								case 'platforms':
+										$links[] = l(taxonomy_term_load($target->field_platform[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
+										break;
       }
     }
     return $links;
@@ -1069,28 +1069,28 @@ function doc_manage_core_check_admin(){
 /**
  * Find matching document types for a given release and device
  */
-function technet_get_related_doctypes($node, $options) {
-  return technet_get_related($node, 'doctypes', $options);
+function longform_get_related_doctypes($node, $options) {
+  return longform_get_related($node, 'doctypes', $options);
 }
 
 /**
  * Find matching releases for a given document type and device
  */
-function technet_get_related_releases($node, $options) {
-  return technet_get_related($node, 'releases', $options);
+function longform_get_related_releases($node, $options) {
+  return longform_get_related($node, 'releases', $options);
 }
 
 /**
  * Find matching releases for a given document type and device
  */
-function technet_get_related_platforms($node, $options) {
-  return technet_get_related($node, 'platforms', $options);
+function longform_get_related_platforms($node, $options) {
+  return longform_get_related($node, 'platforms', $options);
 }
 
 /**
  * Run through all elements in an array and array_shift each one. Returns the slimmed array.
  */
-function _technet_shift_array($array) {
+function _longform_shift_array($array) {
   array_walk($array, function(&$item) {
     $item = $item['tid'];
   });
@@ -1838,7 +1838,7 @@ function tn_bootstrap_form($variables) {
   // Pick off search forms and rewrite the HTML.
   // @TODO: Figure out a better/"real" way to do this -- it works, but it smells awful.
   if (strpos($element['#id'], '_search_') !== FALSE || strpos($element['#id'], '-search-') !== FALSE) {
-    $element['#children'] = technet_rewrite_html($element['#children'],
+    $element['#children'] = longform_rewrite_html($element['#children'],
 	array(
 	  'format' => 'bootstrap',
 	  'type' => 'input_group',
@@ -1870,7 +1870,7 @@ function tn_bootstrap_form($variables) {
  * @param $options
  * 	An options array. 
  */
-function technet_rewrite_html($html, $options = NULL) {
+function longform_rewrite_html($html, $options = NULL) {
   if (!$options) return;
   $qp = htmlqp($html);
   $class = $options['class'];
@@ -1949,8 +1949,8 @@ function tn_bootstrap_preprocess_page(&$variables) {
   // Technet user nav.
   global $user;
   if($user->uid && module_exists('doc_manage_core')) {
-    $variables['technet_nav']['enabled'] = TRUE;
-    $variables['technet_nav']['content'] = technet_technet_header(menu_get_object());
+    $variables['longform_nav']['enabled'] = TRUE;
+    $variables['longform_nav']['content'] = longform_longform_header(menu_get_object());
   }
 
   // Secondary nav.

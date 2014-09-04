@@ -8,7 +8,7 @@
 /**
  * Implements hook_ctools_plugin_api().
  */
-function technet_panels_ctools_plugin_api($module, $api) {
+function longform_panels_ctools_plugin_api($module, $api) {
   if ($module == 'page_manager' && $api == 'pages_default') {
     return array('version' => 1);
   }

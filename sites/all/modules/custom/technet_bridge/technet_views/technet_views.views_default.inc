@@ -8,7 +8,7 @@
 /**
  * Implements hook_views_default_views().
  */
-function technet_views_views_default_views() {
+function longform_views_views_default_views() {
   $views = array();
 
   $view = new view();

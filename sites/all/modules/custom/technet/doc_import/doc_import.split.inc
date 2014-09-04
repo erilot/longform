@@ -575,7 +575,7 @@ function doc_import_frame_prepare($doc, $tool) {
 	
   switch ($tool){
     case 'frame':
-      $qp = htmlqp(technet_html($doc));
+      $qp = htmlqp(longform_html($doc));
       $qp->find('p.TitleChapter, p.Head1, p.Heading1'); // Restore this for Frame-native docs 
       break;
     case 'mif2go':

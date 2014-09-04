@@ -249,13 +249,13 @@ ul li .glyphicon {
 }
 
 .btn.procedure {
-  background-color: rgba(0,0,0,.1);
+  /*background-color: rgba(0,0,0,.1);*/
   margin-bottom: 1em;
   font-weight: bold;
 }
 
 .btn.table {
-  background-color: rgba(0,100,200,.1);
+  /*background-color: rgba(0,100,200,.1);*/
   margin-bottom: 1em;
 }
 

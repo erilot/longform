@@ -112,11 +112,10 @@ function doc_import_convert(){
   $controller = menu_get_object();
 
   //get the "topic_used_in" relation endpoints. These will be the topics to convert.
-  $query = relation_query('node', $controller->nid, 'is_a_topic_in_');
+  $query = relation_query('node', $controller->nid, 'ticket_contains_topics');
   $topic_relation = $query->execute();
   $topic_relation = array_shift($topic_relation);
   $topic_relation = relation_load($topic_relation->rid);
-  
   $pages = $topic_relation->endpoints[LANGUAGE_NONE];
     if(!isset($pages)){
       drupal_set_message('No relation was found to work with.','error');
@@ -140,65 +139,6 @@ function doc_import_convert(){
     batch_process();
   
   return FALSE;
-  //retrieve the segmented content array (preprocessed)
-  $content = _doc_import_get_processed_file($controller, 'pre');
-
-  //dpm($content,'content before processing'); 
-  add_log_entry('info','Beginning main HTML processing',$log);
-  $author_tool = $controller->field_authoring_tool[LANGUAGE_NONE][0]['value'];
-  $final_dir = "public://import-source-files/".$controller->nid."/";
-	
-  $total = count($content);
-  watchdog('import cron','Beginning HTML conversion for [' . $total . '] sections');  
-  $i = 0;
-  
-  add_log_entry('info','Finished main HTML processing',$log); 
-  
-  //dpm($content,'content array after processing');
-  
-  //Save two copies of the converted document: One HTML for quick review, and one JSON array for further processing.
-  $new_file_uri = $final_dir . 'processed_html_' . $controller->nid . '.html';
-  add_log_entry('info','Saving processed file as '.$new_file_uri, $log);
-  $new_file = file_save_data(doc_import_construct_html_file($content), $new_file_uri, FILE_EXISTS_REPLACE);
-  if($new_file){
-    add_log_entry('info','Processed HTML saved',$log);
-  }
-  else{
-    add_log_entry('error','Error saving processed file',$log);
-    drupal_set_message('Unable to save processed HTML master file.','error');
-    return FALSE;
-  }
-  
-  //save converted content array as JSON data
-  add_log_entry('info',"Converting final array to JSON object",$log);
-  $processed_json_uri = $final_dir . 'json_processed_' . $controller->nid . '.json';  
-  $converted_content = json_encode($content);
-  add_log_entry('info','Saving processed JSON object as '.$processed_json_uri, $log);
-  $processed_json = file_save_data($converted_content, $processed_json_uri, FILE_EXISTS_REPLACE);
-  if($processed_json){
-    add_log_entry('info','Processed JSON file saved',$log);
-  }
-  else{
-    add_log_entry('error','Error saving processed JSON file',$log);
-    drupal_set_message('Unable to save processed JSON file.','error');
-    return FALSE;
-  }
-  ////debug check contents of files as saved
-  //dpm(file_get_contents($new_file_uri),'file saved and re-read');
-  //dpm(json_decode(file_get_contents($processed_json_uri),TRUE),'processed JSON file saved and re-read');
-  
-  $controller->field_imported_html_master[LANGUAGE_NONE][0] = (array)$new_file;
-  $controller->field_imported_html_master[LANGUAGE_NONE][0]['display'] = 1;
-  $controller->field_processed_json[LANGUAGE_NONE][0] = (array)$processed_json;
-  $controller->field_processed_json[LANGUAGE_NONE][0]['display'] = 1;
-  
-  add_log_entry('info','Saving/updating node ' .$controller->nid,$log); 
-  node_save($controller);
-  add_log_entry('info',"Node ".$controller->nid." saved successfully",$log);
-
-
-  doc_import_update_log($log, $controller->nid);
-  return TRUE;
 }
 
 function _doc_import_convert_operation($pages, &$context){
@@ -288,41 +228,41 @@ function doc_import_frame_preprocess(&$doc, $tool) {
   
     // Miscellaneous content bashing follows
     $qp = htmlqp($doc, 'body')
-	->find('.Chapter-, .Chapter')->remove()																	//.Chapter-xyz classes are xref links only and are discarded
-	->top()->find('h1.TitleFront')->remove()					//h1.TitleFront classes are above H1 (i.e., H0) and are discarded 
-	->top()->find('.TitleIndex')->nextAll()->andSelf()->remove()			//.TitleIndex headings start the Index section, which is excluded from the HTML doc. Remove from here to end of doc.
-	->top()->find('a[name*="pgfId-"], a[name*="marker-"]')->remove()		//These <a> tags are internal Frame markers and are discarded
-	->top()->find('p.body-text br, h1 br, h2 br, h3 br, li br')->remove()		//Drop empty line breaks inside <p> and <H*> elements
-	->top()->find('.TableAnchor, .FigAnchorIndent')->remove()
+						->find('.Chapter-, .Chapter')->remove()																	//.Chapter-xyz classes are xref links only and are discarded
+						->top()->find('h1.TitleFront')->remove()					//h1.TitleFront classes are above H1 (i.e., H0) and are discarded 
+						->top()->find('.TitleIndex')->nextAll()->andSelf()->remove()			//.TitleIndex headings start the Index section, which is excluded from the HTML doc. Remove from here to end of doc.
+						->top()->find('a[name*="pgfId-"], a[name*="marker-"]')->remove()		//These <a> tags are internal Frame markers and are discarded
+						->top()->find('p.body-text br, h1 br, h2 br, h3 br, li br')->remove()		//Drop empty line breaks inside <p> and <H*> elements
+						->top()->find('.TableAnchor, .FigAnchorIndent')->remove()
 
-	// FigAnchor may actually be needed? preserving for regression if need be.
-	//->top()->find('.FigAnchor, .AnchorTbFig')->remove()
+						// FigAnchor may actually be needed? preserving for regression if need be.
+						//->top()->find('.FigAnchor, .AnchorTbFig')->remove()
 	
-	->top()->find('a[name^="X"]')->remove()							
+						->top()->find('a[name^="X"]')->remove()							
       
     //Delete empty <map> and <b> tags
     //->top()->find('table.Box')->removeClass('Box')->addClass('table-note note')
     ->top()->find('map');
     
     foreach ($qp as $link){	
-	if ($link->contents()->size() == 0){
-	    $link->end()->remove();
-	}
+						if ($link->contents()->size() == 0){
+										$link->end()->remove();
+						}
     }
 
     $qp->top()->find('caption>p.TableCap')->addClass('caption')->parent('caption')->contents()->unwrap();
     $qp->top()->find('.TaskIntroduction')->addClass('bulleted-task-introduction')   
-	->top()->find('.ListNum')->prev('.TaskIntroduction')->addClass('numbered-task-introduction')->removeClass('bulleted-task-introduction')->removeClass('TaskIntroduction')
-	->top()->find('.ListNum')->addClass('list-number-1')->removeClass('ListNum')
-	->top()->find('.ListNum3')->addClass('list-number-3')->removeClass('ListNum3')
-	->top()->find('.ListAlpha')->addClass('list-number-2')->removeClass('ListAlpha')
-	->top()->find('span.zBullet:contains(bull)')->parent()->addClass('list-bullet-1')
-	->top()->find('span.zBullet:contains(mdash)')->parent()->addClass('list-bullet-2')
-	->top()->find('.list-number-1')->prev('.Body, .body-text')->addclass('numbered-task-preface')->removeClass('Body')
-	->top()->find('.list-bullet-1')->prev('.Body, .body-text')->addclass('bulleted-task-preface')->removeClass('Body')
-	->top()->find('span.Title')->contents()->unwrap()
-	->top()->find('.zTask, .zBullet, .zTaskOne'/*, span.wingdings'*/)->remove()
-	->top()->find('p.ChapterName')->wrap('<h1 class="converted"/>');
+						->top()->find('.ListNum')->prev('.TaskIntroduction')->addClass('numbered-task-introduction')->removeClass('bulleted-task-introduction')->removeClass('TaskIntroduction')
+						->top()->find('.ListNum')->addClass('list-number-1')->removeClass('ListNum')
+						->top()->find('.ListNum3')->addClass('list-number-3')->removeClass('ListNum3')
+						->top()->find('.ListAlpha')->addClass('list-number-2')->removeClass('ListAlpha')
+						->top()->find('span.zBullet:contains(bull)')->parent()->addClass('list-bullet-1')
+						->top()->find('span.zBullet:contains(mdash)')->parent()->addClass('list-bullet-2')
+						->top()->find('.list-number-1')->prev('.Body, .body-text')->addclass('numbered-task-preface')->removeClass('Body')
+						->top()->find('.list-bullet-1')->prev('.Body, .body-text')->addclass('bulleted-task-preface')->removeClass('Body')
+						->top()->find('span.Title')->contents()->unwrap()
+						->top()->find('.zTask, .zBullet, .zTaskOne'/*, span.wingdings'*/)->remove()
+						->top()->find('p.ChapterName')->wrap('<h1 class="converted"/>');
   
     //Clean out hard-coded bolding and preset anchor links in headers
     $qp->top()->find('h1, h2, h3, .TaskIntroduction')->find('b')->contents()->unwrap();
@@ -338,8 +278,8 @@ function doc_import_frame_preprocess(&$doc, $tool) {
     $regex = ' /((<\/li>)$(\s*?<img.*?>.*?))((<\/ul>)|(<\/ol>))/ism';
     preg_match_all($regex,$doc,$out);
     for($i=0;$i < count($out[0]);$i++){
-	$replace = $out[3][$i].$out[2][$i];
-	$doc = str_replace($out[1][$i],$replace,$doc);
+						$replace = $out[3][$i].$out[2][$i];
+						$doc = str_replace($out[1][$i],$replace,$doc);
     }	
     //dpm((array)$doc,'after frame preprocess');	
     return $doc;
@@ -350,9 +290,9 @@ function doc_import_frame_preprocess(&$doc, $tool) {
  */
 function remove_style(&$section){
     $section = extract_body(htmlqp($section)->find('table')->removeAttr('cellspacing')->removeAttr('cellpadding')->top()
-	->remove('style')
-	->top()->find('p, div, span, img')->removeAttr('style')->top()
-	->html());
+						->remove('style')
+						->top()->find('p, div, span, img')->removeAttr('style')->top()
+						->html());
 }		
 
 /**
@@ -366,9 +306,9 @@ function doc_import_transliterate_classes(&$section, $author_tool){
     $classes = $table['classes'];
     _doc_import_bracket($classes);
     //'classes' is a keyed array of format "technet class" => array("template classes").
-    foreach ($classes as $technet_class => $template_class){
+    foreach ($classes as $longform_class => $template_class){
 	//Replace all occurrences of corresponding template classes with their Technet class.
-	$section = str_ireplace($template_class, '"'.$technet_class.'"', $section);
+	$section = str_ireplace($template_class, '"'.$longform_class.'"', $section);
     }
 
 }
@@ -1534,19 +1474,19 @@ function _doc_import_bracket(&$term){
     module_load_include ('inc', 'doc_import');
     
     if (empty($context['sandbox'])) {
-	$context['sandbox'] = array();
-	$context['sandbox']['progress'] = 0;
-	$context['sandbox']['current_topic'] = 0;
-
-	// Save topic count for the termination message.
-	$context['sandbox']['max'] = 1;
+						$context['sandbox'] = array();
+						$context['sandbox']['progress'] = 0;
+						$context['sandbox']['current_topic'] = 0;
+					
+						// Save topic count for the termination message.
+						$context['sandbox']['max'] = 1;
     }
     
     // First, get the array of head & body links from topic nodes
     $anchors = _doc_manage_get_topic_fields ($controller, "field_topic_anchors");
     foreach ($anchors as $key => $anchor) {
-	$anchors_split['head'][$key] = $anchor['head'];
-	$anchors_split['body'][$key] = $anchor['body'];
+						$anchors_split['head'][$key] = $anchor['head'];
+						$anchors_split['body'][$key] = $anchor['body'];
     }
 
     //dpm($anchors_split['head'],'anchors split head');
@@ -1557,39 +1497,41 @@ function _doc_import_bracket(&$term){
     $errors = array();
     global $base_path;
     foreach($nodes as $node) {
-	$link_topic = node_load($node);
-        $nid = $link_topic->nid;
-	$title = $link_topic->title;
-	$body = $link_topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'];
-	
-	$body = extract_body(htmlqp($body, 'a.xref.other-section')->each(function($index,$item) use ($anchors_split, &$errors, $nid, $title, $base_path) {
-	    $link = qp($item);
-	    $href = $link->attr('href');
-	    $name = array_pop(explode('#',$href));
-	    
-	    // Check head links -- these go in with no #anchor. Add original anchor as "Ref" attribute.
-	    $in = recursive_array_search($name,$anchors_split['head']);
+						$link_topic = node_load($node);
+      $nid = $link_topic->nid;
+						$title = $link_topic->title;
+						$body = $link_topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'];
+						$body = extract_body(htmlqp($body, 'a.xref.other-section')->each(function($index,$item) use ($anchors_split, &$errors, $nid, $title, $base_path) {
+								$link = qp($item);
+								$href = $link->attr('href');
+								$name = array_pop(explode('#',$href));
+								
+								// Check head links -- these go in with no #anchor. Add original anchor as "Ref" attribute.
+								$in = recursive_array_search($name,$anchors_split['head']);
 
-	    if ($in !== FALSE) {
-		$link->attr('href', $base_path . 'node/' .$in)->removeClass('link-error')->addClass('matched link-topic head')->attr('ref', $name)->attr('topic', $in);
-		return $link;
-	    }
+								if ($in !== FALSE) {
+
+										$link->attr('href', $base_path . 'node/' . $in)->removeClass('link-error')->addClass('matched link-topic head')->attr('ref', $name)->attr('topic', $in);
+										return $link;
+								}
 	    
-	    // Check body links -- these go in with #anchor. Add original anchor as "ref" attribute as well.
-	    $in = recursive_array_search($name,$anchors_split['body']);
-	    if ($in !== FALSE) {
-		$link->attr('href', $base_path . 'node/' . $in . '#' . $name)->removeClass('link-error')->addClass('matched link-topic body')->attr('ref', $name)->attr('topic', $in);
-		return $link;
-	    }
+								// Check body links -- these go in with #anchor. Add original anchor as "ref" attribute as well.
+								$in = recursive_array_search($name,$anchors_split['body']);
+								
+								if ($in !== FALSE) {
+
+										$link->attr('href', $base_path . 'node/' . $in . '#' . $name)->removeClass('link-error')->addClass('matched link-topic body')->attr('ref', $name)->attr('topic', $in);
+										return $link;
+								}
 	    
-	    // href was not found in the $anchors array, so add it to the error array for reporting
-	    $errors[$href] = array('topic_nid' => $nid, 'topic_title' => $title, 'link_text' => $link->text(), 'link_href' => $href);
+								// href was not found in the $anchors array, so add it to the error array for reporting
+								$errors[$href] = array('topic_nid' => $nid, 'topic_title' => $title, 'link_text' => $link->text(), 'link_href' => $href);
 		
-	})->addClass('topic-link-processed')->top()->html());
-	
-	// Strip off any QP cruft before the initial <div class="document-content' string and save the topic.
-	$link_topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'] = substr($body, strpos($body, '<div class="document-content'));
-	node_save($link_topic);
+						})->addClass('topic-link-processed')->top()->html());
+						// Strip off any QP cruft before the initial <div class="document-content' string and save the topic.
+						$link_topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'] = substr($body, strpos($body, '<div class="document-content'));
+						
+						node_save($link_topic);
     }
 
     drupal_set_message('Cross-reference links rebuilt.','status');

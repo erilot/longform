@@ -8,7 +8,7 @@
 /**
  * Implements hook_ds_field_settings_info().
  */
-function technet_displaysuite_ds_field_settings_info() {
+function longform_displaysuite_ds_field_settings_info() {
   $ds_fieldsettings = array();
 
   $ds_fieldsetting = new stdClass();
@@ -41,7 +41,7 @@ function technet_displaysuite_ds_field_settings_info() {
 /**
  * Implements hook_ds_layout_settings_info().
  */
-function technet_displaysuite_ds_layout_settings_info() {
+function longform_displaysuite_ds_layout_settings_info() {
   $ds_layouts = array();
 
   $ds_layout = new stdClass();
@@ -131,7 +131,7 @@ function technet_displaysuite_ds_layout_settings_info() {
   $ds_layout->entity_type = 'node';
   $ds_layout->bundle = 'book';
   $ds_layout->view_mode = 'search_result';
-  $ds_layout->layout = 'panels-technet_search_result';
+  $ds_layout->layout = 'panels-longform_search_result';
   $ds_layout->settings = array(
     'regions' => array(
       'header-first' => array(
@@ -340,7 +340,7 @@ function technet_displaysuite_ds_layout_settings_info() {
 /**
  * Implements hook_ds_view_modes_info().
  */
-function technet_displaysuite_ds_view_modes_info() {
+function longform_displaysuite_ds_view_modes_info() {
   $ds_view_modes = array();
 
   $ds_view_mode = new stdClass();

@@ -7,10 +7,10 @@
  /**
 * Implements hook_menu().
 */
-function technet_user_toolbar_menu() {
+function longform_user_toolbar_menu() {
   return array(
     'language_selector/ajax' => array(
-      'page callback' => 'technet_user_toolbar_ajax_gt_callback',
+      'page callback' => 'longform_user_toolbar_ajax_gt_callback',
       'access callback' => TRUE,
       'type' => MENU_CALLBACK,
     ),
@@ -21,7 +21,7 @@ function technet_user_toolbar_menu() {
 /**
  * admin settings page
  */
-function technet_user_toolbar_settings() {
+function longform_user_toolbar_settings() {
   $intro_text = <<<HtmlCode
 <p>Placeholder for future Language Selector options.</p>
 HtmlCode;
@@ -31,7 +31,7 @@ HtmlCode;
 /**
  * Implements hook_block_info().
  */
-function technet_user_toolbar_block_info() {
+function longform_user_toolbar_block_info() {
   
   $blocks['machine_translations'] = array(
   'info' => t('Machine Translations'),
@@ -72,7 +72,7 @@ function technet_user_toolbar_block_info() {
 /**
  * Implements hook_block_view().
  */
-function technet_user_toolbar_block_view($delta) {
+function longform_user_toolbar_block_view($delta) {
   
   $node = menu_get_object();
   
@@ -81,23 +81,23 @@ function technet_user_toolbar_block_view($delta) {
     case 'machine_translations':      
       //define block 
       $blocks['subject'] = t('Machine Translations');
-      $blocks['content'] = technet_user_toolbar_machine($node);
+      $blocks['content'] = longform_user_toolbar_machine($node);
     break;
   
     case 'formal_translations':
       $blocks['subject'] = t('Formal Translations');
-      $blocks['content'] = technet_user_toolbar_formal($node);
+      $blocks['content'] = longform_user_toolbar_formal($node);
     break;
   
     case 'navigation_help':
       //define block
       $blocks['subject'] = t('definio Technet Help');
-      $blocks['content'] = technet_user_toolbar_help_output($node);
+      $blocks['content'] = longform_user_toolbar_help_output($node);
     break;
   
     case 'print_options':
       $blocks['subject'] = t('Print Options');
-      $blocks['content'] = technet_user_toolbar_print_output($node); 
+      $blocks['content'] = longform_user_toolbar_print_output($node); 
     break;
   
     case 'tn_spacer':      
@@ -108,12 +108,12 @@ function technet_user_toolbar_block_view($delta) {
   
     case 'welcome_block':
       $blocks['subject'] = t('Technet Welcome Block');
-      $blocks['content'] = technet_manage_user_welcome_block($node);
+      $blocks['content'] = longform_manage_user_welcome_block($node);
     break;
   
     case 'profile_block':
       $blocks['subject'] = t('Technet User Profile Block');
-      $blocks['content'] = technet_manage_user_profile_block($node);
+      $blocks['content'] = longform_manage_user_profile_block($node);
     break;
   }
   return $blocks;
@@ -125,10 +125,10 @@ function technet_user_toolbar_block_view($delta) {
  *
  * Assumes bootstrap themeing.
  *
- * This should almost certainly be in a theme function along with technet_manage_user_welcome_block().
+ * This should almost certainly be in a theme function along with longform_manage_user_welcome_block().
  *
  */
-function technet_manage_user_profile_block($node) {
+function longform_manage_user_profile_block($node) {
   global $user;
   
   $viewed_user = user_load(menu_get_object('user')->uid);
@@ -191,7 +191,7 @@ function technet_manage_user_profile_block($node) {
  * Displayed as a bootstrap jumbotron, with message left-side and selections right-side
  *
  */
-function technet_manage_user_welcome_block($node) {
+function longform_manage_user_welcome_block($node) {
   global $user, $base_path;
   
   $buttons = array(
@@ -200,7 +200,7 @@ function technet_manage_user_welcome_block($node) {
     'My Unpublished Tickets' => '<a href="' . $base_path . 'document-tracking/user?uid=' . $user->name . '&sid=5"class="btn btn-primary btn-block major">My Unpublished Tickets</a>',
     'LSG Style Guide' => '<a href="' . $base_path . 'documents/lsg" class="btn btn-success btn-block major">LSG Style Guide</a>',
     'My Profile' => '<a href="' . $base_path . 'user" class="btn btn-primary btn-block major">My Profile</a>',
-    //'Edit Prifle' => technet_manage_user_self_service_menu($node),
+    //'Edit Prifle' => longform_manage_user_self_service_menu($node),
   );
 
   $output = '
@@ -234,7 +234,7 @@ $output.='</div>
  * 	An options array. Currently supports 'theme' => 'dropdown-menu' to override button styling.
  * 	
  */
-function technet_manage_user_self_service_menu($node, $options) {
+function longform_manage_user_self_service_menu($node, $options) {
 
   global $user, $base_path;
   
@@ -284,7 +284,7 @@ function technet_manage_user_self_service_menu($node, $options) {
  * 	An options array. Currently supports 'theme' => 'dropdown-menu' to override button styling.
  * 	
  */
-function technet_user_documents_menu($node, $options) {
+function longform_user_documents_menu($node, $options) {
 
   global $user, $base_path;
   
@@ -360,7 +360,7 @@ function technet_user_documents_menu($node, $options) {
  * 	An options array. Currently supports 'theme' => 'dropdown-menu' to override button styling.
  * 	
  */
-function technet_publishing_resources_menu($node, $options) {
+function longform_publishing_resources_menu($node, $options) {
 
   global $user, $base_path;
   
@@ -402,7 +402,7 @@ function technet_publishing_resources_menu($node, $options) {
 
 // HTML Builder Functions
 
-function technet_user_toolbar_machine($node){
+function longform_user_toolbar_machine($node){
   
   drupal_add_library('system', 'drupal.ajax');
   
@@ -431,14 +431,14 @@ function technet_user_toolbar_machine($node){
   return $output;
 }
 
-function technet_user_toolbar_formal($node){
+function longform_user_toolbar_formal($node){
   
   drupal_add_library('system', 'drupal.ajax');
   
   //translatable strings
   $formal_translation_title = t("Formal Translations");
   
-  $formal_translation_options = technet_get_node_languages();
+  $formal_translation_options = longform_get_node_languages();
   
   //$formal_translation_options = get_node_translations($node->nid, $node->language);
   if(!$formal_translation_options['items']) {
@@ -468,7 +468,7 @@ function technet_user_toolbar_formal($node){
 }
 
 
-function technet_user_toolbar_ajax_gt_callback($nid = 26126) {
+function longform_user_toolbar_ajax_gt_callback($nid = 26126) {
   $node = node_load($nid);
   
   $output = $node->body[LANGUAGE_NONE][0]['value'];
@@ -481,7 +481,7 @@ function technet_user_toolbar_ajax_gt_callback($nid = 26126) {
 
 }
 
-function technet_user_toolbar_help_output($node){
+function longform_user_toolbar_help_output($node){
   $block_title = t("About This Interface");
   $help_image = file_create_url('public://static/help_screen.png');
   $help_output = '
@@ -507,7 +507,7 @@ function technet_user_toolbar_help_output($node){
   return $help_output;  
 }
 
-function technet_user_toolbar_print_output($node){
+function longform_user_toolbar_print_output($node){
   $block_title = t("Print Options");
   $file_download_title = t("PDF Downloads");
   $print_download_title = t("Print Functions");

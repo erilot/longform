@@ -4,7 +4,8 @@
  * Returns an array of entities contained by the specified relation on the current node
  *
  * Returns only the first matching relation found, so if there is more than one the results will be wrong.
- * This function should only be used when a single result is expected. Code based on relation_query() from the relation module.
+ * This function should only be used when a single result is expected.
+ * Code based on relation_query() from the relation module.
  *
  * @param $relation_type
  * 	The machine name of the relation to query.
@@ -72,8 +73,9 @@ function doc_manage_get_book_pages($ticket, $full = FALSE){
 /**
  * Returns the book page endpoints given a component book page.
  *
- * This function requires a field to be set with the relation ID to work.
- *
+ * This function cannot be trusted if there is more than one ticket_contains_book_pages relation
+ * on the import ticket (not a problem now, but could be in the future!)
+ * 
  * @var $node
  * 	The book node.
  *
@@ -84,23 +86,18 @@ function doc_manage_get_book_pages($ticket, $full = FALSE){
  * 	The book node IDs.
  */
 function doc_manage_get_book_pages_from_book_page($node, $full = FALSE) {
-  $wrapper = entity_metadata_wrapper('node', $node);
-  
-  if (isset($wrapper->field_document_relation)) {
-    $relation = relation_load($wrapper->field_document_relation->value());
-    if ($full) {
-      return $relation;
-    }
-    else {
-      foreach ($relation->endpoints[LANGUAGE_NONE] as $endpoint) {
-	$pages[] = $endpoint['entity_id'];
-      }
-      return $pages;
-    }
+		$ticket = relation_get_related_entity('node', $node->nid, 'ticket_contains_book_pages');
+		$relation = doc_manage_relation_query('ticket_contains_book_pages', $ticket);
+
+  if ($full) {
+    return $relation;
   }
   else {
-    return FALSE;
-  }
+				foreach ($relation as $endpoint) {
+						$pages[] = $endpoint['entity_id'];
+				}
+				return $pages;
+		}
 }
 
 
@@ -160,8 +157,7 @@ function _doc_manage_get_topics($node, $type = NULL){
  */
 function doc_manage_get_page_topics($node){
   
-  $endpoints = doc_manage_relation_query('page_contains_topic', $node);
-
+  $endpoints = doc_manage_relation_query('page_uses_topics', $node);
   foreach($endpoints as $ep){
     $nids[] = $ep['entity_id'];
   }
@@ -183,7 +179,7 @@ function doc_manage_get_page_topics($node){
 function _doc_manage_get_topic_relations($relation_type = NULL){
   
   if(!$relation_type) {
-    $relation_type = 'uses_topic';
+    $relation_type = 'ticket_contains_topics';
   }
   
   $query = db_query("SELECT rid FROM {relation} WHERE relation_type IN (:types)", array(':types' => $relation_type));
@@ -221,8 +217,7 @@ function _doc_manage_get_orphaned_topics($relation_type = NULL){
  * @return (int)
  * 	The import ticket NID.
  */
-function doc_manage_relation_get_ticket($page) {
-  $relation = doc_manage_relation_query('entity_is_on_ticket', $page);
-  $ticket = reset($relation);
-  return $ticket['entity_id'];  
+function doc_manage_relation_get_ticket($node) {
+		$ticket = relation_get_related_entity('node', $node->nid, 'ticket_contains_book_pages');
+  return $ticket->nid;  
 }
