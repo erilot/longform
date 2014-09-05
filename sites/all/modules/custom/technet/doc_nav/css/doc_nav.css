@@ -361,7 +361,7 @@ ul.toc,
 .toc a.btn {
   margin: 2px 0;
   background-color: rgba(0,0,0,.2);
-  color: #4A698F;
+  /*color: #4A698F;*/
   border: 0;
 }
 

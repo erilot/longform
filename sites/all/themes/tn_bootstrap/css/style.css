@@ -27,20 +27,20 @@ h6 {
 
 table thead tr td,
 table thead tr th {
-    background-color: #e5e5e5;
+    /*background-color: #e5e5e5;*/
 }
 
 a,
 a:visited,
 a:hover,
 a:focus {
-  color: #4A698C;
+  /*color: #4A698C;*/
 }
 
 .dropdown-menu a,
 .dropdown-menu a:visited,
 a.btn:not(.btn-default) {
-  color: #fff;
+  /*color: #fff;*/
 }
 
 a.link-external .glyphicon {
@@ -167,7 +167,7 @@ ul.toc,
 .toc a.btn {
   margin: 2px 0;
   background-color: rgba(0,0,0,.2);
-  color: #4A698F;
+  /*color: #4A698F;*/
   border: 0;
 }
 
@@ -187,7 +187,6 @@ ul.toc,
 
 .toc .link-title a,
 .toc-aggregated>a{
-  /*color: #d11c23;*/
   font-weight: bold;
 }
 
