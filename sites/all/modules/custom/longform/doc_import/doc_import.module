@@ -1,0 +1,88 @@
+<?php
+// $Id$
+/**
+ * File: doc_import.module
+ *
+ * Version 7.x-1.0
+ * 
+ */
+
+/**
+ * Implements hook_permission().
+ */
+function doc_import_permission() {
+  return array(
+    'access doc_import' => array(
+      'title' => t('Import new documents'),
+      'description' => t('Users may use the import module to add new content. This makes the import functions available to the user, but individual actions may be limited by workflow permissions.'),
+    ),
+    'administer doc_import' => array(
+      'title' => t('Administer document import settings'),
+      'description' => t('Users may alter settings used by the document importer.'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+function doc_import_menu() {
+  
+  // @TODO: THIS IS NOT FINISHED. It is not even really started.
+  // This should be a rational set of document management pages.
+  $items = array();
+  $items['admin/technet/manage'] = array(
+    'title' => 'Document Management',
+    'description' => 'Import and administer documents',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('doc_import_process_book_form'),
+    'access arguments' => array('access doc_import'),
+    'file' => 'doc_import.process_book.inc',array('doc_import_process_book_form'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  return $items;
+}
+
+/**
+ * Implements hook_rules_action_info()
+ */
+function doc_import_rules_action_info() {
+  $actions = array(
+    'doc_import_action_unpack_archive' => array(
+      'label' => t('Unpack Document Archive'),
+      'group' => t('Document Import'),
+      'parameter' => array(
+        'node' => array(
+          'type' => 'node',
+          'label' => t('Node that has been created')
+        ),
+      ),
+    ),
+  );
+  
+  return $actions;
+}
+
+/**
+ * Rules action that triggers the unpacking of an uploaded document archive.
+ * Only fires if the archive URI exists and the HTML raw master file does NOT exist.
+ */
+function doc_import_action_unpack_archive($node) {
+  if($node->field_document_archive[LANGUAGE_NONE][0]['uri'] && !$node->field_raw_html_master){
+    doc_import_process_book_background($node);    
+  }
+}
+
+/**
+ * Implements hook_node_delete
+ * Removes source and media files used by the node being deleted
+ */
+function doc_import_delete(&$node){
+
+  $nid = $node->nid;
+  $path = "public://import-source-files/".$ticket_node->nid; 
+  //dpm($node,'hook delete called');
+  
+}
+
+

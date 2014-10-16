@@ -1,0 +1,15 @@
+;$Id document_search.info $
+name = "Document Release Redirect"
+description = "Notifies users when a newer version of a document is available. Implements a redirect scheme for application-provided paths"
+dependencies[] = doc_manage_core
+dependencies[] = book_nav
+
+files[] = doc_redirect.module
+files[] = doc_redirect.css
+
+stylesheets[all][] = doc_redirect.css
+
+package = "Doc Manager"
+core = 7.x
+
+version = 7.x-1.0

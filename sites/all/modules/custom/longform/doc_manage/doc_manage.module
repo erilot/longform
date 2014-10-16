@@ -1,0 +1,599 @@
+<?php
+// $Id$
+/**
+ * File: doc_manager.module
+ *
+ * Version 7.x-1.0
+ *
+ * Creates and manages document creation and workflow tracking for definio documentation
+ * 
+ */
+ 
+/**
+ * Implements hook_init()
+ * Conditionally load CSS, JS, and modules for Doc Manager
+ */
+
+ function doc_manage_init(){
+  $page = menu_get_object();
+  if(!is_object($page)) return FALSE;
+  
+  if($page->type == 'import_ticket' || ($page->type == 'book' && user_is_logged_in())){
+    $path = drupal_get_path('module','doc_manage');
+    drupal_add_css($path . '/css/doc-manage-style.css');
+    drupal_add_js($path . '/doc_manage.js');
+    module_load_include('inc', 'doc_manage');
+    module_load_include('inc', 'doc_manage', 'doc_manage.relation');
+    module_load_include('inc', 'doc_manage', 'doc_manage.workflow');
+    module_load_include('inc', 'doc_manage', 'doc_manage.topics');
+    module_load_include('inc', 'doc_manage', 'doc_manage.preview');
+  }
+ }
+ 
+ /**
+  * Implements hook_page_alter()
+  */
+ function doc_manage_page_alter(&$page){
+  //debuggers
+ // doc_manage_pdfreactor_button();
+  
+ }
+ 
+/**
+ * Implements hook_permission().
+ */
+function doc_manage_permission() {
+  return array(
+    'access doc_manage' => array(
+      'title' => t('View document management screens'),
+      'description' => t('Users may see content assembled by the document manager. This can include document source files, unpublished, and published documents.'),
+    ),
+    'administer doc_manage' => array(
+      'title' => t('Administer documents'),
+      'description' => t('Users may execute management functions (such as importing and editing).'),
+    ),
+  );
+}
+
+/**
+ * Implements hook_help().
+ */
+function doc_manage_help($path, $arg) {
+  switch ($path) {
+    case 'admin/help#doc_manage':
+      $output = t('Help for Doc Manage');
+      return $output;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function doc_manage_menu() {
+  $items = array();
+  $items['manage/topics'] = array(
+    'title' => 'Manage topic relations',
+    'description' => 'Manage topics related to this document',
+    'page callback' => 'doc_manage_relations_topics',
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/technet/manage/conversion/convert-single'] = array(
+    'title' => 'Convert a single topic',
+    'description' => 'Run conversion processes on one topic at a time.',
+    'file' => 'doc_manage.topics.inc',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('doc_manage_convert_once'),
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  
+  return $items;
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function doc_manage_block_info() {
+  $blocks['queue_import'] = array(
+                                       'info' => t('Queue Import'),
+                                       'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['shift_workflow'] = array(
+                                       'info' => t('Shift Workflow'),
+                                       'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['display_related_book_nodes'] = array(
+                                       'info' => t('Display Related Book Nodes'),
+                                       'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['document_preview'] = array(
+                                      'info' => t('Preview and Edit Nodes'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['adaptive_links'] = array(
+                                      'info' => t('Display Adaptive Links'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['display_related_topics'] = array(
+                                      'info' => t('Display Related Topics'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['administer_topic_actions'] = array(
+                                      'info' => t('Topic Administration'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['node_manage_options'] = array(
+                                      'info' => t('Node Manage Options'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['document_publishing_options'] = array(
+                                      'info' => t('Document Publishing Options'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['document_workflow_state'] = array(
+                                      'info' => t('Document current workflow state'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['document_manage_field_report'] = array(
+                                      'info' => t('Import Ticket Field Report'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['document_manage_main_nav'] = array(
+                                      'info' => t('Import Ticket Navigation block'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  $blocks['document_manage_toolbar'] = array(
+                                      'info' => t('Document management toolbar'),
+                                      'cache' => DRUPAL_NO_CACHE,
+                                      );
+  
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view().
+ */
+function doc_manage_block_view($delta) {
+  
+  switch($delta){
+    
+    case 'queue_import':
+      //define block 
+      $blocks['subject'] = t('Document Publishing Tasks');
+      $blocks['content'] = queue_import();
+    break;
+    
+    case 'shift_workflow':
+      //define block 
+      $blocks['subject'] = t('Shift Workflow');
+      $blocks['content'] = drupal_get_form('shift_workflow');
+    break;
+  
+    case 'display_related_book_nodes':
+      //define block 
+      $blocks['subject'] = t('Display Related Book Nodes');
+      $blocks['content'] = display_related_book_nodes();
+    break;
+  
+    case 'document_preview':
+      //define block 
+      $blocks['subject'] = t('Preview and Edit Nodes');
+      $blocks['content'] = drupal_get_form('doc_manage_preview_form_create');
+    break;
+
+    case 'adaptive_links':
+      //define block 
+      $blocks['subject'] = t('Display adaptive links');
+      $blocks['content'] = doc_manage_adaptive_links_block();
+    break;
+  
+    case 'display_related_topics':
+      //define block 
+      $blocks['subject'] = t('Display topics used by this controller');
+      $blocks['content'] = doc_manage_display_related_topics_block();
+    break;
+  
+    case 'administer_topic_actions':
+      //define block 
+      $blocks['subject'] = t('Presents options for managing related topics');
+      $blocks['content'] = doc_manage_administer_related_topics();
+    break;
+   
+    case 'node_manage_options':
+      //define block 
+      $blocks['subject'] = t('Presents options for managing nodes');
+      $blocks['content'] = doc_manage_show_management_menu();
+    break;
+   
+    case 'document_publishing_options':
+      //define block 
+      $blocks['subject'] = t('Publishing settings for documentation');
+      $blocks['content'] = doc_manage_show_document_settings();
+     break;
+
+    case 'document_workflow_state':
+      //define block 
+      $blocks['subject'] = t('Display current document state');
+      $blocks['content'] = doc_manage_status_summary();
+     break;
+
+    case 'document_manage_field_report':
+      //define block 
+      $blocks['subject'] = t('Display the import ticket\'s field report');
+      $blocks['content'] = doc_manage_field_report();
+     break;
+    
+    case 'document_manage_main_nav':
+      //define block 
+      $blocks['subject'] = t('Display and manage subsets of document publication');
+      $blocks['content'] = doc_manage_main_nav();
+     break;
+
+    case 'document_manage_toolbar':
+      //define block 
+      $blocks['subject'] = t('Display and manage subsets of document publication');
+      $blocks['content'] = doc_manage_toolbar();
+     break;
+  }
+  
+  return $blocks;
+
+}
+
+function doc_manage_toolbar() {
+  module_load_include('inc', 'doc_manage');
+  return doc_manage_render_manage_toolbar(); 
+}
+
+function doc_manage_main_nav() {
+  module_load_include('inc', 'doc_manage');
+  return doc_manage_render_main_nav(); 
+}
+
+function doc_manage_field_report() {
+  module_load_include('inc','doc_manage');
+  $report['head'] = array(
+    '#markup' => '<h2>Ticket Information</h2>',
+  );
+  
+  $report['panel'] = array(
+    '#type' => 'container',
+    '#attributes' => array(),
+  );
+  
+  $report['panel']['table'] = doc_manage_metadata_table();
+  
+  return $report; 
+}
+
+function doc_manage_status_summary() {
+  return;
+  module_load_include('inc', 'doc_manage'); 
+  $node = menu_get_object();
+  return doc_manage_render_status_summary($node);
+}
+
+
+function doc_manage_show_management_menu() {
+  module_load_include('inc', 'doc_manage');
+  $node = menu_get_object();
+  return doc_manage_get_management_menu($node);
+}
+
+function doc_manage_display_related_topics_block() {
+  module_load_include('inc', 'doc_manage', 'doc_manage.topics');
+  return doc_manage_display_related_topics();
+}
+
+/*
+ * Display block function. Checks to make sure the page is of type import_ticket first.
+ */
+function display_related_book_nodes(){
+
+  $node = menu_get_object();
+  if($node->type == 'import_ticket') {
+    module_load_include('inc', 'doc_manage');
+    module_load_include('inc', 'doc_manage', 'doc_manage_relation');
+    return display_book_relations($node);    
+  }
+  else {
+    return FALSE;
+  }
+}
+
+/**
+ * Display adaptive link block
+ */
+function doc_manage_adaptive_links_block() {
+  module_load_include('inc','doc_manage');
+  return doc_manage_display_adaptive_links();
+}
+
+/**
+ * Display import commands. Returns a form.
+ */
+
+function queue_import(){
+  
+  $node = menu_get_object();
+  if($node->type != 'import_ticket') return FALSE;
+
+  return doc_manage_render_workflow();
+}
+
+
+/*
+ * Unpacks an uploaded document archive.
+ */
+
+function doc_manage_unpack(){
+
+  module_load_include('inc', 'doc_import');
+  module_load_include('inc', 'doc_import', 'doc_import.unpack');
+  module_load_include('inc', 'doc_import', 'htmLawed.lib');
+  
+  $log = array();
+  $meta = array();
+  $content_array = array();
+  
+  $node = menu_get_object();
+  global $base_path;
+  $log_uri = $base_path.'sites/default/files/import-source-files/'.$node->nid.'/log/import'; 
+  
+  if(!doc_import_extract_archive($node)){
+    drupal_set_message("Error returned in <b>doc_import_extract_archive()</b>. <a href=\"$log_uri\">The conversion log file is available here.</a>",'error');
+    return FALSE;
+  }
+  
+  drupal_set_message("Archive expanded successfully. <a href=\"$log_uri\">The conversion log file is available here.</a>",'status');
+  return TRUE;
+}
+
+/*
+ * Splits the unpacked archive and saves resulting topic nodes.
+ */
+function doc_manage_save_nodes(){
+
+  $content_array = array();
+  
+  $node = menu_get_object();
+  doc_import_initialize_import($node);
+  doc_import_split_document($node, $content_array);
+  
+  doc_import_save_nodes($node, $content_array);
+  drupal_set_message('Finished saving pages. ','status');  
+}
+
+/**
+ * RULES IMPLEMENTATION
+ */
+
+/**
+ * Bulk publishes all book nodes tracked by an online document
+ */
+function doc_manage_bulk_publish($node = NULL,$action = "flag") {
+  //if no node object supplied, load the current one
+  if(!$node) $node = menu_get_object();
+  
+  module_load_include('inc', 'doc_manage', 'doc_manage.relation');
+  //pick up the entities referenced by this controller, then drop the first element (which is the controller).
+  $endpoints = doc_manage_relation_query('ticket_contains_book_pages',$node);
+  $cover = array_shift($endpoints);
+  if (!$endpoints) return FALSE;
+  //array_shift($endpoints);
+
+  //set the workflow state of each object. Depending on what calls this function, this will be one of:
+  // * "flag" = publish
+  // * "unflag" = unpublish
+  // * anything else = directly assign the given workflow state. This input is not validated.
+  foreach($endpoints as $endpoint){
+    switch($action){
+     case 'flag':
+      $published = 36;
+      break;
+     case 'unflag':
+      $published = 14;
+      break;
+     default:
+      $published = $action;
+    };
+
+    // Execute workflow shift and clear the cache for this node
+    workflow_execute_transition(node_load($endpoint['entity_id']),$published, 'State change by rule', TRUE);
+    entity_get_controller('node')->resetCache(array($endpoint['entity_id']));
+    //dpm($endpoint,'state changed to '. $published);
+    
+  }
+  
+  ////get the flag object and then run through all endpoints, either setting or unsetting the flag ($action).  
+  //$flag_publish = flag_get_flag('book_page_is_published');
+  //foreach($endpoints as $endpoint){
+  //  if($action == 'flag') $flag_publish->flag('flag',$endpoint['entity_id'], NULL, TRUE);
+  //  else $flag_publish->flag('unflag',$endpoint['entity_id'], NULL, TRUE);
+  //}
+  
+  watchdog('doc manage','Finished performing operation ['.$action.'] on node ['.$node->nid.']');
+  return TRUE;
+}
+
+/**
+ * Implements hook_rules_action_info() for doc manage module
+ */
+function doc_manage_rules_action_info() {
+  $actions = array(
+    'doc_manage_action_publish_book' => array(
+      'label' => t('Bulk publish a child book'),
+      'group' => t('Document Manage'),
+      'parameter' => array(
+        'node' => array(
+          'type' => 'node',
+          'label' => t('Online document node')
+        ),
+      ),
+    ),
+    'doc_manage_action_unpublish_book' => array(
+      'label' => t('Bulk unpublish a child book'),
+      'group' => t('Document Manage'),
+      'parameter' => array(
+        'node' => array(
+          'type' => 'node',
+          'label' => t('Online document node')
+        ),
+      ),
+    ),
+    'doc_manage_action_delete_topics' => array(
+      'label' => t('Bulk delete topics used by a controller'),
+      'group' => t('Document Manage'),
+      'parameter' => array(
+        'node' => array(
+          'type' => 'node',
+          'label' => t('Online document node')
+        ),
+      ),
+    ),
+  );
+  
+  return $actions;
+}
+
+
+/**
+ * Rules action that bulk flags an entire book as 'published'. Must use this method instead of Drupal publishing to allow book construction prior to publication.
+ */
+
+function doc_manage_action_publish_book($node) {
+  watchdog('doc manage','publishing from controller ['.$node->nid.']');
+   doc_manage_bulk_publish($node,'flag');
+   return TRUE;
+}
+
+/**
+ * Rules action that bulk flags an entire book as 'unpublished'. Must use this method instead of Drupal publishing to allow book construction prior to publication.
+ */
+
+function doc_manage_action_unpublish_book($node){
+  watchdog('doc manage','unpublishing from controller ['.$node->nid.']');
+  doc_manage_bulk_publish($node,'unflag');
+  return TRUE;
+}
+
+function doc_manage_action_delete_topics($node){
+  watchdog('doc manage','deleting topics used by controller ['.$node->nid.']');
+  doc_manage_batch_delete_topics($node);
+}
+
+/**
+ * Implementation of hook_cron_queue_info()
+ */
+function doc_manage_cron_queue_info() {
+  $queues['delete_orphan_topics'] = array( 'worker callback' => 'doc_manage_cron_delete_orphan_topics',// This is the callback function for each queue item.
+                            'time' => 180, // This is the max run time per cron run in seconds.
+                            );
+  return $queues;
+}
+
+
+/**
+ *
+ * Implementation of hook_cron()
+ */
+function doc_manage_cron() {
+ module_load_include('inc', 'doc_manage', 'doc_manage.relation');
+  $items = _doc_manage_get_orphaned_topics();
+  if($items) {
+    $queue = DrupalQueue::get('delete_orphan_topics');
+    foreach($items as $item) {
+      foreach($item->endpoints[LANGUAGE_NONE] as $topic){
+        $queue->createItem($topic['entity_id']);
+      }
+    }
+  }
+}
+
+/**
+ * Worker function that deletes topics as called by doc_manage_cron.
+ */
+function doc_manage_cron_delete_orphan_topics($relation){
+  
+  node_delete($relation);
+  watchdog('doc manage', "Deleted topic node: $relation");
+  
+}
+
+
+/**
+ * Implements hook_preprocess_flag()
+ */
+function doc_manage_preprocess_flag(&$variables) {
+ $node = menu_get_object();
+  // insert the "list-group-item" class on flag links
+  switch ($node->type) {
+   case 'book':
+    if($node->nid == $variables['entity_id']) {
+     $variables['flag_classes_array'][] = 'btn btn-block';
+     if($variables['status'] == 'flagged') {
+      $variables['link_text'] = '<span class="glyphicon glyphicon-flag"></span>Click to clear alert';
+     $variables['flag_classes_array'][] = 'btn-danger';
+     }
+     else {
+      $variables['link_text'] = '<span class="glyphicon glyphicon-flag"></span>Click to set alert';
+     $variables['flag_classes_array'][] = 'btn-warning';
+     }
+    }
+    else {
+     $variables['flag_wrapper_classes_array'][] = 'list-group-item';
+    }
+    
+    break;
+   
+   default:
+    break;
+  }
+}
+
+function doc_manage_show_document_settings() {
+  $node = menu_get_object();
+  $pdf_mode = flag_create_link('pdf_reactor_mode', $node->nid);
+
+  $output =
+  '<div class="row">
+    <div class="col-xs-12">'
+    . _doc_manage_pdf_modes(array('pdf_reactor_mode', 'pdf_reactor_live_sync'), $node->nid) .
+     '</div>
+   </div>';
+   
+   return $output;
+}
+
+//http://localhost/plcmtechnet/docroot/flag/flag/pdf_reactor_mode/75122?destination=node/75122&token=fjyjX_BttoZaVTXkf4GvQu5vlDvJWIV-zWpbBYSsf8Y
+//http://localhost/plcmtechnet/docroot/flag/flag/pdf_reactor_mode/?destination=node/75122&token=pvDRpFHNUhawjAQ4QXnlrLrKvT1S_FpUkWlS9Yf_fTs
+
+/**
+ * Helper function that returns HTML for PDF flags.
+ *
+ * @param $flags (array)
+ *  Array of flag machine names.
+ *
+ * @param $nid
+ *  Import ticket NID.
+ */
+function _doc_manage_pdf_modes($flags, $nid) {
+ 
+ $output =
+ '<div class="panel panel-default">
+   <div class="panel-heading">
+    <h4 class="panel-title">PDF Mode</h4>
+   </div>
+   <div class="panel-body">';
+
+
+  foreach ($flags as $flag) {
+   $output .= flag_create_link($flag, $nid) . PHP_EOL;
+  }
+  
+  $output .= "</div></div>";
+  
+  return $output;
+}

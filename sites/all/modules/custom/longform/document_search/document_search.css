@@ -1,0 +1,88 @@
+/**
+ * @file: document_search.css
+ *
+ * Overrides for facet API and solr search results
+ */
+
+div.list-group-item-success {
+    background-color: #ddd;
+}
+ul.expanded {
+    padding: 1em .5em;
+    background: #eee;	
+}
+
+ul.expanded.list-group {
+    margin-bottom: .5em;
+}
+
+.expanded.list-group a.list-group-item {
+    /*background: rgba(0,150,0,.05);*/
+    margin-left:1em;
+}
+
+ul[class^="facetapi"] {
+    font-size: 0.8em;
+    padding-left: 0;
+}
+
+ul[class^="facetapi"] .list-group-item {
+    /*border: 0;*/
+    /*padding: 5px 10px;*/
+}
+
+.facetapi-active {
+    text-indent: -1em;   
+}
+ul[class^="facetapi"] .list-group-item-success {
+    padding-left: 2em;
+}
+
+ul[class^="facetapi"] glyphicon:empty {
+    margin-right: 0;
+    width: auto;
+}
+
+div[class*="facetapi"] h2 {
+    font-size: 1.2em;
+    margin-top: 0;
+}
+
+.technet-search-result {
+    margin-top: 2em;
+}
+
+.technet-search-result {
+    margin-bottom: 0em;
+}
+
+.technet-search-result h3 {
+    margin: 0;
+}
+
+.technet-search-result ul {
+    margin: 0;
+}
+
+.technet-search-result ul li {
+    display: inline;
+    color: #999;
+    font-style: italic;
+    font-size: .8em;
+}
+
+.technet-search-result .field-name-search-snippet {
+    /*background: rgba(0,0,0,.03);*/
+    border-top: 1px solid #eaeaea;
+}
+
+.technet-search-result .field-type-taxonomy-term-reference {
+    display: inline-block;
+    margin-right: 1em;
+    color: #999;
+    font-size: .8em;
+}
+
+.technet-search-result .field-name-taxonomy-vocabulary-8 {
+    font-weight: bold;
+}

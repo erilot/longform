@@ -1,0 +1,213 @@
+<?php
+
+/**
+ * Implements hook_page_alter
+ */
+function document_search_page_alter(&$page) {
+
+  //Add document_search.js
+  $path = drupal_get_path('module','document_search');
+  drupal_add_js($path . '/document_search.js');
+  drupal_add_css($path . '/document_search.css');
+  
+  // If we're arriving on this page from a search result and are not currently on a search page,
+  // wrap the search terms in spans
+  $referer = $_SERVER['HTTP_REFERER'];
+
+  if(strpos($referer,'/search/') !== FALSE && strpos(request_path(), 'search') === FALSE){
+    //loop through search keys and wrap each occurence on the page with a "search-keys" class
+    $search_keys = urldecode(array_pop(explode('/',$referer)));
+    if(!empty($search_keys)){
+      $keys=explode(' ',$search_keys);
+      // Pass keys to javascript. 
+      drupal_add_js(array('document_search' => array('keys' => $keys)),'setting');
+    }
+  }
+}
+
+function document_search_block_info() {
+  $blocks['document_search'] = array(
+    'info' => t('Document Search Form'), 
+    'cache' => DRUPAL_CACHE_PER_ROLE,
+  );
+  return $blocks;
+}
+ 
+function document_search_block_view($delta = '') {
+  $block = array();
+  switch ($delta) {
+    case 'document_search':
+      $block['title'] = t('definio Technet Search');   
+      $block['content'] = drupal_render(drupal_get_form('document_search_search_block_form'));
+      break;
+  }
+  return $block;
+}
+
+function document_search_search_block_form($form, &$form_state) {
+
+  $form['#attributes']['class'][] = 'search-form';
+  $form['basic'] = array('#type' => 'container', '#attributes' => array('class' => array('container-inline', 'prevent-close')));
+  $form['basic']['keys'] = array(
+    '#type' => 'textfield',
+    '#title' => NULL,
+    '#size' => 15,
+    '#defaultvalue' => '',
+    '#maxlength' => 255,
+    '#attributes' => array(
+      'placeholder' => t('Search definio Technet'),      
+    )
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Search'),
+    '#id' => 'search-submit',
+    '#attributes' => array(
+      'class' => array('btn', 'btn-default'),
+    ),
+  );
+  
+  return $form;
+}
+
+function document_search_search_block_form_submit($form, &$form_state) {
+
+  //Get book ID of current node
+  $node = menu_get_object();
+  $wrapper = entity_metadata_wrapper('node', node_load($node->nid));
+  $devices = $wrapper->field_products->value();
+  $bid = $node->book['bid'];
+
+  $releases = $wrapper->field_software_release->value();
+  
+  $doctype = $wrapper->field_document_type->value();
+  
+  $i = 0;
+  foreach($devices as $device) {
+    $tid = $device->tid;
+    $query["f[$i]"]="im_field_products:$tid";
+    $i++;
+  }
+  
+  foreach($releases as $release) {
+    $tid = $release->tid;
+    $query["f[$i]"]="im_field_software_release:$tid";
+  }
+  $search_url = 'search/faceted/' . $form_state['values']['keys'];
+  
+  ////If $bid returns a value, we are on a book page. Set up the search URL as a doc search.
+  ////If $bid returns empty, we are not on a book page. Set up search URL as standard.
+  //if($bid != ''){
+  //  $search_url = 'search/document/' . $bid . '/' . $form_state['values']['keys'];
+  //}
+  //else{
+  //  $search_url = 'search/node/'. $form_state['values']['keys'];    
+  //}
+  variable_set('search_keys',$form_state['values']['keys']);
+  drupal_goto($search_url, array('HTML' => TRUE, 'query' => $query));
+}
+
+function document_search_menu() {
+  $items['search/node/%'] = array(
+    'page callback' => 'document_search_do_search',
+    'page arguments' => array(3),
+    'access arguments' => array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+  return $items;
+}
+
+function document_search_do_search($keys) {
+  // set the page title
+  drupal_set_title(t('Technet search results'));
+  // get the search results
+  $results = module_invoke('node', 'search_execute', $keys . " type:faq");
+
+  return theme('search_results', array('results' => $results));
+}
+
+///////// Theme functions
+
+function tn_bootstrap_facetapi_count($vars) {
+  return '<span class="badge">' . $vars['count'] . '</span>';
+}
+
+function tn_bootstrap_facetapi_link_inactive($variables) {
+  // Builds accessible markup.
+  // @see http://drupal.org/node/1316580
+  $variables['options']['attributes']['class'][] = 'list-group-item';
+  $accessible_vars = array(
+    'text' => $variables['text'], 
+    'active' => FALSE,
+  );
+  $accessible_markup = theme('facetapi_accessible_markup', $accessible_vars);
+
+  // Adds count to link if one was passed.
+  // Note this was moved up from the original function so bootstrap's list-group badge fanciness
+  // works correctly (badge precedes content).
+  if (isset($variables['count'])) {
+    $badge = theme('facetapi_count', $variables);
+  }
+  
+  // Sanitizes the link text if necessary.
+  $sanitize = empty($variables['options']['html']);
+  $variables['text'] = ($sanitize) ? check_plain($variables['text']) . ' ' . $badge : $variables['text'] . ' ' . $badge;
+
+  // Resets link text, sets to options to HTML since we already sanitized the
+  // link text and are providing additional markup for accessibility.
+  $variables['text'] .= $accessible_markup;
+  $variables['options']['html'] = TRUE;
+  return theme_link($variables);
+}
+
+/**
+ * Returns HTML for an inactive facet item.
+ *
+ * @param $variables
+ *   An associative array containing the keys 'text', 'path', and 'options'. See
+ *   the l() function for information about these variables.
+ *
+ * @see l()
+ *
+ * @ingroup themeable
+ */
+function tn_bootstrap_facetapi_link_active($variables) {
+
+  // Sanitizes the link text if necessary.
+  $sanitize = empty($variables['options']['html']);
+  $link_text = ($sanitize) ? check_plain($variables['text']) : $variables['text'];
+
+  // Theme function variables fro accessible markup.
+  // @see http://drupal.org/node/1316580
+  $accessible_vars = array(
+    'text' => $variables['text'],
+    'active' => TRUE,
+  );
+
+  // Builds link, passes through t() which gives us the ability to change the
+  // position of the widget on a per-language basis.
+  $replacements = array(
+    '!facetapi_deactivate_widget' => theme('facetapi_deactivate_widget', $variables),
+    '!facetapi_accessible_markup' => theme('facetapi_accessible_markup', $accessible_vars),
+  );
+  $variables['text'] = t('!facetapi_deactivate_widget !facetapi_accessible_markup', $replacements);
+  $variables['options']['html'] = TRUE;
+  return '<div class="list-group-item list-group-item-success">' . theme_link($variables) . $link_text . '</div>';
+}
+
+/**
+ * Returns HTML for the deactivation widget.
+ *
+ * @param $variables
+ *   An associative array containing the keys 'text', 'path', and 'options'. See
+ *   the l() function for information about these variables.
+ *
+ * @see l()
+ * @see theme_facetapi_link_active()
+ *
+ * @ingroup themable
+ */
+function tn_bootstrap_facetapi_deactivate_widget($variables) {
+  return '<span class="glyphicon glyphicon-remove-circle"></span>';
+}
+

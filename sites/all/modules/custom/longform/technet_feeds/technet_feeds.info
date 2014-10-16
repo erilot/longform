@@ -1,0 +1,5 @@
+name = Document Manager Feeds
+description = Feeds implementation for Document Manager
+core = 7.x
+files[] = technet_feeds.module
+package = Doc Manager

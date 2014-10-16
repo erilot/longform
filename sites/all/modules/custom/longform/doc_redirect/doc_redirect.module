@@ -1,0 +1,663 @@
+<?php
+
+/**
+ * Redirect module for polycom document management
+ * This module alerts users when there is a newer version of the document they are viewing, and provides a link to jump to it.
+ * Also provide a redirect ability based on a URL. This allows applications to specify a constant URL for documentation, which will automatically
+ * display the latest version, without needing to update published links.
+ */
+
+ /**
+  * Add notification to a page when a newer version exists. Compares document type, device type, and device platform, and then looks for higher
+  * Release Version values.
+  */
+ 
+function doc_redirect_page_alter(&$page){
+  
+
+}
+
+/**
+ * Implements hook_block
+ * Provides a block for administrators that displays the "always current" link for this document.
+ */
+
+function doc_redirect_block_info() {
+  // TODO Rename block deltas (e.g. delta-0) to readable strings.
+  $blocks['link_current'] = array(
+                              'info' => t('Current Version Link'),
+                              'cache' => DRUPAL_CACHE_PER_PAGE,                                    
+                             );
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view().
+ */
+function doc_redirect_block_view($delta) {
+  switch($delta){   
+    case 'link_current':
+      //define block 
+      $blocks['subject'] = t('Permalink to Current Version');
+      $blocks['content'] = doc_redirect_permalink_current();    
+    break;
+  }
+  return $blocks;
+}
+
+/**
+ * Displays administrator notice containing the always-current permalink for this device type/document type/language.
+ */
+function doc_redirect_permalink_current(){
+  $node = menu_get_object();
+  if($node->type == 'book' && user_is_logged_in()){
+   global $base_url;   
+    $this_device = $node->field_products[LANGUAGE_NONE][0]['tid'];
+    $this_doctype = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
+    $this_platform = $node->field_platform[LANGUAGE_NONE][0]['tid'];
+    $this_language = $node->language;
+    
+    $fresh_link = "current/$this_language/$this_doctype/$this_device";
+    if(!empty($this_platform)){
+      $fresh_link.="/$this_platform";
+    }
+ 
+    $message = t('To dynamically point to the <b>latest release version</b> for this document, use this URL:');
+    $link = l($base_url . '/' . $fresh_link, $base_url . '/' . $fresh_link );
+
+    $output = array(
+      '#type' => 'markup',
+      '#markup' => "$message<br/>$link",
+      );
+    return $output;
+  }
+  else{
+    return FALSE;
+  }
+} 
+
+/**
+ * Function returns the redirect links for a given controller document.
+ * Returns an array: ['adaptive'] is the always-current permalink, and ['override'] is for this specific software version.
+ */
+function doc_redirect_get_adaptive_permalink(){
+  $node = menu_get_object();
+  if($node->type == 'import_ticket' && user_is_logged_in()){
+   global $base_url;   
+    $this_device = isset($node->field_products[LANGUAGE_NONE]) ? $node->field_products[LANGUAGE_NONE][0]['tid'] : NULL;
+    $this_doctype = isset($node->field_document_type[LANGUAGE_NONE]) ? $node->field_document_type[LANGUAGE_NONE ][0]['tid'] : NULL;
+    $this_platform = isset($node->field_platform[LANGUAGE_NONE]) ? $node->field_platform[LANGUAGE_NONE][0]['tid'] : NULL;
+    $this_language = isset($node->language) ? $node->language : NULL;
+    $this_version = isset($node->field_software_release[LANGUAGE_NONE]) ? taxonomy_term_load($node->field_software_release[LANGUAGE_NONE][0]['tid'])->name : NULL;
+    $fresh_link = "current/$this_language/$this_doctype/$this_device";
+    if(!empty($this_platform)){
+      $fresh_link.="/$this_platform";
+    }
+    
+    //Build adpative link
+    $adaptive = l($base_url . '/' . $fresh_link, $base_url . '/' . $fresh_link );
+    
+    //Build software-specific link
+    if ($this_version){
+      $override = l($base_url . '/' . $fresh_link . '/' . $this_version, $base_url . '/' . $fresh_link . '/' . $this_version);
+    }
+    else{
+      $override = FALSE;
+    }
+    
+    $relation = doc_manage_relation_query('ticket_contains_book_pages', $node);
+
+    //Build canonical link, or display a note if the book has not been imported yet.
+    if($relation){
+      
+      // The node ID is the entity_id of the first element in the relation, if it exists
+      $path = $base_url . '/' . drupal_lookup_path('alias',('node/' . $relation[1]['entity_id']));
+      $cover = l($path,$path);
+    }
+    else{
+      $cover = FALSE;
+    }
+    $link = array('adaptive' => isset($adaptive) ? $adaptive : NULL,
+                  'override' => isset($override) ? $override : NULL,
+                  'cover' => isset($cover) ? $cover : NULL,
+                  'alias' => isset($path) ? $path : NULL,
+                  );
+    return $link;
+  }
+}
+
+/**
+ * Implements hook_menu
+ * Establishes /current/ as the path for version redirection
+ * Creates summary pages with index keys
+ */
+function doc_redirect_menu(){
+ $items['current'] = array(
+    'page callback' => 'doc_redirect_go',
+    'access arguments' => array('access content'), //TRUE,//array('access content'),
+    'type' => MENU_CALLBACK,
+  );
+ $items['reference'] = array(
+  'page callback' => 'doc_redirect_reference',
+  'access arguments' => array('access content'),
+  'type' => MENU_NORMAL_ITEM,
+ );
+ $items['reference/doctypes'] = array(
+  'page callback' => 'doc_redirect_doctypes',
+  'access arguments' => array('access content'),
+  'type' => MENU_NORMAL_ITEM,
+ );
+ $items['reference/devicetypes'] = array(
+  'page callback' => 'doc_redirect_devicetypes',
+  'access arguments' => array('access content'),
+  'type' => MENU_NORMAL_ITEM,
+ );
+ $items['reference/platforms'] = array(
+  'page callback' => 'doc_redirect_platforms',
+  'access arguments' => array('access content'),
+  'type' => MENU_NORMAL_ITEM,
+ );
+ $items['reference/releases'] = array(
+  'page callback' => 'doc_redirect_releases',
+  'access arguments' => array('access content'),
+  'type' => MENU_NORMAL_ITEM,
+ );
+ $items['reference/roles'] = array(
+  'page callback' => 'doc_redirect_roles',
+  'access arguments' => array('access content'),
+  'type' => MENU_NORMAL_ITEM,
+ );
+ $items['reference/marketing'] = array(
+  'page callback' => 'doc_redirect_marketing',
+  'access arguments' => array('access content'),
+  'type' => MENU_NORMAL_ITEM,
+ );
+
+ return $items;
+}
+
+/**
+ * Callback for doc_redirect_menu
+ * Accepts the arguments specified in order:
+ *  %1: language code
+ *  %2: $doc_type (document type TID)
+ *  %3: $product_type (device type TID)
+ *  %4: $device_platform (device platform TID) (optional)
+ *  %5: $external_role (external user role TID) (optional)
+ *  %6: $version_override (string version of software version. Forces the specific release to be displayed) (optional)
+ *  
+ *  Looks for the highest release version number with those parameters and redirects to that node if found
+ *  If not found, redirects to the archive page.
+ */
+function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $arg_6 = NULL){
+  
+  $vocabularies = array('platform','external_user_role','vocabulary_8', 'vocabulary_12');
+  $languages = db_query('SELECT * FROM {languages} ORDER BY weight ASC, name ASC')->fetchAllAssoc('language');
+  
+  //this variable indexes TIDs which have been incorrectly committed to documentation (keys) to proper adjusted values (values).
+  $hack_incorrect_tids = array(1608 => 1606, 1178 => 1177);
+
+  //determine which arguments are present, and correct for
+  foreach(array($arg_1, $arg_2, $arg_3, $arg_4, $arg_5, $arg_6) as $option){
+    if (!isset($option)){
+      break;
+    }
+    //hack workaround for incorrect published links
+    else{
+      if(array_key_exists($option, $hack_incorrect_tids)){
+        $option = $hack_incorrect_tids[$option];
+      }
+    }
+    
+    $term = taxonomy_term_load($option);
+    
+    //if a result is found, and is one of the expected arguments, assign the query variables
+    if (!empty($term) && in_array($term->vocabulary_machine_name,$vocabularies)){
+
+      switch ($term->vocabulary_machine_name){
+        case 'platform':
+          $device_platform = $option;
+          break;
+        
+        case 'external_user_role':
+          $external_user_role = $option;
+          break;
+        
+        case 'vocabulary_8':
+          $doc_type = $option;
+          break;
+        
+        case 'vocabulary_12':
+          $product_type = $option;
+          break;
+      }
+    }
+    else{
+      //otherwise, it is either a language code or a string argument.
+      
+      //check language argument
+      if(array_key_exists($option,$languages) && !isset($language)){
+        $language = $option;
+        continue;
+      }
+      else{
+        //not a language code: look for other string possibilities
+        $term = taxonomy_get_term_by_name($option,'software_release');
+  
+        if(count($term) > 1){
+          drupal_set_message('There are multiple items matching the software release version specified (' . $option . '). Providing the first match.','warning');          
+        }
+  
+        switch (count($term)){
+          case 0:
+            drupal_set_message('The supplied ID <b>' . $option . '</b> does not match anything in the database, so it cannot be matched to any documentation','error');
+            drupal_goto('');
+            break;
+          
+          default:
+            $term = array_shift($term);
+            $version_override = $term->tid;
+            break;
+        }
+      }
+    }    
+  }
+  
+  //force language to English if not specified
+  if(!$language){
+    $language = 'en';
+  }
+  
+  //perform query
+  $destination = doc_redirect_find_target($language, $doc_type, $product_type, $device_platform, $version_override);
+  
+  //if nothing was returned and the language is not English, reset the language to English and try again.
+  if(!isset($destination['target_node']) && $language != 'en'){
+    $default_language = 'en';
+    $destination = doc_redirect_find_target($default_language, $doc_type, $product_type, $device_platform, $version_override);
+    if(isset($destination['target_node'])){
+      drupal_set_message('The required document is not available in ' . $languages[$language]->name . ', but it is available in English. Switching to the English-language version.','warning');
+    }
+  }
+
+  //if a positive result was found, redirect there. Otherwise assemble a coherent error message and display that.
+  if(isset($destination['target_node'])){
+    drupal_goto('node/' . $destination['target_node']);
+  }
+  else{
+    if (!$language){
+      $errors[] = 'No language code was specified.';
+    }
+    if (!$doc_type){
+      $errors[] = "No document type was specified.";
+    }
+    if (!$product_type){
+      $errors[] = "No product type was specified.";
+    }
+    
+    if ($errors){
+      $error_list = theme_item_list(array(
+        'items' => $errors,
+        'type' => 'ul',        
+      ));
+      drupal_set_title('There was a problem with your URL.');
+      $output = array(
+        '#type' => 'markup',
+        '#markup' => '<h2>One or more elements in your dynamic URL pattern are missing.</h2>
+        <p>We were unable to determine which document you are looking for. The following items are not present:</p>' . $error_list .
+        '<p>Please double-check your URL and try again, or ' . l('click here','http://support.polycom.com') . ' for the definio Support site.</p>',
+        );
+      return $output;
+    }
+    else{
+      drupal_set_title('This document isn\'t ready yet...');
+      $output = array(
+        '#type' => 'markup',
+        '#markup' => '
+          <div class="logo-behind">
+          <div class="well frosted-light col-xs-12 col-md-10 col-md-offset-1"><h2>...but it should be here soon.</h2>
+          <p>Most likely, you are seeing this message because the document has not been added to the online library yet. We are constantly adding documentation, so try again soon.</p>' .
+          '<p>' . l('Click here','http://support.polycom.com') . ' to go to the definio Support site.</p>
+          </div>
+          </div>'
+      );
+      
+      return $output;
+    }
+  }
+}
+
+
+/**
+ * Displays a grid of all taxonomy metadata
+ */
+function doc_redirect_reference() {
+  
+  $vids = array (8,12,14,21,41,11);
+  
+  drupal_set_title('Technet Metadata Reference');
+  
+  $output['title'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="container"><div class="shade row col-xs-12"><p>This page displays all of the metadata terms that can be passed from Technet through to HTML.</p></div></div>',
+    );
+  $output['header'] = array(
+    '#type' => 'markup',
+    '#markup' => '<div class="container"><div class="row">',
+    );
+  
+  foreach ($vids as $vid) {
+    $name = taxonomy_vocabulary_load($vid);
+    $output[$vid]['head'] = array(
+        '#type' => 'markup',
+        '#markup' => '<div class="column col-sm-4"><div class="panel panel-primary"><div class="panel-heading"><h4 class="panel-title">' . $name->name . '</h4></div>',
+      );
+    $output[$vid]['content'] = array(
+        '#type' => 'markup',
+        '#markup' => drupal_render(taxonomy_nested_tree_render(taxonomy_get_nested_tree($vid), array('plain_text' => TRUE))),
+      );
+    $output[$vid]['footer'] = array(
+      '#type' => 'markup',
+      '#markup' => '</div></div>',
+    );
+  }
+  $output['footer'] = array(
+    '#type' => 'markup',
+    '#markup' => '</div>',
+  );
+  
+  return $output;
+}
+
+/**
+ * Callback for current/doctypes
+ * displays a list of document types an ID#s.
+ */
+function doc_redirect_doctypes(){
+  $vid = 8;
+  $output = array(
+    'heading' => array(
+      '#type' => 'markup',
+      '#markup' => '<h1>Index of document types on Technet</h1>',
+    ),
+    'table' => array(
+      '#type' => 'markup',
+      '#markup' => theme_table(taxonomy_term_get_by_vid($vid)),
+    ),
+  );
+  
+  $output = array(
+    'first' => array(
+      '#type' => 'markup',
+      '#markup' => '<div class="panel panel-default"><div class="panel-heading"><h4 class="panel-title">Document Types</h4></div>',
+    ),
+    'content' => array(
+      '#type' => 'markup',
+      '#markup' => drupal_render(taxonomy_nested_tree_render(taxonomy_get_nested_tree($vid), array('plain_text' => TRUE))),
+    ),
+    'last' => array(
+      '#type' => 'markup',
+      '$markup' => '</div>',
+    )
+
+  );
+  return $output;
+}
+
+function taxonomy_get_nested_tree($vid_or_terms = array(), $max_depth = NULL, $parent = 0, $parents_index = array(), $depth = 0) {
+  if (!is_array($vid_or_terms)) {
+    $vid_or_terms = taxonomy_get_tree($vid_or_terms);
+  }
+  foreach ($vid_or_terms as $term) {
+    foreach ($term->parents as $term_parent) {
+      if ($term_parent == $parent) {
+        $return[$term->tid] = $term;
+      }
+      else {
+        $parents_index[$term_parent][$term->tid] = $term;
+      }
+    }
+  }
+  foreach ($return as &$term) {
+    if (isset($parents_index[$term->tid]) && (is_null($max_depth) || $depth < $max_depth)) {
+      $term->children = taxonomy_get_nested_tree($parents_index[$term->tid], $max_depth, $term->tid, $parents_index, $depth + 1);
+    }
+  }
+
+  return $return;
+}
+
+function taxonomy_nested_tree_render($tree, $options, $recurring = FALSE) {
+
+$items = array();
+  if (count($tree)) {
+    foreach ($tree as $term) {
+        $path = taxonomy_term_uri($term);
+        if($options['plain_text']) {
+          $url = $term->name . ' <span class="badge alert-info pull-right">' . $term->tid . '</span>';
+        }
+        else {
+          $url = l($term->name . ' (' . $term->tid . ')', $url, array(
+                                          'attributes' => array(
+                                            'class' => array('list-group-item'),
+                                        )));
+        }
+        $item = array(
+          'data' => $url,
+          'class' => array('list-group-item'));
+          
+      if (isset($term->children)) {
+        $item["children"] = taxonomy_nested_tree_render($term->children, $options, TRUE);
+      }
+      $items[] = $item;
+    }
+  }
+  if ($recurring) {
+    return $items;
+  }
+  
+
+  
+  return array(
+    '#theme' => 'item_list',
+    '#items' => $items,
+    '#attributes' => array('class' => 'taxonomy-tree list-group reference-list panel-content'),
+  );
+}
+
+/**
+ * Callback for current/devicetypes
+ * displays a list of device types an ID#s.
+ */
+function doc_redirect_devicetypes(){
+  $vid = 12;
+  $output = array(
+    'heading' => array(
+      '#type' => 'markup',
+      '#markup' => '<h1>Index of device types on Technet</h1>',
+    ),
+    'table' => array(
+      '#type' => 'markup',
+      '#markup' => theme_table(taxonomy_term_get_by_vid($vid)),
+    ),
+  );
+  return $output;
+}
+
+/**
+ * Callback for current/platforms
+ * displays a list of device platforms an ID#s.
+ */
+function doc_redirect_platforms(){
+  $vid = taxonomy_vocabulary_get_names();
+  $output = array(
+    'heading' => array(
+      '#type' => 'markup',
+      '#markup' => '<h1>Index of device types on Technet</h1>',
+    ),
+    'table' => array(
+      '#type' => 'markup',
+      '#markup' => theme_table(taxonomy_term_get_by_vid($vid['platform']->vid)),
+    ),
+  );
+  return $output;
+}
+
+/**
+ * Callback for current/releases
+ * displays a list of software releases and ID#s.
+ */
+function doc_redirect_releases(){
+  $vid = taxonomy_vocabulary_get_names();
+  $output = array(
+    'heading' => array(
+      '#type' => 'markup',
+      '#markup' => '<h1>Index of Release Versions on Technet</h1>',
+    ),
+    'table' => array(
+      '#type' => 'markup',
+      '#markup' => theme_table(taxonomy_term_get_by_vid($vid['software_release']->vid)),
+    ),
+  );
+  return $output;
+}
+
+/**
+ * Callback for current/roles
+ * displays a list of external user roles.
+ */
+function doc_redirect_roles(){
+  $vid = taxonomy_vocabulary_get_names();
+  $output = array(
+    'heading' => array(
+      '#type' => 'markup',
+      '#markup' => '<h1>Index of External User Roles on Technet</h1>',
+    ),
+    'table' => array(
+      '#type' => 'markup',
+      '#markup' => theme_table(taxonomy_term_get_by_vid($vid['external_user_role']->vid)),
+    ),
+  );
+  return $output;
+}
+
+/**
+ * Callback for current/roles
+ * displays a list of external user roles.
+ */
+function doc_redirect_marketing(){
+  $vid = taxonomy_vocabulary_get_names();
+  $output = array(
+    'heading' => array(
+      '#type' => 'markup',
+      '#markup' => '<h1>Index of Marketing Categories on Technet</h1>',
+    ),
+    'table' => array(
+      '#type' => 'markup',
+      '#markup' => theme_table(taxonomy_term_get_by_vid($vid['marketing_category']->vid)),
+    ),
+  );
+  return $output;
+}
+
+function taxonomy_term_get_by_vid($vid) {
+
+  $depth = 0;
+  $num_at_depth = 0;
+  $tree = taxonomy_get_tree($vid);
+
+  $table = array(
+    'header' => array('data' => array('data'=>'Term'),array('data'=>'ID#')),  
+  );
+  foreach ($tree as $term) {
+    $table['rows'][] = array(
+                        array('data'=>$term->name, 'class'=>'level-' . $term->depth),
+                        array('data'=>$term->tid, 'class'=>'tid'),
+                      );
+  }
+  $table['attributes'] = array(
+    'class' => 'redirect-index',
+  );
+  
+  return $table;
+}
+
+/**
+ * Given a document type (tid), device type (tid), and optional device platform (tid),
+ * returns an array containing:
+ * ['current_release'] = the tid of the current release version
+ * ['this_node'] = the nid of the corresponding book
+ *
+ * Returns FALSE if there was an error, or if already on the current version.
+ */
+
+function doc_redirect_find_target($language, $doc_type, $product_type, $device_platform = NULL, $version_override = NULL){
+  
+  if(isset($device_platform)){
+    $query = "
+SELECT node.nid AS nid, field_data_field_software_release.field_software_release_tid AS field_data_field_software_release_field_software_release_tid, 'node' AS field_data_field_software_release_node_entity_type
+FROM 
+{node} node
+LEFT JOIN {book} book ON node.nid = book.nid
+LEFT JOIN {node} node_book ON book.bid = node_book.nid
+LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
+LEFT JOIN {field_data_field_products} field_data_field_products ON node.nid = field_data_field_products.entity_id AND (field_data_field_products.entity_type = 'node' AND field_data_field_products.deleted = '0')
+LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
+LEFT JOIN {field_data_field_platform} field_data_field_platform ON node.nid = field_data_field_platform.entity_id AND (field_data_field_platform.entity_type = 'node' AND field_data_field_platform.deleted = '0')
+LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
+WHERE (( (node.language = '$language') AND (field_data_field_products.field_products_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) AND (field_data_field_platform.field_platform_tid = '$device_platform' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+ORDER BY field_data_field_software_release_field_software_release_tid DESC
+LIMIT 10 OFFSET 0";
+  }
+  else{
+   $query ="
+SELECT node.nid AS nid, field_data_field_software_release.field_software_release_tid AS field_data_field_software_release_field_software_release_tid, 'node' AS field_data_field_software_release_node_entity_type
+FROM 
+{node} node
+LEFT JOIN {book} book ON node.nid = book.nid
+LEFT JOIN {node} node_book ON book.bid = node_book.nid
+LEFT JOIN {menu_links} book_menu_links ON book.mlid = book_menu_links.mlid
+LEFT JOIN {field_data_field_products} field_data_field_products ON node.nid = field_data_field_products.entity_id AND (field_data_field_products.entity_type = 'node' AND field_data_field_products.deleted = '0')
+LEFT JOIN {field_data_field_document_type} field_data_field_document_type ON node.nid = field_data_field_document_type.entity_id AND (field_data_field_document_type.entity_type = 'node' AND field_data_field_document_type.deleted = '0')
+LEFT JOIN {field_data_field_software_release} field_data_field_software_release ON node.nid = field_data_field_software_release.entity_id AND (field_data_field_software_release.entity_type = 'node' AND field_data_field_software_release.deleted = '0')
+WHERE (( (node.language = '$language') AND (field_data_field_products.field_products_tid = '$product_type' ) AND (field_data_field_document_type.field_document_type_tid = '$doc_type' ) )AND(( (node.status = '1') AND (node.type IN  ('book')) AND (book_menu_links.depth = '1') )))
+ORDER BY field_data_field_software_release_field_software_release_tid DESC
+LIMIT 10 OFFSET 0";
+}
+    
+    $result = db_query($query)->fetchAll();
+    
+    // Strip out results that aren't published.
+    // @todo: Work this into the original db query? Or leave it separate so admins can be processed differently?
+    foreach($result as $key => $check) {
+      $state = workflow_node_current_state(node_load($check->nid));
+      if ($state != 36) {
+        
+        // 36 is book page published state
+        unset ($result[$key]);
+      }
+    }
+    
+    $highest_release = array_shift($result);
+    
+    $target_release = $highest_release->field_data_field_software_release_field_software_release_tid;
+    $target_node = $highest_release->nid;
+    
+
+    //override results if $version_override exists. If it exists but is not matched, nothing is changed.
+    if(isset($version_override)){
+      foreach($result as $record){
+        if($record->field_data_field_software_release_field_software_release_tid == $version_override){
+          $target_release = $version_override;
+          $target_node = $record->nid;
+          break;
+        }
+      }
+    }
+    
+    if ($target_node == NULL || $target_release == NULL){
+      return FALSE;
+    }
+    return array('target_node'=> $target_node,'target_release'=>$target_release);
+}

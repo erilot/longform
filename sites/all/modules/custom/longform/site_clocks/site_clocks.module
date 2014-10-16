@@ -1,0 +1,83 @@
+<?php
+
+function site_clocks_block_info() {
+  $blocks['site_clocks'] = array(
+   'info' => t('Site Clocks'),
+   'cache' => DRUPAL_NO_CACHE,
+  );
+  return $blocks;
+}
+
+function site_clocks_block_view($delta) {
+  
+  switch($delta){
+    case 'site_clocks':
+     //define block 
+     $blocks['subject'] = t('Learning Solution Group Sites');
+     $blocks['content'] = site_clocks_show_clocks();
+    break;
+  }
+  return $blocks;
+}
+
+function site_clocks_show_clocks(){
+ 
+ drupal_add_js(drupal_get_path('module','site_clocks') . '/js/station-clock.js');
+ drupal_add_js(drupal_get_path('module','site_clocks') . '/js/site-clocks.js');
+ 
+ $date = date_now('UTC');
+ $site_ids = site_clocks_get_sites();
+  
+ $sites = array(); 
+ $sites = entity_load('node',array_keys($site_ids));
+ $clock_size = 100;
+ 
+ //start building output string. Sites are put into a single-row table
+ $output = '<div id="site-clocks">';
+ $output .= '<table id="clock-table"><tr>';
+ 
+ foreach($sites as $site){
+  //get time zone from site entity
+  $tz = $site->field_time_zone[LANGUAGE_NONE][0]['value'];
+  $local = date_now($tz);
+  //$timestamp = date_format_date($date,'custom','U') + date_offset_get($local);
+  $day = date_day_of_week_name($local, FALSE);
+
+  $offset = date_offset_get($local)/60;
+
+  $cell = '<td>
+   <p class="site">' . l($site->title, 'node/' . $site->nid) . '</p>
+   <p class="day">' . $day . '</p>
+   <canvas id="' . strtolower(urlencode($site->title)) . '" class="clock" width="' . $clock_size . '" height="' . $clock_size . '" start="' . $offset . '">canvas element</canvas>
+   <p class="date">' . date_format_date($local,'custom','d-F (A)') . '</p>   
+   </td>';
+  
+  $output .= $cell;
+
+  $settings[strtolower(urlencode($site->title))] = $offset;
+ }  
+ drupal_add_js(array('site-clocks' => $settings), 'setting');
+
+ $output .= '</tr></table></div>';
+ 
+ return $output;
+
+}
+
+/**
+ * Returns an array of site entities
+ */
+function site_clocks_get_sites(){
+ 
+ $query = new EntityFieldQuery();
+ 
+ $query->entityCondition('entity_type','node')
+       ->entityCondition('bundle','documentation_group')
+       ->propertyCondition('status',1);
+       
+ $result = $query->execute();
+ 
+ return $result['node'];
+}
+
+

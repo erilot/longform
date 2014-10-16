@@ -1,0 +1,11 @@
+name = "Document Manager"
+description = "Controls creation and workflow functions for managed documents"
+package = "Longform"
+dependencies[] = longform_core
+dependencies[] = querypath
+dependencies[] = relation
+dependencies[] = workflow
+
+core = 7.x
+php = 5
+version = 7.x-1.0

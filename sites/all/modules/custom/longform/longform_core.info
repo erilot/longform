@@ -1,0 +1,6 @@
+name = "Longform Core"
+description = "Enables the core framework for document publishing and administration."
+package = "Longform"
+core = 7.x
+
+version = 7.x-1.0

@@ -1,0 +1,16 @@
+@File: patchlist.txt
+====================
+
+Record patches applied to modules here; in the event of an upgrade that overwrites them, you will probably need to re-apply patches.
+Remove them from this list once the patch is committed to a distributed version and is no longer needed.
+
+Module
+==========
+
+Hierarchical select:
+
+Views: https://drupal.org/node/1995892 -- jQuery.ui dialog conflict with jQuery 1.7
+
+Admin menu: https://drupal.org/node/2114587 -- .browser.msie removed in jQuery1.9+
+
+Panels: 

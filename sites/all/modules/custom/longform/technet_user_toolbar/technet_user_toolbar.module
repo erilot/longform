@@ -1,0 +1,844 @@
+<?php
+// $Id$
+/**
+ * File: language_selector.module
+ */
+
+ /**
+* Implements hook_menu().
+*/
+function longform_user_toolbar_menu() {
+  return array(
+    'language_selector/ajax' => array(
+      'page callback' => 'longform_user_toolbar_ajax_gt_callback',
+      'access callback' => TRUE,
+      'type' => MENU_CALLBACK,
+    ),
+  );
+}
+
+
+/**
+ * admin settings page
+ */
+function longform_user_toolbar_settings() {
+  $intro_text = <<<HtmlCode
+<p>Placeholder for future Language Selector options.</p>
+HtmlCode;
+
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function longform_user_toolbar_block_info() {
+  
+  $blocks['machine_translations'] = array(
+  'info' => t('Machine Translations'),
+  'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+  
+  $blocks['formal_translations'] = array(
+    'info' => t('Formal Translations'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+   );
+  
+  $blocks['navigation_help'] = array(
+    'info' => t('Navigation Help'),
+    'cache' => DRUPAL_CACHE_GLOBAL,
+   );
+  
+  $blocks['print_options'] = array(
+    'info' => t('Print Options'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+   );
+  
+  $blocks['tn_spacer'] = array(
+    'info' => t('Spacer'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+   );
+  $blocks['welcome_block'] = array(
+    'info' => t('Technet Welcome Block'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+   );
+  $blocks['profile_block'] = array(
+    'info' => t('User Profile Block'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+   );
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view().
+ */
+function longform_user_toolbar_block_view($delta) {
+  
+  $node = menu_get_object();
+  
+  switch($delta){
+
+    case 'machine_translations':      
+      //define block 
+      $blocks['subject'] = t('Machine Translations');
+      $blocks['content'] = longform_user_toolbar_machine($node);
+    break;
+  
+    case 'formal_translations':
+      $blocks['subject'] = t('Formal Translations');
+      $blocks['content'] = longform_user_toolbar_formal($node);
+    break;
+  
+    case 'navigation_help':
+      //define block
+      $blocks['subject'] = t('definio Technet Help');
+      $blocks['content'] = longform_user_toolbar_help_output($node);
+    break;
+  
+    case 'print_options':
+      $blocks['subject'] = t('Print Options');
+      $blocks['content'] = longform_user_toolbar_print_output($node); 
+    break;
+  
+    case 'tn_spacer':      
+      $output = '<div class="spacer">&nbsp;</div>';
+      $blocks['subject'] = t('Spacer');
+      $blocks['content'] = $output;
+    break;
+  
+    case 'welcome_block':
+      $blocks['subject'] = t('Technet Welcome Block');
+      $blocks['content'] = longform_manage_user_welcome_block($node);
+    break;
+  
+    case 'profile_block':
+      $blocks['subject'] = t('Technet User Profile Block');
+      $blocks['content'] = longform_manage_user_profile_block($node);
+    break;
+  }
+  return $blocks;
+}
+
+
+/**
+ * Provides customized content for display on user profile pages.
+ *
+ * Assumes bootstrap themeing.
+ *
+ * This should almost certainly be in a theme function along with longform_manage_user_welcome_block().
+ *
+ */
+function longform_manage_user_profile_block($node) {
+  global $user;
+  
+  $viewed_user = user_load(menu_get_object('user')->uid);
+  $logged_in_user = user_load($user->uid);
+  $owned = $viewed_user->uid == $logged_in_user->uid ? TRUE : FALSE;
+  
+  
+  $avatar = theme('user_picture', array('account' =>$viewed_user));
+  $edit_profile_link =  $owned ? l(t('Edit Profile'), 'user/' . $user->uid . '/edit', array('HTML' => TRUE, 'attributes' => array('class' => array('btn', 'btn-primary', 'btn-sm', 'btn-block')))) : FALSE;
+  
+  $email = $owned ? FALSE : l('email', 'mailto:' . $viewed_user->mail, array('absolute' => TRUE, 'attributes' => array('class' => array('btn', 'btn-primary', 'btn-sm', 'btn-block'))));
+
+  $user_nav = '<ul class="nav nav-pills">' . $email . $email2 . '</ul>';
+  
+  $user_group_nodes = og_get_groups_by_user($viewed_user);
+  $groups = node_load_multiple($user_group_nodes['node']);
+
+  $linked = TRUE;
+  $print_groups = count($groups) ? TRUE : FALSE;
+  
+  if($print_groups) {
+    $group_list = '<ul class="list-inline">';
+    
+    foreach($groups as $group) {
+      switch ($linked) {
+	case TRUE:
+	  $group_list.= '<li class="list-item">' . l($group->title,'node/' . $group->nid) . '</li>';
+	  break;
+	
+	default:
+	  $group_list.= '<li>' . $group->title . '</li>';
+	  break;
+      }
+    }
+    
+    $group_list.= '</ul>';
+  }
+  
+  $block_first = '
+    <div class="profile-block-first col-sm-9">
+      <div class="jumbotron">
+      <h1>' . $viewed_user->name . '</h1>'
+       . $group_list . '
+      </div>
+    </div>';
+  
+  $block_last = '
+  <div class="profile-block-last col-sm-3">
+    <div class="profile-picture">' . $avatar . '</div>
+    <div class="profile-edit-button">' . $edit_profile_link . '</div>
+    <div class="profile-email-button">' . $email . '</div>
+  </div>';
+  
+  return $block_first . $block_last;
+}
+
+/**
+ * Provides a welcome message block for users when they log into Technet
+ *
+ * Displayed as a bootstrap jumbotron, with message left-side and selections right-side
+ *
+ */
+function longform_manage_user_welcome_block($node) {
+  global $user, $base_path;
+  
+  $buttons = array(
+    'New Import Ticket' => '<a href="' . $base_path . 'node/add/import-ticket"class="btn btn-primary btn-block major">New Import Ticket</a>',
+    //'My Documents' => '<a href="' . $base_path . 'document-tracking/user?uid=' . $user->name . '"class="btn btn-primary btn-block major">My Documents</a>',
+    'My Unpublished Tickets' => '<a href="' . $base_path . 'document-tracking/user?uid=' . $user->name . '&sid=5"class="btn btn-primary btn-block major">My Unpublished Tickets</a>',
+    'LSG Style Guide' => '<a href="' . $base_path . 'documents/lsg" class="btn btn-success btn-block major">LSG Style Guide</a>',
+    'My Profile' => '<a href="' . $base_path . 'user" class="btn btn-primary btn-block major">My Profile</a>',
+    //'Edit Prifle' => longform_manage_user_self_service_menu($node),
+  );
+
+  $output = '
+  <div class="jumbotron">
+    <div class="row">
+      <div class="col-sm-8">
+        <h1>Definio Communications</h1>
+	<p>Welcome to the Document Publishing System.</p>
+      </div>
+      <div class="col-sm-4">
+	<div class="nav nav-pills nav-stacked">';
+
+	foreach ($buttons as $label => $button) {
+	  $output.=$button;
+	}
+	
+$output.='</div>
+      </div>
+    </div>
+  </div>';
+  return $output;
+}
+
+/**
+ * Provides a useful menu of user self-serve functions
+ *
+ * @param $node
+ * 	The current node object. Optional.
+ *
+ * @param $options
+ * 	An options array. Currently supports 'theme' => 'dropdown-menu' to override button styling.
+ * 	
+ */
+function longform_manage_user_self_service_menu($node, $options) {
+
+  global $user, $base_path;
+  
+  $theme = $options['theme'] ? $options['theme'] : 'default';
+  
+  switch ($theme) {
+    
+    case 'dropdown-menu' :
+      $class = array('user-menu-item');
+      break;
+    
+    default:
+      $class = array('btn','btn-block','btn-primary','major', 'user-menu-item');
+      break;
+  }
+  
+  $global_attrs = array(
+    'attributes' => array (
+      'class' => $class,
+    ),
+  );
+  
+  // User edit option array. The key will become the button label; data should be a valid drupal path
+  $buttons = array(
+    'My Profile' => l('My profile', $base_path . 'user', $global_attrs),
+    'Edit Account' => l('Edit account', $base_path . 'user/' . $user->uid . '/edit', $global_attrs),
+    'Log out' => l('Log out', $base_path . 'user/logout/' . $user->uid, $global_attrs),
+  );
+
+  $output = '<div class="user-menu item-list"><ul class="nav nav-pills nav-stacked">';
+  foreach($buttons as $button) {
+    $output.="<li>$button</li>";
+  }
+  $output.="</ul></div>";
+ 
+ return $output;
+  
+}
+
+/**
+ * Provides a styled menu of user-specific document options.
+ *
+ * @param $node
+ * 	The current node object. Optional.
+ *
+ * @param $options
+ * 	An options array. Currently supports 'theme' => 'dropdown-menu' to override button styling.
+ * 	
+ */
+function longform_user_documents_menu($node, $options) {
+
+  global $user, $base_path;
+  
+  $theme = $options['theme'] ? $options['theme'] : 'default';
+  
+  switch ($theme) {
+    
+    case 'dropdown-menu' :
+      $class = array('user-menu-item');
+      break;
+    
+    default:
+      $class = array('btn','btn-block','btn-primary','major', 'user-menu-item');
+      break;
+  }
+  
+  $global_attrs = array(
+    'attributes' => array (
+      'class' => $class,
+    ),
+    'html' => TRUE,
+  );
+  
+  // User edit option array. The key will become the button label; 'path' is the link URL,
+  // 'query' is an array of query pairs to be appended to the URL.
+  
+  $buttons = array(
+    'My documents' => array (
+      'path' => $base_path . 'document-tracking/user',
+      'query' => array(
+	'uid' => $user->name,
+      ),
+    ),
+    
+    'Unpublished' => array(
+      'path' => $base_path . 'document-tracking/user',
+      'query' => array(
+	'uid' => $user->name,
+	'sid' => 5,
+      ),
+    ),
+    
+    'Published' => array(
+      'path' => $base_path . 'document-tracking/user',
+      'query' => array(
+	'uid' => $user->name,
+	'sid' => 4,
+      ),
+    ),
+  );
+
+  $output = '<div class="user-menu"><ul class="nav nav-pills nav-stacked">';
+  foreach($buttons as $label => $button) {
+    $attrs = $button['query'] ? $global_attrs + array('query' => $button['query']) : $global_attrs;
+    
+    $output.='<li>' . l($label, $button['path'], $attrs) . '</li>';
+  }
+  $output.="</ul></div>";
+ 
+ return $output;
+  
+}
+
+/**
+ * Provides a styled menu of publishing resources.
+ *
+ * @TODO: This ought to be derived from Drupal's menu system, not a custom construct
+ *
+ * @param $node
+ * 	The current node object. Optional.
+ *
+ * @param $options
+ * 	An options array. Currently supports 'theme' => 'dropdown-menu' to override button styling.
+ * 	
+ */
+function longform_publishing_resources_menu($node, $options) {
+
+  global $user, $base_path;
+  
+  $theme = $options['theme'] ? $options['theme'] : 'default';
+  
+  switch ($theme) {
+    
+    case 'dropdown-menu' :
+      $class = array('user-menu-item');
+      break;
+    
+    default:
+      $class = array('btn','btn-block','btn-primary','major', 'user-menu-item');
+      break;
+  }
+  
+  $global_attrs = array(
+    'attributes' => array (
+      'class' => $class,
+    ),
+  );
+  
+  // User edit option array. The key will become the button label; data should be a valid drupal path
+  $buttons = array(
+    'LSG Style Guide' => l('LSG Style Guide', $base_path . 'documents/lsg', $global_attrs),
+    'Technet Publishing Guide' => l('Technet Publishing Guide', $base_path . 'documents/en/learning-solutions-group/technet-details/publish-documents-polycom-technet', $global_attrs),
+ );
+
+  $output = '<div class="publishing-resources-menu"><ul class="nav nav-pills nav-stacked">';
+  foreach($buttons as $button) {
+    $output.="<li>$button</li>";
+  }
+  $output.="</ul></div>";
+ 
+ return $output;
+  
+}
+
+
+// HTML Builder Functions
+
+function longform_user_toolbar_machine($node){
+  
+  drupal_add_library('system', 'drupal.ajax');
+  
+  //translatable strings
+  $block_title = t("Languages");
+  $machine_translation_title = t("Machine Translations");
+  
+  $output = '<div id="machine-translations" class="translation-block menu-drop-options">';
+  
+  // If the node is flagged as non-translatable, return without generating anything
+  if ($node->type != 'book' || flag_get_flag('no_translate')->is_flagged($node->nid)) {
+    $output .= '<ul class="nav nav-pills nav-stacked"><li class="disabled">This page does not allow machine translations.</li></ul></div>';
+    return $output;
+  }
+  
+  //if GT cookie exists, don't load disclaimer
+  if (!$_COOKIE['google-translate-ok']){
+    $output .= '<ul class="machine-options nav nav-pills nav-stacked prevent-collapse"><li id="gt-disclaimer">' . gt_disclaimer() . '</a></li> </ul>'. gt_widget();
+  }
+  else{
+    $output .= gt_widget();
+  }
+  
+  $output .='</div>';
+
+  return $output;
+}
+
+function longform_user_toolbar_formal($node){
+  
+  drupal_add_library('system', 'drupal.ajax');
+  
+  //translatable strings
+  $formal_translation_title = t("Formal Translations");
+  
+  $formal_translation_options = longform_get_node_languages();
+  
+  //$formal_translation_options = get_node_translations($node->nid, $node->language);
+  if(!$formal_translation_options['items']) {
+    $sad = t('None');
+    $formal_translation_options = "<li class=\"disabled\"><a>$sad</a></li>";
+  }
+  else {
+    $formal_translation_options = theme_item_list($formal_translation_options);
+  }
+
+    $formal_block = '
+    <div id="formal-translations" class="translation-block menu-drop-options">
+      <ul class="formal-options nav nav-pills nav-stacked">' . $formal_translation_options . '</ul>
+    </div>';
+
+
+  //NOTE: future AJAX implementation of this menu should use this link: <a href="'.base_path().'language_selector/ajax" class="use-ajax">...</a>
+  //build HTML
+
+  $ls_output = '<div id="language-options" class="menu-drop-options-container">';
+  $ls_output .=  $formal_block;
+
+  
+  $ls_output .='</div>';
+
+  return $ls_output;
+}
+
+
+function longform_user_toolbar_ajax_gt_callback($nid = 26126) {
+  $node = node_load($nid);
+  
+  $output = $node->body[LANGUAGE_NONE][0]['value'];
+  $commands = array(); // define the div id to return output.
+  $commands[] = ajax_command_html('#gt-disclaimer', $output);
+
+  $response = array('#type' => 'ajax', '#commands' => $commands);
+  //$response = "<h1>HI MOM</h1>";
+  ajax_deliver($response);
+
+}
+
+function longform_user_toolbar_help_output($node){
+  $block_title = t("About This Interface");
+  $help_image = file_create_url('public://static/help_screen.png');
+  $help_output = '
+
+  <a href="#" title="How to use this interface" data-toggle="modal" data-target="#help-nav"><span class="glyphicon glyphicon-question-sign"></span>How to use this interface</a>
+  
+  <div id="help-nav" class="modal fade help help-nav">
+    <div class="modal-dialog">
+      <div class="modal-content">
+	<div class="modal-header">
+	  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	    <h4 class="modal-title">' . $block_title . '</h4>
+	</div>
+	<div class="modal-body">
+	  <img src="' . $help_image . '"/>
+	</div>
+	<div class="modal-footer">
+	  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	</div>
+      </div>
+    </div>
+  </div>';
+  return $help_output;  
+}
+
+function longform_user_toolbar_print_output($node){
+  $block_title = t("Print Options");
+  $file_download_title = t("PDF Downloads");
+  $print_download_title = t("Print Functions");
+  $generic_pdf_label = t ("Download a PDF");
+  $print_link_label = t("Print this page");
+  
+  //build file download block. If the item is related to a controller, get the files uploaded there. Otherwise, refer to the book cover page.
+  if($node->field_document_relation && $node->type = 'book'){
+    $relation = relation_load($node->field_document_relation[LANGUAGE_NONE][0]['value']);
+    $book_node = node_load($relation->endpoints[LANGUAGE_NONE][0]['entity_id']);
+  }
+  else $book_node = node_load($node->book['bid']);
+  
+dpm($auto_pdf,'auto pdf');
+  if(count($book_node->field_manual_pdf) >= 1) {
+    //assemble array of uploaded files
+  
+    $file_array = array();
+    $pdf_count = 0;
+    
+    foreach ($book_node->field_manual_pdf['und'] as $file){
+      $temp = array();
+      $temp['filename'] = $file['filename'];
+      $temp['url'] = file_create_url($file['uri']);
+      switch ($file['filemime']){
+        case 'application/pdf':
+          $temp['type'] = 'pdf';
+	  $pdf_count++;
+          break;
+        default:
+          $temp['type'] = 'other';
+          break;
+      }
+      switch ($temp['type']) {
+	case 'pdf':
+	  $glyphicon = "<span class=\"glyphicon glyphicon-download\"></span>";
+	  break;
+	case 'other':
+	  $glyphicon = "<span class=\"glyphicon glyphicon-file\"></span>";
+	  break;
+      }
+      
+      $link = l($glyphicon . $generic_pdf_label, $temp['url'], array(
+	  'html' => TRUE,
+	  'attributes' => array(
+	    'class' => array($temp['type']),
+	    ),
+	  )
+       );
+      $file_list .= '<li class="file-downloads">' . $link . PHP_EOL;
+    }
+    
+    // If manually-loaded PDFs are present, they will always supercede auto-generated ones.
+    if($pdf_count == 0 && isset($auto_pdf)) {
+      $link = l('<span class=\"glyphicon glyphicon-download\"></span>' . $generic_pdf_label, $auto_pdf['url'], array(
+	  'html' => TRUE,
+	  'attributes' => array(
+	    'class' => array('pdf', 'auto-generated'),
+	    ),
+	  )
+       );
+ 
+      $file_list .= '<li class="file-downloads">' . $link . PHP_EOL;
+    }
+    
+    $file_block =  '<div id="file-downloads" class="menu-drop-options">
+			<h2 class="block-title">' . t('Downloads') . '</h2>
+                        <ul class="files nav nav-pills nav-stacked">' . $file_list . '</ul>
+                    </div>';
+  }
+
+    //collect print options
+    $glyphicon = '<span class="glyphicon glyphicon-print"></span>';
+    $print_link = extract_body(qp(print_insert_link(),'a')->text($print_link_label)->prepend($glyphicon)->top()->html());
+    $print_list = '<li class="print-option">'.$print_link.'</li>'; 
+    
+    $print_block = '<div id="print-functions" class="menu-drop-options">
+		      <h2 class="block-title">' . t('Print Options') . '</h2>
+                      <ul class="files nav nav-pills nav-stacked">'.$print_list.'</ul>
+                    </div>';
+                    
+   return array('print' => $print_block, 'file' => $file_block);  
+
+}
+
+
+
+// Library Functions
+
+function gt_widget(){
+  
+  if (!$_COOKIE['google-translate-ok']){
+    $gt_class = '"gt-widget hidden prevent-close"';
+  }
+  else{
+    $gt_class = '"gt-widget prevent-close"';
+  }
+  
+  //set language variables. First is the site language (derived from global $language variable)
+  global $language;
+  $site_language = "'".($language->language)."'";
+  
+  //Specify included languages. Currently this is all but Japanese (jp).
+  //@TODO: dynamically generate this list based on available formal translations
+  $included_languages = "'af,ar,az,be,bg,bn,ca,cs,cy,da,de,el,en,eo,es,et,eu,fa,fi,fr,ga,gl,gu,hi,hr,ht,hu,hy,id,is,it,iw,ka,kn,ko,la,lt,lv,mk,ms,mt,nl,no,pl,pt,ro,ru,sk,sl,sq,sr,sv,sw,ta,te,th,tl,tr,uk,ur,vi,yi,zh-CN,zh-TW'";
+
+  //generate HTML and return it to block
+  
+  return "
+    <div id=\"google_translate_element\" class=$gt_class>
+      &nbsp;</div>
+    <script type=\"text/javascript\">
+    function googleTranslateElementInit() {
+      new google.translate.TranslateElement({pageLanguage: $site_language, includedLanguages: $included_languages, layout: google.translate.TranslateElement.InlineLayout.SIMPLE, autoDisplay: false}, 'google_translate_element');
+    }
+
+    jQuery(document).ready(function() {
+
+      jQuery(document.head).append(decodeURIComponent('%3Cscript%20src%3D%22http%3A%2F%2Ftranslate.google.com%2Ftranslate_a%2Felement.js%3Fcb%3DgoogleTranslateElementInit%22%3E%3C%2Fscript%3E'));
+
+      });
+
+    </script>
+";
+// This <script/> chunk was taken out of the above and replaced with the (document).ready call. Saved here as a backup.
+// <script type="text/javascript" src="//translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
+}
+
+
+function gt_disclaimer(){
+  
+  //set label for GT switch
+  $activate_text = t("Google Translate");
+  
+  //generate HTML and return it to block
+  $return = '<a href="#" data-toggle="modal" data-target="#disclaimer">' . $activate_text . '</a>';
+
+  $return.='
+  <div class="modal fade disclaimer" id="disclaimer" tabindex="-1" role="dialog" aria-labelledby="GoogleTranslateDisclaimer" aria-hidden="true">
+    <div class="modal-dialog">
+      <div class="modal-content">
+	<div class="modal-header">
+	  <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+	  <h4 class="modal-title" id="myModalLabel">Warning! Machine translations may not be accurate.</h4>
+	</div>
+	<div class="modal-body row">'
+	  . disclaimer_bs() . '
+	</div>
+	<div class="modal-footer">
+	  <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+	</div>
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->';
+  
+return $return;
+}
+
+function disclaimer_bs() {
+  $array = disclaimer_array();
+  
+  $i = 0;
+  foreach ($array as $code=>$language) {
+    $tab[] = '<a href="#language-container-' . $i . '" class="justify btn-tb-fixed">' . $language['language'] . '</a>';
+    
+    $class = '';
+    if($i==0){
+      $class = " active";
+    }
+    
+    $containers[] =
+    '<div class="tab-pane' . $class . '" id="language-container-' . $i . '">'
+    . $language['body']
+    . '<div class="btn-group pull-right">
+	<button class="btn btn-default cancel" data-dismiss="modal">' . $language['cancel'] . '</button>
+	<button class="btn btn-success accept" langcode="' . $code . '">' . $language['accept'] . '</button>
+      </div>'
+    . '</div>';
+    
+    $i++;
+  }
+  
+  $tab_list_array = array(
+    'title' => NULL,
+    'type' => 'ul',
+    'items' => $tab,
+    'attributes' => array(
+      'class' => array('language-list nav nav-pills nav-stacked'),
+    ),
+  );
+  
+  $tabs = str_replace('class="item-list"', 'class="col-md-3"', theme_item_list($tab_list_array));
+  $tabs = str_replace('li class="first"', 'li class="first active"', $tabs);
+  
+  foreach($containers as $container) {
+    $text.=$container . PHP_EOL;
+  }
+  
+  $text = '<div class="col-sm-9">' . PHP_EOL . '<div class="tab-content">' . PHP_EOL . $text . PHP_EOL . '</div></div>' . PHP_EOL;
+  $script = "<script type=\"text/javascript\">jQuery('.language-list a').click(function (e) {e.preventDefault();jQuery(this).tab('show');});</script>";
+  $output =
+    '<div>' . PHP_EOL . $tabs . PHP_EOL . $text . PHP_EOL . $script . '</div>';
+  return $output;
+}
+
+
+function disclaimer_array() {
+  
+  // Declare each language as an array element
+  
+  $gt['en'] = array(
+    'language' => 'English',
+    'body' => '<p>You are cautioned that the translation of this document is generated by a machine; therefore, the translated document may have errors and be inconsistent with the original English language version of the document. The English language version of this document shall be considered the governing document related to the definio product.</p>
+	      <p>If there is any contradiction between the English language version of the document and the translated version of the document, the English language version of the document shall take precedence.</p>
+	      <p>The translation is provided for your convenience only. Neither Google nor definio shall be responsible for translated content or for the performance of the translation tool. If you require further assistance on non-translation issues, please contact definio support.</p>
+	      ',
+    'accept' => 'Accept Agreement',
+    'cancel' => 'Cancel',
+  );
+  $gt['de'] = array(
+    'language' => 'Deutsch',
+    'body' => '<p>Sie werden darauf hingewiesen, dass es sich bei der &Uuml;bersetzung dieses Dokuments um eine maschinelle &Uuml;bersetzung handelt und daher das &uuml;bersetzte Dokument Fehler enthalten und nicht mit dem in englischer Sprache verfassten Originaldokument &uuml;bereinstimmen kann. Die Version dieses Dokuments in englischer Sprache ist das f&uuml;r das definio-Produkt ma&szlig;gebliche Dokument.</p>
+	      <p>Im Falle von Abweichungen zwischen der englischen Version des Dokuments und der &uuml;bersetzten Version des Dokuments hat die englische Version des Dokuments Vorrang.</p>
+	      <p>Diese &Uuml;bersetzung wird nur zur Hilfestellung angeboten. Weder Google noch definio sind f&uuml;r &uuml;bersetze Inhalte oder die Leistung des &Uuml;bersetzungswerkzeugs verantwortlich. Weitere nicht auf &Uuml;bersetzung bezogenen Unterst&uuml;tzung erhalten Sie beim definio-Support.</p>
+	      ',
+    'accept' => 'Vereinbarung annehmen',
+    'cancel' => 'Abbrechen',
+  );  
+  $gt['es'] = array(
+    'language' => 'Espa&ntilde;ol',
+    'body' => '<p>Se advierte que la traducci&oacute;n de este documento se ha generado de forma autom&aacute;tica, por lo que el documento traducido puede contener errores y ser incoherente con la versi&oacute;n original en ingl&eacute;s del documento. La versi&oacute;n en ingl&eacute;s de este documento se considerar&aacute; el documento regulador en relaci&oacute;n con el producto de definio.</p>
+	      <p>En caso de contradicci&oacute;n entre la versi&oacute;n en ingl&eacute;s del documento y la versi&oacute;n traducida del documento, tendr&aacute; prioridad la versi&oacute;n en ingl&eacute;s del documento.</p>
+	      <p>La traducci&oacute;n &uacute;nicamente se suministra por razones pr&aacute;cticas. Ni Google ni definio ser&aacute;n responsables del contenido traducido o del rendimiento de la herramienta de traducci&oacute;n. Si necesita m&aacute;s ayuda sobre cuestiones no relacionadas con la traducci&oacute;n, p&oacute;ngase en contacto con el servicio de asistencia t&eacute;cnica de definio.</p>
+	      ',
+    'accept' => 'Aceptar acuerdo',
+    'cancel' => 'Cancelar',
+  );
+  $gt['fr'] = array(
+    'language' => 'Fran&ccedil;ais',
+    'body' => '<p>Il est port&eacute; &agrave; votre attention que la traduction de ce document est g&eacute;n&eacute;r&eacute;e par une machine et, que par cons&eacute;quent, le document traduit peut contenir des erreurs et &ecirc;tre en contradiction avec la version originale en langue anglaise. La version en langue anglaise de ce document doit &ecirc;tre consid&eacute;r&eacute;e comme le document de r&eacute;f&eacute;rence li&eacute; au produit definio.</p>
+	      <p>S&#39;il y a une contradiction entre la version en langue anglaise du document et la version traduite, la version anglaise du document pr&eacute;vaut.</p>
+	      <p>La traduction est fournie seulement &agrave; titre d&#39;information. Ni Google, ni definio ne pourra &ecirc;tre tenu responsable du contenu traduit ou des performances de l&#39;outil de traduction. Si vous avez besoin d&#39;aide suppl&eacute;mentaire ne concernant pas la traduction, veuillez contacter le support technique de definio.</p>
+	      ',
+    'accept' => 'Accepter le contrat',
+    'cancel' => 'Annuler',
+  );
+  $gt['it'] = array(
+    'language' => 'Italiano',
+    'body' => '<p>Si avvisa che la traduzione del presente documento &egrave; stata generata da una macchina. Pertanto, il documento tradotto pu&ograve; contenere errori e presentare differenze rispetto alla versione in lingua inglese del documento stesso. La versione in lingua inglese del presente documento deve essere considerata come il documento principale correlato al prodotto definio.</p>
+	      <p>In caso di eventuali differenze tra la versione in lingua inglese e la versione tradotta del documento, assumer&agrave; la precedenza la versione in lingua inglese.</p>
+	      <p>La traduzione &egrave; fornita esclusivamente per comodit&agrave; dell&#39;utente. Google o definio non potranno essere ritenuti responsabili del contenuto tradotto o delle prestazioni dello strumento di traduzione. Per ulteriori informazioni su problemi non correlati alla traduzione, contattare il servizio di supporto tecnico definio.</p>
+	      ',
+    'accept' => 'Accetta contratto',
+    'cancel' => 'Prossimo',
+  );
+  $gt['ko'] = array(
+    'language' => '한국어',
+    'body' => '<p>본 문서의 번역은 기계에 의해 생성되므로, 번역된 문서에 오류가 있을 수 있고 문서의 원래 영어 버전과 일치하지 않을 수 있다는 점에 유의하시기 바랍니다. 본 문서의 영어 버전은 definio 제품과 관련된 관리 운영 문서로 간주됩니다.</p>
+	      <p>본 문서의 영어 버전과 번역본의 내용이 상충되는 경우 영어 버전이 우선합니다.</p>
+	      <p>번역본은 단지 편의상 제공됩니다. Google이나 definio은 번역된 내용 또는 번역 도구의 성능에 대해 책임지지 않습니다.미번역 문제에 대한 추가 지원이 필요한 경우 definio 지원팀 에 문의하시기 바랍니다.</p>
+	      ',
+    'accept' => '동의',
+    'cancel' => '취소',
+  );
+  $gt['hu'] = array(
+    'language' => 'Magyar',
+    'body' => '<p>Felh&iacute;vjuk sz&iacute;ves figyelm&eacute;t, hogy a jelen dokumentum ford&iacute;t&aacute;s&aacute;t ford&iacute;t&oacute;g&eacute;p k&eacute;sz&iacute;tette; ez&eacute;rt a ford&iacute;t&aacute;sban előfordulhatnak hib&aacute;k vagy elt&eacute;r&eacute;sek a dokumentum angol nyelvű eredetij&eacute;hez k&eacute;pest. A definio term&eacute;khez kapcsol&oacute;d&oacute;an a jelen dokumentum angol nyelvű v&aacute;ltozata tekintendő ir&aacute;nyad&oacute;nak.</p>
+	      <p>Amennyiben a dokumentum angol nyelvű v&aacute;ltozata &eacute;s leford&iacute;tott v&aacute;ltozata k&ouml;z&ouml;tt ellentmond&aacute;s &aacute;ll fenn, &uacute;gy a dokumentum angol nyelvű v&aacute;ltozata &eacute;lvez elsőbbs&eacute;get.</p>
+	      <p>A ford&iacute;t&aacute;s kiz&aacute;r&oacute;lag az &Ouml;n k&eacute;nyelm&eacute;t szolg&aacute;lja. Sem a Google, sem a definio nem v&aacute;llal felelőss&eacute;get a leford&iacute;tott tartalom vagy a ford&iacute;t&oacute;eszk&ouml;z teljes&iacute;tm&eacute;nye ir&aacute;nt. Amennyiben a ford&iacute;t&aacute;son k&iacute;v&uuml;l egy&eacute;b k&eacute;rd&eacute;sben tov&aacute;bbi seg&iacute;ts&eacute;gre van sz&uuml;ks&eacute;ge, k&eacute;rj&uuml;k, forduljon a definio &uuml;gyf&eacute;lszolg&aacute;lat&aacute;hoz.</p>
+	      ',
+    'accept' => 'Szerződ&eacute;s elfogad&aacute;sa',
+    'cancel' => '&eacute;rv&eacute;nytelen&iacute;t',
+  );
+  $gt['nn'] = array(
+    'language' => 'Norsk',
+    'body' => '<p>Du b&oslash;r v&aelig;re oppmerksom p&aring; at oversettelsen av dette dokumentet er gjort av en maskin, og det oversatte dokumentet kan derfor inneholde feil og uoverensstemmelser i forhold til den opprinnelige engelskspr&aring;klige utgaven av dokumentet. Den engelskspr&aring;klige utgaven av dette dokumentet skal anses som det gjeldende dokumentet i tilknytning til definio-produktet.</p>
+	      <p>Hvis det er noen motsetning mellom den engelskspr&aring;klige utgaven av dokumentet og den oversatte utgaven av dokumentet, skal den engelskspr&aring;klige utgaven av dokumentet ha forrang.</p>
+	      <p>Oversettelsen er kun gitt til hjelp for deg. Verken Google eller definio p&aring;tar seg noe ansvar for det oversatte innholdet eller for ytelsen til oversettelsesverkt&oslash;yet. Hvis du trenger mer hjelp om problemer som ikke gjelder oversettelse, ta kontakt med definios st&oslash;ttetjeneste.</p>
+	      ',
+    'accept' => 'Godta avtale',
+    'cancel' => 'Avbryt',
+  );
+  $gt['pl'] = array(
+    'language' => 'Polski',
+    'body' => '<p>Należy zwr&oacute;cić uwagę, że dokument został przetłumaczony maszynowy i z tego powodu może zawierać błędy oraz odbiegać od angielskiej wersji językowej. Za obowiązujący dokument dotyczący produktu firmy definio należy uważać wersję w języku angielskim.</p>
+	      <p>W przypadku sprzeczności pomiędzy angielską wersją językową dokumentu a jego tłumaczeniem, ważna jest angielska wersja językowa.</p>
+	      <p>Tłumaczenie zostało dostarczone jedynie dla wygody użytkownika. Google ani definio nie ponoszą odpowiedzialności za przetłumaczoną treść ani skuteczność narzędzi użytych do tłumaczenia. Jeżeli potrzebna będzie dodatkowa pomoc w sprawach niezwiązanych z tłumaczeniem, prosimy o kontakt z pomocą techniczną firmy definio.</p>
+	      ',
+    'accept' => 'Zaakceptuj umowę',
+    'cancel' => 'Anuluj',
+  );
+  $gt['pt-br'] = array(
+    'language' => 'Portugu&ecirc;s',
+    'body' => '<p>Esteja ciente de que a tradu&ccedil;&atilde;o deste documento &eacute; gerada por uma m&aacute;quina. Portanto, o documento traduzido pode conter erros e ser inconsistente com a vers&atilde;o original do documento em ingl&ecirc;s. A vers&atilde;o em ingl&ecirc;s deste documento deve ser considerada o documento vigente com rela&ccedil;&atilde;o ao produto definio.</p>
+		<p>Caso haja qualquer contradi&ccedil;&atilde;o entre a vers&atilde;o em ingl&ecirc;s do documento e a vers&atilde;o traduzida do documento, a vers&atilde;o em ingl&ecirc;s do documento deve ter preced&ecirc;ncia.</p>
+		<p>A tradu&ccedil;&atilde;o &eacute; fornecida apenas para sua conveni&ecirc;ncia. Nem o Google nem a definio devem ser responsabilizados pelo conte&uacute;do traduzido ou pelo desempenho da ferramenta de tradu&ccedil;&atilde;o. Caso precise de assist&ecirc;ncia com assuntos n&atilde;o relacionados &agrave; tradu&ccedil;&atilde;o, entre em contato com o suporte da definio.</p>
+		',
+    'accept' => 'Aceitar o contrato',
+    'cancel' => 'Cancelar',
+  );
+  $gt['ru'] = array(
+    'language' => 'Русский',
+    'body' => '<p>Перевод данного документа является машинным переводом. Поэтому переведенный документ может содержать ошибки и несоответствия относительно варианта документа на английском языке. Определяющим документом по продукту definio считается вариант данного документа на английском языке.</p>
+	      <p>В случае возникновения несоответствий между английским и русским вариантах данного документа вариант документа на английском языке обладает преимущественной силой над переводом.</p>
+	      <p>Данный перевод предоставляется только для удобства пользователя. Ни компания Google, ни компания definio не несут ответственности за содержимое перевода и за качество работы системы машинного перевода. Для получения дополнительной информации по вопросам, не касающимся перевода, обращайтесь в службу поддержки definio.</p>
+	      ',
+    'accept' => 'Принять соглашение',
+    'cancel' => 'Следующий',
+  );
+  $gt['zh-tw'] = array(
+    'language' => '简体中文',
+    'body' => '<p style="font-family : Microsoft JhengHei;">请注意，本文档是机器翻译的，因此，已翻译的文档可能包含错误并且存在与文档的原始英语版本不一致现象。本文档的英语版本应视作与 definio 产品有关的指导文档。</p>
+	      <p style="font-family : Microsoft JhengHei;">如果文档的英语版本和文档的翻译版本之间有冲突，请以文档的英语版本为准。</p>
+	      <p style="font-family : Microsoft JhengHei;">翻译版本只是为您提供方便。对于翻译内容和翻译工具的性能，Google 和 definio 均不负任何责任。如需有关非翻译问题的进一步帮助，请联系 definio 支持部门。</p>
+	      ',
+    'accept' => '接受协议',
+    'cancel' => '取消',
+  );
+  $gt['zh-cn'] = array(
+    'language' => '繁體中文',
+    'body' => '<p>敬請注意，本文件的翻譯文字是由電腦產生，可能包含錯誤並與英文版文件有所出入。definio 產品的相關資訊以本文件之英文版為準。</p>
+	    <p>如本文件的英文版本與翻譯版本有任何衝突，概以英文版文件為主。</p>
+	    <p>提供翻譯版本的目的僅係方便使用者。Google 與 definio 皆不對翻譯內容或翻譯工具的效能負起任何責任。</p>
+	    <p>若您有翻譯以外的問題需要進一步協助，請洽 definio 技術支援部門。</p>
+	    ',
+    'accept' => '接受使用者授權合約',
+    'cancel' => '取消',
+  );
+
+  return $gt;
+}
+
+
+
