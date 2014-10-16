@@ -1,0 +1,8 @@
+name = "Longform User Toolbar"
+description = "Provide several blocks for navigating and using Longform documents"
+package = "Longform"
+dependencies[] = longform_core
+
+core = 7.x
+php = 5
+version = 7.x-1.2

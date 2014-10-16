@@ -1,0 +1,1670 @@
+<?php
+
+/**
+ * @file
+ * Adds javascript and css libraries needed by the book navigation system.
+ */
+
+ /**
+  * Implements hook_init().
+  */
+ function book_nav_init(){
+    
+    // Always add the UI library
+    drupal_add_library('system','ui');
+    drupal_add_js('misc/tableheader.js');
+    
+    // If user is logged in and has proper permission levels, load workflow include
+    global $user;
+    $roles = array_keys($user->roles);
+    $workflow_roles = array(3,6,7,8,10,11);
+    
+    foreach($workflow_roles as $role){
+	if(in_array($role, $roles)){
+	    module_load_include('inc', 'doc_manage', 'doc_manage.workflow');
+	    break;
+	}
+    }
+ }
+ 
+ 
+ //dpm(QueryPath::VERSION,'querypath version');
+/**
+ * Implements hook_block_info().
+ */
+function book_nav_block_info() {
+
+    $blocks['title_block'] = array(
+      'info' => t('Title Block'),
+      'cache' => DRUPAL_CACHE_PER_PAGE,
+    );
+    $blocks['book_multipass'] = array(
+      'info' => t('Book Multipass'),
+      'cache' => DRUPAL_CACHE_PER_PAGE,
+    );
+    $blocks['footer_info'] = array(
+      'info' => t('Footer info'),
+      'cache' => DRUPAL_CACHE_PER_PAGE,
+    );
+    $blocks['publish_status'] = array(
+      'info' => t('Publish Status'),
+      'cache' => DRUPAL_CACHE_PER_PAGE,
+    );
+    $blocks['book_toc'] = array(
+      'info' => t('Display book TOC'),
+      'cache' => DRUPAL_CACHE_PER_PAGE,
+    );
+    $blocks['language_switcher'] = array(
+	'info' => t('Display alternate page languages'),
+	'cache' => DRUPAL_CACHE_PER_PAGE,
+    );
+    $blocks['content_slider'] = array(
+	'info' => t('Navigate pages with an ajax interface'),
+	'cache' => DRUPAL_CACHE_PER_PAGE,
+    );
+
+  return $blocks;
+}
+
+
+/**
+ * Implements hook_block_view().
+ */
+function book_nav_block_view($delta) {
+  
+  switch($delta){
+    
+    case 'title_block':
+	$blocks['subject'] = t('Title Block');
+	$blocks['content'] = book_nav_title_block();    
+	break;
+
+    case 'book_multipass':
+	$blocks['subject'] = t('Book Multipass');
+	$blocks['content'] = book_nav_multipass();    
+	break;
+
+    case 'footer_info':
+	$blocks['subject'] = t('Footer Info');
+	$blocks['content'] = book_nav_footer_info();    
+	break;
+
+    case 'publish_status':
+	$blocks['subject'] = t('Published Status');
+	$blocks['content'] = book_nav_publish_status();    
+	break;
+
+    case 'book_toc':
+	$blocks['subject'] = t('Table of Contents');
+	$blocks['content'] = book_nav_get_toc();
+	break;
+    
+    case 'language_switcher':
+	$blocks['subject'] = t('Language Switcher');
+	$blocks['content'] = longform_language_switcher();
+	break;
+
+    case 'content_slider':
+	$blocks['subject'] = t('Content Slider');
+	$blocks['content'] = book_nav_display_body();
+	break;
+
+  }
+  
+  return $blocks;
+
+}
+
+/**
+ * Implements hook_menu()
+ */
+function book_nav_menu(){
+
+    $items['ajax/topic-live-edit/%/%'] = array(
+	'title' => 'Edit or revert topic content',
+	'type' => MENU_CALLBACK,
+	'page arguments' => array(2,3),
+	'page callback' => "book_nav_live_edit_ajax_callback",
+	'access callback' => 'book_nav_live_edit_access_callback',
+	'access arguments' => array('live-edit'),
+	'delivery callback' => 'ajax_deliver',
+    );
+    $items['ajax/topic-workflow-edit/%/%'] = array(
+	'title' => 'View or alter workflow states',
+	'type' => MENU_CALLBACK,
+	'page arguments' => array(2,3),
+	'page callback' => 'book_nav_topic_workflow_ajax_edit_callback',
+	'access callback' => 'book_nav_topic_workflow_ajax_access_callback',
+	'access arguments' => array('live_topic_workflow'),
+	'delivery callback' => 'ajax_deliver',
+    );
+    return $items;
+}
+
+/**
+ * Callback for live edit ajax requests.
+ *
+ * 	@param $nids
+ * 		An string of topic node IDs, separated by '+'
+ *
+ *	@param $mode
+ *		The action being performed on $nid. Is one of 'view', 'update'.
+ *
+ *	@param $state
+ *		The state to change to, if $mode = "update".
+ * 
+ */
+function book_nav_topic_workflow_ajax_edit_callback($mode, $nids) {
+
+    switch ($mode) {
+	
+	case 'view':
+	    $all_topics = node_load_multiple(explode('-',$nids));
+
+	    foreach($all_topics as $topic) {
+		if ($workflow = workflow_get_workflow_type_map_by_type($topic->type)) {
+		    $choices = workflow_field_choices($topic);
+		    $workflow = workflow_get_workflows_by_wid($workflow->wid);
+		    $possible_states = workflow_get_workflow_states_by_wid($workflow->wid);
+		    $current = workflow_node_current_state($topic);
+		    $options = workflow_get_workflow_options($workflow->wid);
+		    $output = '<div class="list-group">';
+		    
+		    // For some reason, array_shifting the $options array dumps the keys. workaround until I figure that out.
+		    $i = -1;
+		    foreach($options as $id =>$possible) {
+			$i++;
+			if ($i == 0) continue;
+			$status = ($current == $id) ? " current" : "";
+			$output.='<a href="#" onclick="return false" class="list-group-item workflow-update state-' . strtolower(str_replace(' ','-',$possible)) . ' state-id-' . $id . $status .'" data-topic="' . $topic->nid . '" data-state="' . $id . '">' . $possible . '</a>';
+		    }
+		    $output.="</div>";
+		}
+		
+		$states[] = array('id' => $topic->nid, 'state' => $current, 'choices' => $possible_states, 'output' => $output);
+	    }
+	    return drupal_json_encode($states);
+	    
+	    break;
+	
+	case 'update' :
+	    break;
+    
+	default:
+	    break;
+    }
+
+}
+
+/**
+ * Access callback for live edit ajax requests.
+ * For now, this is wide open and alwasy returns TRUE.
+ *
+ */
+function book_nav_topic_workflow_ajax_access_callback($type) {
+    switch ($type) {
+	default:
+	    return user_is_editor();
+    }
+}
+
+
+
+/**
+ * Callback for live edit ajax requests.
+ *
+ * 	@param $nid
+ * 		A topic node ID
+ *
+ *	@param $mode
+ *		The action being performed on $nid. Is one of 'edit', 'revert'.
+ * 
+ */
+function book_nav_live_edit_ajax_callback($nid, $mode) {
+    
+    switch ($mode) {
+	
+	case 'edit':
+	    // Return the requested topic title, level, and processed HTML field in a JSON array
+	    $topic = node_load($nid);
+	    $response['title'] = $topic->title;
+	    $response['level'] = $topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'];
+	    $response['body'] = $topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'];
+	    
+	    return drupal_json_encode(array('response' => 'success', 'title' => 'Update Topic', 'result' => $response));
+	    break;
+	
+	case 'revert':
+	    // Revert the selected topic
+	    // This is not implemented yet, so just return a message.
+	    return drupal_json_encode(array('response' => 'warning', 'title' => 'Future development!', 'result' => '<div class="alert alert-warning">This feature is not implemented yet. No content has been changed.</div>'));
+	    break;
+	
+	default:
+	    return drupal_json_encode(array('response' => 'error', 'title' => 'AJAX configuration error', 'result' => '<div class="alert alert-danger">An illegal mode was used in your AJAX request: <b>' . $mode . '</b> is not a known operation.'));
+	    break;
+    
+    }
+}
+
+/**
+ * Access callback for live edit ajax requests.
+ * For now, this is wide open and alwasy returns TRUE.
+ *
+ */
+function book_nav_live_edit_access_callback($type) {
+    switch ($type) {
+	default:
+	    return user_is_editor();
+    }
+}
+
+/**
+ * Provides an unordered list of page links to alternate language versions of the current page.
+ */
+function longform_language_switcher(){
+   
+    $list = longform_get_node_languages();
+    $label = t('See this in another language');
+    if($list['items']) {
+	return "<h2 class=\"block-title\">$label</h2>" . theme_item_list($list);
+    }
+    else{
+	return NULL;
+    }
+
+}
+
+/**
+ * Gets alternate language nodes in this set, and returns them as a list of linked English strings
+ *
+ * @param $nid
+ * 	Optionally feed a node ID to generate a list for; if omitted, the current node is used.
+ */
+function longform_get_node_languages($nid = NULL) {
+		if(isset($nid)) {
+				$node = node_load($nid);
+		}
+		else {
+				$node = menu_get_object();
+				$nid = $node->nid;	
+		}
+		
+		$tnid = $node->tnid;
+		
+		if ($tnid != 0 && $tnid != $nid) {
+				$find = $tnid;
+		}
+		else {
+				$find = $nid;
+		}
+
+		// Pull a list of nodes with matching tnids, excluding the curent node. 
+		// Using EFQ here instead of db_query because I may add fields in the future.
+		
+		$query = new EntityFieldQuery();
+		$result = $query->entityCondition('entity_type', 'node')
+		->propertyCondition('type', $node->type)
+		->propertyCondition('tnid', $find)
+		->propertyCondition('nid', $nid, '!=')
+		->execute();
+
+		$languages = locale_language_list();
+		foreach ($result as $type) {
+				foreach ($type as $entity) {
+								$sql = "SELECT title, language FROM {node} WHERE nid = " . $entity->nid;
+								$result = db_query($sql)->fetch();
+								$nodes[$entity->nid] = array(
+					'language' => $languages[$result->language],
+					'title' => $result->title,
+					'link' => l($languages[$result->language], 'node/' . $entity->nid),
+								);
+				}
+		}
+		$list = array(
+				'type' => 'ul',
+				'attributes' => array(
+								'class' => array('language-list'),
+				),
+		);
+		if (!isset($nodes)) return FALSE;
+		
+		// Build the unordered list.
+		foreach ($nodes as $item) {
+				$list['items'][] = $item['link'];
+		}
+		return $list;
+}
+
+/**
+ * Supplies publication status div for pages
+ */
+function book_nav_publish_status(){
+    
+    // Supply published status div
+    $node = menu_get_object();
+    $state = workflow_get_workflow_node_by_nid($node->nid);
+    if(!is_object($state)) return FALSE;
+    
+    switch ($state->sid){
+	case 36:
+	    $output = '<div class="publish-status published">' . t('This page is published') . '</div>';   
+	    break;
+	default:
+	    $output = '<div class="publish-status unpublished">' . t('This page is NOT published') . '</div>';
+	    break;
+    }
+    
+    // Add edit form if allowed
+    if(user_is_editor()) {
+	$output .= drupal_render(drupal_get_form('book_nav_edit_form_create'));
+	
+	// Collect topic nodes and generate workflow update forms for all.
+	// @TODO: This should be done via a relation db request, not querypath, but this is quick and dirty for now
+	$page_content = $node->body[LANGUAGE_NONE][0]['value'];
+	$qp_content = htmlqp(str_replace('&', '%%%', $page_content), '.document-content')->each(function($index, $item) use (&$tids) {
+	    $tids[] = qp($item)->attr('topic');
+	});
+
+	$topics = node_load_multiple($tids);
+	$output.= '<div class="element-invisible form-holding-cell">';
+	foreach($topics as $topic) {
+	    $output .= drupal_render(drupal_get_form('book_nav_workflow_form_create', $topic));
+	}
+	$output.= '</div>';
+    }
+    return $output;
+}
+
+/**
+ * Return state array for a topic
+ *
+ * @param $topic
+ * 	A loaded topic node
+ *
+ * @return
+ * 	An array describing the node's controlling workflow, it's possible states, it's valid states, and it's current state.
+ */ 
+function _get_workflow_states ($topic) {
+    
+    if($workflow = workflow_get_workflow_type_map_by_type($topic->type)) {
+						$choices = workflow_field_choices($topic);
+						$workflow = workflow_get_workflows_by_wid($workflow->wid);
+						$states = workflow_get_workflow_states_by_wid($workflow->wid);
+						$current = workflow_node_current_state($topic);
+									
+						return array('choices' => $choices, 'workflow' => $workflow, 'states' => $states, 'current' => $current);
+    }
+    else return FALSE;
+}
+
+/**
+ * Generate the workflow control form.
+ *
+ * @param $form
+ * @param $form_state
+ *
+ * @param $topic
+ * 	The topic node to generate the form for.
+ */
+function book_nav_workflow_form_create($form, &$form_state, $topic) {
+    
+    $states = _get_workflow_states($topic);
+    $tid = $topic->nid;    
+
+    $apply_label = t('Apply');
+    $headline_label = t('Workflow State');
+    
+    $form['topic-workflow-' . $tid]['header'] = array(
+      '#type' => 'markup',
+      '#markup' => "<h3>$headline_label</h3>",
+    );
+    
+    $group_type = $workflow->wid == 2 ? 'btn-group-horizontal' : 'btn-group-vertical';
+
+    $form['topic-workflow-' . $tid] = array(
+						'#type' => 'fieldset',
+						'#prefix' => '<div class="topic-set ' . $group_type . '" data-topic-target="' . $tid . '" data-current="' . $topic->workflow . '">',
+						'#suffix' => '</div>',
+    );
+    $form['topic-workflow-' . $tid]['radios'] = array(
+      '#type' => 'radios',
+      '#options' => $states['choices'],
+      '#name' => 'options-' . $tid,
+      '#parents' => array('workflow'),
+      '#default_value' => $states['current'],
+      '#attributes' => array(
+								'class' => array('btn-group-vertical'), // class 'btn-group' is applied in theme_radios().
+      ),
+    );    
+    $form['topic-workflow-' . $tid]['comment'] = array(
+      '#type' => 'textarea',
+      '#description' => t('Optionally, include a comment describing this change.'),
+      '#prefix' => '<div id="workflow-comment-' . $tid . '" class="workflow-comment panel panel-info"><div class="panel-heading"><h4 class="panel-title">'.t('Confirm State Change').'</h4></div><div class="panel-body">',
+      '#suffix' => '</div></div>',
+      '#cols' => 20,
+      '#resizable' => FALSE,
+    );
+    
+    if(!$form_state['input']['topic']) {
+						$form['flag']['html-help'] = array(
+										'#type' => 'markup',
+										'#markup' => flag_create_link('html_problem_alert', $tid),
+						);
+						$form['flag']['translate'] = array(
+										'#type' => 'markup',
+										'#markup' => flag_create_link('no_translate', $tid),
+						);
+    }
+    $form['topic-workflow-' . $tid]['topic'] = array(
+      '#type' => 'hidden',
+      '#name' => 'topic',
+      '#value' => $tid,
+      '#attributes' => array('id'=>'topic-id-' . $tid, 'class' => array('topic-id-field')),
+    );
+    $form['topic-workflow-' . $tid]['buttons']['submit'] = array(
+      '#type' => 'submit',
+      '#value' => $apply_label,
+      '#id' => 'workflow-submit-' . $tid,
+      '#attributes' => array (
+								'class' => array('btn btn-success'),
+      ),
+      '#ajax' => array(
+        'callback' => 'book_nav_topic_workflow_callback',
+        ),
+      );
+    $form['feedback'] = array(
+						'#type' => 'markup',
+						'#markup' => '',
+    );
+    $form['ajax'] = array(
+						'#type' => 'ajax',
+						'#commands' => array(
+								ajax_command_replace('.document-content[topic="' . $tid . '"]>.workflow-indicator', _book_nav_generate_workflow_indicator($node, $target_state, $target_label)),
+						),
+    );
+
+  return $form;
+}
+
+
+/*
+ * Callback for workflow shift form
+ */
+function book_nav_topic_workflow_callback($form, &$form_state){
+
+		$tid = $form_state['input']['topic'];
+		unset ($form['flag']);
+
+		$node = node_load($tid);
+		
+		$choices = workflow_field_choices($node);
+		$old_state = $node->workflow;
+		$old_label = $choices[$old_state];
+		$target_state = $form_state['values']['workflow'];
+		$target_label = $choices[$target_state];
+		$node_title = $node->title;
+		
+		if($target_state != $old_state){
+				$new_state = workflow_execute_transition($node, $target_state, $form_state['values']['comment'], TRUE);
+				entity_get_controller('node')->resetCache(array($node->nid));
+				$alert = "<div class='alert alert-success alert-edit'><em>" . $node_title . "</em>: workflow state has been changed from <em>$old_label</em> to <em>$target_label</em>.<button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button></div>";
+  }
+    
+  $return = array(
+				'#type' => 'ajax',
+				'#commands' => array(
+								ajax_command_replace('.document-content[topic="' . $tid . '"]>.workflow-indicator', _book_nav_generate_workflow_indicator($node, $target_state, $target_label)),
+								ajax_command_replace('.topic-workflow-form-' . $tid, drupal_render($form)),
+								ajax_command_before('.document-content[topic="' . $tid . '"]', $alert),
+				),
+  );
+  return $return;
+}
+
+/**
+ * Document Live Edit
+ * 
+ * Generates an edit form which is displayed in a bootstrap overlay. The form elements are populated by JS
+ * and the edits made are committed to both base topics and generated pages.
+ * 
+ */
+function book_nav_edit_form_create($form, &$form_state){
+    
+    $form['edit'] = array(
+						'#type' => 'markup',
+						'#prefix' => '<div class="modal-body">',
+						'#suffix' => '</div>',
+						//'#attributes' => array('class' => array('edit-form-modal')),	
+    );
+    $form['edit']['warning'] = array(
+						'#type' => 'container',
+						'#attributes' => array(
+										'class' => array('alert', 'alert-danger'),
+						),
+    );
+    $form['edit']['warning']['content'] = array(
+						'#markup' => '
+								<label>Warning: Topic edit is currently disabled.</label><br/>
+								A major AJAX bug has been discovered that can potentially corrupt published content.<br/>
+								Until this bug is fixed, use the <b>edit</b> button at the top of the page to edit the full page contents.',
+    );
+    $form['edit']['spacer'] = array(
+						'#markup' => '<div class="vertical-spacer"></div>',
+    );
+    $form['edit']['title-form'] = array(
+      '#type' => 'textfield', 
+      '#title' => t('Title'), 
+      '#default_value' => '',
+      '#maxlength' => 128, 
+      '#required' => TRUE,
+      '#attributes' => array('class' => array('title-form form-control')),
+      '#id' => array('edit-title-form'),
+      '#name' => array('title-form'),
+      '#prefix' => '<div class="form-group title-group">',
+      '#suffix' => '</div>',
+    );
+    
+    $form['edit']['heading-form'] = array(
+      '#type' => 'textfield', 
+      '#title' => t('Heading level'), 
+      '#default_value' => '',
+      '#size' => 5, 
+      '#maxlength' => 1, 
+      '#required' => TRUE,
+      '#attributes' => array('class' => array('title-form form-control')),
+      '#id' => array('edit-heading-form'),
+      '#name' => array('heading-form'),
+      '#prefix' => '<div class="form-group heading-group pull-right">',
+      '#suffix' => '</div>',
+    );
+
+    $form['edit']['content-form'] = array(
+      '#type' => 'text_format', 
+      '#title' => NULL,//t('Content'), 
+      '#default_value' => NULL,
+      '#format' => NULL,
+      '#required' => false,
+      '#attributes' => array('class' => array('content-form', user_is_administrator() ? 'admin' : 'disabled')),
+      '#prefix' => '<div class="vertical-spacer">',
+      '#suffix' => '</div>',
+    );
+
+    $form['edit']['content-commit'] = array(
+						'#type' => 'fieldset',
+						'#attributes' => array('class' => array('btn-group pull-right')),
+    );
+    $form['edit']['content-commit']['section'] = array(
+      '#type' => 'hidden',
+      '#value' => menu_get_object()->nid,
+      '#attributes' => array('id'=>'section-id'),
+    );
+    $form['edit']['content-commit']['topic'] = array(
+      '#type' => 'hidden',
+      '#name' => 'topic',
+      '#value' => -1,
+      '#attributes' => array('id'=>'section-topic'),
+    );
+    $form['edit']['content-commit']['level'] = array(
+      '#type' => 'hidden',
+      '#value' => -1,
+      '#attributes' => array('id'=>'section-level'),
+    );
+    $form['edit']['content-commit']['weight'] = array(
+      '#type' => 'hidden',
+      '#value' => -1,
+      '#attributes' => array('id'=>'section-weight'),
+    );
+    $form['edit']['content-commit']['content-cancel'] = array(
+      '#type' => 'markup',
+      '#markup' => '<input type="button" id="cancel-content" name="op" value="Cancel" class="content-cancel btn btn-default" data-dismiss="modal">',
+    );
+    $form['edit']['content-commit']['content-update'] = array(
+      '#type' => 'submit',
+      '#value' => user_is_administrator() ? 'Update' : '(Disabled)',
+      '#name' => 'op-update',
+      '#attributes' => array('edit-topic' => -1, 'class' => array('btn', (user_is_administrator() ? 'btn-success' : 'btn-danger disabled'))),
+      '#ajax' => array(
+        'callback' => 'doc_nav_edit_update_content',
+						),
+    );
+
+    $form['#attached'] = array(
+						'library' => array(
+								array('system', 'drupal.ajax'),
+						),
+    );
+  return $form;    
+}
+
+/**
+ * AJAX handler for live content edit/update
+ *
+ */
+function doc_nav_edit_update_content($form, &$form_state){
+  
+		//retrieve topic node information in the format expected by the form constructor.
+		$topic = node_load($form_state['input']['topic']);
+
+		$old_content = $topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'];
+		$new_content = $form_state['input']['content-form']['value'];
+		
+		// $new_content = ''; //uncomment for testing
+		
+		// If nothing was received, then an AJAX error occurred. Set an alert and bail out.
+		if(!$new_content || strlen(trim($new_content)) == 0) {
+    
+				$alert = '<div class="alert alert-danger">An AJAX error occurred and no data was received. Your updates have been lost, but the original content is intact.</div>';
+				$return = array(
+						'#type' => 'ajax',
+						'#commands' => array(
+								ajax_command_prepend('.document-content[topic="' . $topic->nid . '"]', _book_nav_generate_workflow_indicator($topic) . $alert),
+								ajax_command_replace('#book-nav-edit-form-create', drupal_render($form)),
+						),
+				);
+				return $return;
+		}
+			
+		// Get original wrapper from base topic
+		preg_match('/<div.*?>/siu', $old_content, $matches);
+		$prefix = $matches[0];
+
+		// Wrap $new_content in its original wrapper
+		$new_content = $matches[0] . $new_content . '</div>';
+
+		$old_title = $topic->title;
+		$new_title = $form_state['input']['title-form'];
+		
+		$old_level = $topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'];
+		$new_level = $form_state['input']['heading-form'];
+		
+		// Update values if they have changed
+		if($old_content != $new_content) {
+				$topic->field_topic_processed_html[LANGUAGE_NONE][0]['value'] = $new_content;
+		}
+		
+		if($old_title != $new_title) {
+				$topic->title = $new_title;
+		}
+		
+		if($old_level != $new_level) {
+				$topic->field_topic_source_heading[LANGUAGE_NONE][0]['value'] = $form_state['input']['heading-form'];
+		}
+		
+		// Update topic node
+		node_save($topic);
+		
+		// Update current page. @TODO: use relations to do this dynamically insead of stopping at current page
+		$page = node_load($form_state['input']['section']);
+		$body = $page->body[LANGUAGE_NONE][0]['value'];
+		
+		// Replace node on current page. Using QP for now, but should replace with regex
+		$qp = htmlqp(str_replace('&', '%%%', $body), 'div[topic="' . $topic->nid . '"]');
+		$qp->replaceWith(str_replace('&', '%%%', $new_content));
+		
+		// Check whether the topic is the first topic on the page and set a flag if it is: First topics don't include the heading
+		$use_heading = (array_pop(explode('-', ($form_state['input']['weight'])))) > 0 ? TRUE : FALSE;
+		$head = "<h$new_level class=\"document subtitle\" level=\"$new_level\">$new_title</h$new_level></span>";
+
+		// Prepare the revised page to save, and an updated chunk for updating the current page via ajax
+		$new_page = extract_body(str_replace('%%%', '&', $qp->branch()->top()->html()));
+		$replace_ajax = $use_heading ? $prefix . PHP_EOL . $head . PHP_EOL . $form_state['input']['content-form']['value'] . '</div>' : $prefix. PHP_EOL . $form_state['input']['content-form']['value'] . PHP_EOL . '</div>';
+		
+		// Update the page content. Use or exclude the heading based on whether the $use_heading flag is set.
+		$new_page = $use_heading ? str_replace($prefix, $prefix . $head, $new_page) : $new_page;
+
+		// Update node body field
+		$page->body[LANGUAGE_NONE][0]['value'] = $new_page;
+		
+		// Update node
+		node_save($page);
+		
+		$alert = "<div class=\"alert alert-success alert-edit\"><span>\"<em>$new_title</em>\" has been updated.</span><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button></div>";
+		
+		// Prepend alert to altered wrapper
+		$replace_ajax = str_replace($prefix, $prefix . $alert, $replace_ajax);
+		//$target_indicator_html = '<div class="workflow-indicator workflow-state-id-' . $topic->workflow . '" data-toggle="tooltip" data-placement="right" title="State: ' . $target_label . '"></div>';
+
+		$form_state['input']['content-form']['value'] = '';
+		$form_state['input']['title-form'] = '';
+		$form_state['input']['heading-form'] = '';
+		
+		$return = array(
+				'#type' => 'ajax',
+				'#commands' => array(
+								ajax_command_replace('div[topic="' . $topic->nid . '"]', $replace_ajax),
+								ajax_command_prepend('.document-content[topic="' . $topic->nid . '"]', _book_nav_generate_workflow_indicator($topic)),
+								ajax_command_replace('#book-nav-edit-form-create', drupal_render($form)),
+				),
+		);
+		
+		return $return;
+}
+
+/**
+ * Utility function that returns the HTML for a workflow indicator.
+ * 
+ * $state and $label should only be specified when they are already known at call time
+ * and another database query would be redundant.
+ * 
+ * @TODO: Shift the HTML generation to a theme function
+ *
+ * @param $topic
+ * 	Topic object or NID (if the nid is supplied, the topic will be loaded)
+ *
+ * @param $state
+ * 	State ID. If not supplied, it will be pulled from the topic node.
+ *
+ * @param $label
+ * 	Label of the state ID. If not supplied, it will be derived from $state.
+ */
+function _book_nav_generate_workflow_indicator($topic, $state = NULL, $label = NULL) {
+    
+    if(!is_object($topic)) $topic = node_load($topic);
+
+    $choices = workflow_field_choices($topic);
+    
+    if (!$state) $state = $topic->workflow;
+    if (!$label) $label = $choices[$state];
+    return '<div class="workflow-indicator workflow-state-id-' . $state . '" data-toggle="tooltip" data-trigger="hover" data-placement="left" title="' . $label . '"></div>';
+}
+
+/**
+ * Generates the document title block. This is a swiss-army knife toolbar, which contains:
+ * 	- Simple document title
+ * 	- Floating toolbar which affixes to the top of the window on scroll
+ * 		- TOC toggle (toggles .region-33-66-first)
+ * 		- user tools megamenu
+ * 		- dropdown for "on this page" content
+ * 		- document search form
+ * 		- dropdowns for related documents
+ *
+ */
+function book_nav_title_block(){
+    
+    if(!is_object($node = menu_get_object()) && !$node->type == 'book') return FALSE;  
+    
+    // Set up tour
+    _doc_manage_display_tour($node, $node->book);
+    
+    // Collect taxonomy terms.
+    
+    // Device type
+    $devices_array = $node->field_products[LANGUAGE_NONE];
+		
+		if(isset($devices_array)) {
+				foreach($devices_array as $temp) {
+						$device_tids[] = $temp['tid'];
+				}
+		}
+		
+    $device_terms = taxonomy_term_load_multiple($device_tids);
+    foreach($device_terms as $term) {
+						$device_names[$term->tid] = $term->name;
+    }
+        
+    $this_device_tid = $node->field_products[LANGUAGE_NONE][0]['tid'];
+    $this_device_name = taxonomy_term_load($this_device_tid)->name;
+  
+    // Release
+    $this_release_tid = $node->field_software_release[LANGUAGE_NONE][0]['tid'];
+    $this_release_name = taxonomy_term_load($this_release_tid)->name;
+
+    // Doctype
+    $this_doctype_tid = $node->field_document_type[LANGUAGE_NONE ][0]['tid'];
+    $this_doctype_name = taxonomy_term_load($this_doctype_tid)->name;
+    
+    // Platform
+    $this_platform_tid = $node->field_platform[LANGUAGE_NONE][0]['tid'];
+    $this_platform_name = taxonomy_term_load($this_platform_tid)->name; 
+
+    // Language
+    $this_language = $node->language;
+    
+    // Book
+    $book = node_load($node->book['bid']); 
+    $bid = $book->nid;
+    $book_title = $book->title;
+    if($book->field_short_title){
+								$complete_title = $book->field_short_title[LANGUAGE_NONE]['0']['value'];
+    }
+    else {
+								$complete_title = $book_title;
+    }
+    
+    // Linkify book title
+    if($node->book['depth'] == 1) {
+      $complete_title_linked = l($complete_title,"node/$bid", array('attributes' => array('title' => t('Return to the front page.'))));	
+    }
+    else {
+      $complete_title_linked = l($book_title,"node/$bid", array('attributes' => array('title' => t('Return to the front page.'))));
+    }
+    
+    // Build warnings
+        
+    // Determine latest release and set alert if we aren't there
+    $target_release = longform_redirect_find_target($this_language, $this_doctype_tid, $this_device_tid, $this_platform_tid);
+    $target_release_name = taxonomy_term_load($target_release['target_release'])->name;
+    $target_node = $target_release['target_node'];
+    // Set main title
+    $title_main = '<div class="title-block-main"><h1>' . $complete_title_linked . '</h1></div>';
+
+    
+    // === Fixed nav bar construction ===    
+
+    // Set warning, if there is one.
+    if($target_release_name > $this_release_name){
+      $link = htmlspecialchars_decode(l(t('Click here to switch to the current @this_doctype_name.',array('@this_doctype_name' => $this_doctype_name)), "node/$target_node", array('attributes'=>array('class'=>array('alert-link')))));
+      $alert_content = (t("You are viewing the @this_doctype_name for software release version @this_release_name. The current version is @target_release_name. <br/>"
+                           ,array('@this_doctype_name' => htmlspecialchars_decode($this_doctype_name), '@this_release_name' => $this_release_name, '@target_release_name' => $target_release_name)) . $link);
+    }  
+
+    // Attach warning metadata to JS for cookies
+    $pass_to_js = array(
+						'bid' => $bid,
+						'thisRelease' => $this_release_name,
+						'targetRelease' => $target_release_name,
+    );
+    drupal_add_js(array('book_nav' => $pass_to_js), 'setting');
+
+    $warnings = '<div class="alert alert-warning">' . $alert_content . '</div>';
+ 
+
+    // Build render arrays for multiple-term dropdowns
+    
+    $devices = array(
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => $device_names,
+						'attributes' => array(
+										'class' => array('devices'),
+						),
+    );
+    
+    $docs_by_release_array = longform_get_related_releases($node->nid, array('links' => TRUE, 'scope' => 'full', 'grouped' => TRUE));
+    $docs_by_release_parents = array(
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => $docs_by_release_array['parents'],
+						'attributes' => array(
+										'class' => array('doctypes-by-release-parents', 'nav', 'nav-pills', 'nav-stacked'),
+						),
+    );
+    
+    foreach($docs_by_release_array['children'] as $key=>$child) {
+						$list = theme_item_list(array(
+							'title' => NULL,
+							'type' => 'ul',
+							'items' => $child,
+							'attributes' => array(
+									'class' => array('doctypes-by-release-children', 'nav', 'nav-pills', 'nav-stacked', 'btn-sm'),
+							),
+										)
+						);
+						$docs_by_release_children .= '<div id="'. $key .'" class="group-child">' . $list . '</div>';
+    }
+    
+    $doctype_items = longform_get_related_doctypes($node->nid, array('links' => TRUE));
+    $doctypes = array(
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => ($doctype_items == FALSE) ? array(t('None in this release')) : $doctype_items,
+						'attributes' => array(
+										'class' => array('doctypes', 'nav', 'nav-stacked', 'nav-pills'),
+						),
+    );
+    
+    $releases = array(
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => longform_get_related_releases($node->nid, array('links' => TRUE)),
+						'attributes' => array(
+										'class' => array('releases', 'nav', 'nav-stacked', 'nav-pills'),
+						),
+    );
+    
+    $platforms = array(
+						'title' => NULL,
+						'type' => 'ul',
+						'items' => longform_get_related_platforms($node->nid, array('links' => TRUE)),
+						'attributes' => array(
+										'class' => array('platforms', 'nav', 'nav-stacked', 'nav-pills'),
+						),
+    );
+    
+    // Create link to device page
+    
+    // @TODO: When device pages are fully impemented, remove 'disabled' from the class array below.
+    
+    foreach($device_names as $tid => $name) {    
+						$term_uri = taxonomy_term_uri($device_terms[$tid]);
+						$options = array(
+											'attributes' => array(
+													'class' => array(
+															'btn', 'btn-tb-fixed', 'navbar-btn', 'title', 'disabled'),
+											),
+										'html'=>TRUE);
+						$term_path[] = l($name, $term_uri['path'], $options);
+    }
+    if (count($term_path) == 1) {
+						$device_button = '
+						<div class="btn-group"><button class="btn btn-tb-fixed navbar-btn disabled">'
+						. reset($device_names)
+						. '</button></div>';
+    }
+    else {
+						$device_button = '
+						<div class="btn-group">
+							<a href="#" class="device-group btn btn-tb-fixed navbar-btn"
+											rel="popover">'
+										. reset($device_names) . '...</a>'
+						. '<div class="hidden"><div class="device-list">' . theme_item_list($devices) . '</div></div>'
+						.'</div>';
+    }
+    
+    // HTML construction for navbar widgets
+    
+    // Actions (toggles .region-two-33-66-first, which usually contains the TOC)
+    //		<button class="btn btn-tb-fixed navbar-btn toggle-dropdown technet-actions' . $state . '" data-toggle="dropdown" data-container="body"><span class="glyphicon glyphicon-list"></span></button>
+
+    $actions_state = TRUE;//_doc_manage_actions_button_state($node, $book);
+    if($actions_state) {
+	
+						// Settings (grab bag of useful bits).
+						// First, grab rendered block contents for each tool
+						$settings_print = 	'<div class="settings-block print">'
+									. longform_toolbar_print_options($node) 
+					.'</div>';
+						if ($download_files = longform_toolbar_file_options($node)) {
+								$settings_download = '<div class="settings-block">' . $download_files .'</div>';
+						}
+						
+						$settings_formal = '<div class="formal">' . drupal_render(_block_get_renderable_array(_block_render_blocks(array(
+								block_load('longform_user_toolbar', 'formal_translations'),
+								)))) .'</div>';
+						
+						$settings_machine = '<div class="machine">' . drupal_render(_block_get_renderable_array(_block_render_blocks(array(
+								block_load('longform_user_toolbar', 'machine_translations'),
+								)))) . '</div>';
+			
+						$settings_help = '<div class="settings-block help col-md-12">' . drupal_render(_block_get_renderable_array(_block_render_blocks(array(
+								block_load('longform_user_toolbar', 'navigation_help'),
+								)))) .'</div>';
+		
+						$settings_related_container =
+					'<div id="panel-related" class="settings-panel row tab-content active" data-display="show-related">
+									<div class="col-sm-12">
+						<div class="col-sm-4 col-sm-4 panel-related-first">
+										<h2 class="block-title">This release (' . $this_release_name . ')</h2>'
+										. theme_item_list($doctypes) .
+						'</div>
+						<div class="col-sm-8 col-md-8 panel-related-middle prevent-close">
+										<h2 class="block-title">Other Releases</h2>
+										<div class="parents col-sm-6">'
+							. theme_item_list($docs_by_release_parents) .
+										'</div>
+										<div class="children col-sm-6">'
+							. $docs_by_release_children .
+										'</div>
+						</div>
+						'//<div class="col-md-4 panel-related-/last"><h2 class="block-title">Other Platforms</h2>' . theme_item_list($platforms) . '</div>
+									.'</div>
+					</div>';
+					
+						$settings_print_container = '
+					<div id="panel-print" class="settings-panel tab-content" data-display="show-print">
+									<div class="col-sm-12">
+						<div class="col-sm-4 col-sm-offset-2 panel-print-first">' . $settings_print . '</div>
+						<div class="col-sm-4 panel-print-second">' . $settings_download . '</div>
+									</div>
+					</div>';
+						
+						$settings_i18n_container = '
+					<div id="panel-i18n" class="settings-panel tab-content" data-display="show-i18n">
+									<div class="col-sm-12">
+						<div class="col-sm-4 col-sm-offset-2 panel-related-first">' . $settings_formal . '</div>
+						<div class="col-sm-4 panel-related-last">' . $settings_machine . '</div>
+									</div>
+					</div>';
+						
+						$settings_switcher = '<div class="switcher-container col-sm-8 col-sm-offset-2 prevent-close">
+						<div class="btn-group btn-group-justified btn-group-sm" data-toggle="buttons">
+								<label class="btn btn-default active switcher">
+										<input type="radio" name="switcher-options" id="show-related">Related
+								</label>
+								<label class="btn btn-default switcher">
+										<input type="radio" name="switcher-options" id="show-print">Download & Print
+								</label>
+								<label class="btn btn-default switcher">
+										<input type="radio" name="switcher-options" id="show-i18n">Languages
+								</label>
+						</div>
+									</div>
+									<div class="panels-container col-sm-12">
+		
+									' . $settings_related_container . '
+									' . $settings_print_container . '
+									' . $settings_i18n_container . '
+					</div>'
+					. $script;
+		
+			$contents_wrapper = $node->nid == $node->book['bid']
+							? ''
+							: 	'<div class="toc-insert left-master-col col-md-4 prevent-close actions-panel">
+								<h1 class="element-invisible">Contents</h1><div class="panel panel-default toc" id="toc-sidebar">' . book_nav_get_toc() . '</div>
+				</div>';
+			
+			$actions_button =
+							'<div class="btn-group btn-group-technet-actions">
+										<button class="btn btn-tb-fixed navbar-btn toggle-dropdown technet-actions' . $state . '" data-toggle="dropdown" ><span class="glyphicon glyphicon-align-justify"></span></button>
+										<div class="drawer-actions dropdown-menu dropdown-toc full-width row">
+												<div class="inner col-sm-12">
+														<div class="inset row">'
+																		. $contents_wrapper
+																		.'<div class="options-insert right-master-col col-md-8 actions-panel">
+															<div class="intro">
+															<h1 class="block-title element-invisible">Options</h1>
+															</div>'
+															. $settings_switcher
+															. $settings_containers
+																		.'</div>
+														</div>
+												</div>
+										</div>
+							</div>';
+						}
+    
+    // Warning: if warnings are present, insert this block
+    if($alert_content) {
+	$warning_button =
+	'<div class="btn-group warning-button">
+	    <button class="btn btn-tb-fixed navbar-btn toggle-dropdown warning" data-toggle="dropdown" data-container="body"><span class="glyphicon glyphicon-warning-sign"></span></button>
+	    <div class="drawer-actions dropdown-menu warning-dropdown row"><div class="col-md-12">'
+		. $warnings
+		.'</div></div>
+	    </div>';
+    }
+    // On this page (render as a button with an empty container; the container is populated by javascript)
+    $on_this_page_label = t('Jump to');
+    $on_page_button =
+    	'<div class="btn-group btn-group-on-this-page">
+	    <button class="btn btn-tb-fixed navbar-btn toggle-dropdown on-this-page" data-toggle="dropdown">' . $on_this_page_label . '<span class="caret"></span></button>
+	    <div class="drawer-actions dropdown-menu on-this-page-dropdown row col-xs-12 half-width">
+		<div class="on-this-page-dropdown-main col-xs-12"></div>
+	    </div>
+	</div>';
+
+    // Document search form
+    $search =
+    '<div class="btn-group btn-group-search">
+	<button class="btn btn-tb-fixed navbar-btn toggle-dropdown search" data-toggle="dropdown">
+	    <span class="glyphicon glyphicon-search"></span>
+	</button>
+	<div class="drawer-actions dropdown-menu search-dropdown col-xs-12 prevent-close half-width">
+	    ' . drupal_render(_block_get_renderable_array(_block_render_blocks(array(block_load('document_search', 'document_search'),)))) . '
+	</div>
+    </div>';
+
+    // Downloads
+    if($download_files) {
+	$downloads =
+    '<div class="btn-group btn-group-downloads">
+	<button class="btn btn-tb-fixed navbar-btn toggle-dropdown search" data-toggle="dropdown">
+	    <span class="glyphicon glyphicon-download"></span>
+	</button>
+	<div class="drawer-actions dropdown-menu download-dropdown col-xs-12 prevent-close medium">
+	    ' . $settings_download . '
+	</div>
+    </div>';
+    }
+    
+    if (count($platforms['items']) != 0) {
+	$platform_button =
+	'<div class="btn-group">
+	    <button class="btn btn-tb-fixed navbar-btn dropdown-toggle platform" data-toggle="dropdown">' . $this_platform_name . '<span class="caret"></span></button>
+	    <div class="drawer-actions dropdown-menu platform-dropdown"><h3>Other Platforms</h3>' . theme_item_list($platforms) . '</div>
+	</div>';
+    }
+    
+    if (count($doctypes['items']) == 0) {
+	$state_doctype = ' disabled';
+    }
+    else {
+	$caret_doctype = '<span class="caret"></span>';
+    }
+    
+	$feature_profiles =  views_embed_view('related_documents_new','related_feature_profiles_dropdown',$this_device_tid, $node->nid);
+	$feature_profiles = stripos($feature_profiles, 'view-empty') === FALSE ? $feature_profiles : '';
+	
+	$doctype_button =  
+	    '<div class="btn-group">
+		<button class="btn btn-tb-fixed navbar-btn dropdown-toggle doctype' . $state_doctype . '" data-toggle="dropdown">' . $this_doctype_name . $caret_doctype . '</button>
+		<div class="drawer-actions dropdown-menu doctype-dropdown"><h3>Other documents for release <b>' . $this_release_name . '</b></h3>' . theme_item_list($doctypes) . $feature_profiles. '</div>
+	    </div>';
+
+	   
+    if(count($releases['items']) == 0) {
+	$state_release = ' disabled';
+    }
+    else {
+	$caret_release = '<span class="caret"></span>';
+    }
+	$release_button = '
+	    <div class="btn-group">
+		<button class="btn btn-tb-fixed navbar-btn dropdown-toggle release' . $state_release . '" data-toggle="dropdown">' . $this_release_name . $caret_release . '</button>
+		<div class="drawer-actions dropdown-menu release-dropdown"><h3>Other Releases for <b>' . $this_doctype_name . '</b></h3>' . theme_item_list($releases) . '</div>
+	    </div>';
+        
+    // Assemble all the pieces into left and right justified groupings
+    $left_block = '<div class="btn-group navbar-left col-sm-4">'
+	. $actions_button
+	. $warning_button
+	. $search
+	. $downloads
+	. ($node->nid != $node->book['bid'] ? $on_page_button : '')
+	. '</div>';
+	
+    //$middle_block = $search;
+    $right_block = '<div class="btn-group hidden-xs col-sm-8 navbar-right related"><div class="pull-right">'
+	. $device_button
+	. $platform_button
+	. $doctype_button
+	. $release_button
+	. '</div></div>';
+    
+    // Assemble groupings into the toolbar wrapper
+    $tb_fixed =
+	'<div class="fixed-wrapper">
+	<nav class="navbar navbar-default title-block-fixed" role="navigation">
+	    <div id="navbar-header">'
+		. $left_block
+		. $middle_block
+		. $right_block
+		. '</div></nav></div>';
+
+    // Return the finished rendered product
+    return $title_main . $tb_fixed;
+}
+
+/*
+ * Supplies footer with copyright, T&C, and any other links we like
+ */
+function book_nav_footer_info(){
+ 
+  $copyright = l('&copy; ' . date('Y') . ' definio, Inc.','documents/en/legal-documents/1846', array('html'=>TRUE));
+  $node = menu_get_object();
+  $nid = $node->nid;
+  $part_number = isset($node->field_document_unique_id[LANGUAGE_NONE]) ? $node->field_document_unique_id[LANGUAGE_NONE][0]['tid'] : '';
+  $tandc = l(t("Terms & Conditions"),"documents/en/terms-and-conditions");
+  
+  $array = array(
+   'items' => array($copyright, $tandc, $part_number, $nid),
+   'title' => '',
+   'type' => 'ul',
+   'attributes' => array(
+    'class' => array('footer', 'list-inline'),
+   ),
+  );
+  return theme_item_list($array);
+}
+
+/**
+ * Returns the rendered TOC for the current book.
+ * Looks first for a pre-rendered array on the parent/controller node. If one has not been generated, creates it and then reloads the page
+ * (this will only happen once per book; subsequent pageloads will use the saved version).
+ * If the book is old enough not to have a parent, create a simple live TOC and use that. This version will not contain in-page links.
+ * 
+ */
+function book_nav_get_toc() {
+    
+		$node = menu_get_object();
+		if ($node->type != 'book') return;
+		switch ($node->book['depth']) {
+				case 1:
+						$endpoints = doc_manage_get_book_pages_from_book_page($node);
+						$parent = array_shift($endpoints);
+						$parent = node_load($parent);
+						if($parent->type == 'import_ticket'){
+								// If there is no TOC field on the parent node, create one and rebuild the page (this will only ever happen once per book)
+								if(!$parent->field_toc_array) {
+												module_load_include('inc', 'doc_import', 'doc_import.navigation');
+												module_load_include('inc', 'doc_import', 'doc_import.postprocess');
+																$toc = doc_import_create_toc($parent);
+												drupal_goto('node/' . $node->nid);
+								}
+								else {
+												$toc = drupal_json_decode($parent->field_toc_array[LANGUAGE_NONE][0]['value'], TRUE);
+												// An earlier version of this code incorrectly built the list array. Check for improper values and repair if needed.
+												if($toc['class']) {
+														$toc['attributes']['class'] = $toc['class'];
+														unset ($toc['class']);
+														$parent->field_toc_array[LANGUAGE_NONE][0]['value'] = drupal_json_encode($toc, TRUE);
+														node_save($parent);
+												}
+
+										$toc = _book_nav_bootstrapify_toc($toc);
+										$rendered = theme_item_list($toc);
+										return theme_item_list($toc);
+								}
+						}
+						else{
+								// This is an older document. Just spit out the regular TOC.
+								module_load_include('inc','doc_import', 'doc_import.navigation');
+								$toc_array = doc_import_recursive_book_array_builder($node->book['bid']);
+								if(count($toc_array['items']) == 1) {
+												
+								}
+								return theme_item_list(_book_nav_bootstrapify_toc($toc_array));
+						}
+			
+				break;
+		
+				default:
+						$endpoints = doc_manage_get_book_pages_from_book_page($node);
+						$parent = entity_metadata_wrapper('node', array_shift($endpoints));
+						$toc = drupal_json_decode($parent->field_toc_array->value(), TRUE);
+						$toc = _book_nav_bootstrapify_toc($toc);
+						
+						$rendered = theme_item_list($toc);
+						$link_text = t('Contents');
+						$link_options = array(
+								'html' => TRUE,
+								'attributes' => array(
+												'class' => array('btn', 'btn-default', 'justify','single','caption', 'home-link'),
+								),
+						);
+						$home_link = l('<span class="glyphicon glyphicon-home"></span>' . $link_text . '</a>', 'node/' . $node->book['bid'], $link_options);
+						return  '<ul class="nav nav-pills nav-stacked"><li>' . $home_link . '</li></ul>' . theme_item_list($toc);
+						break;
+		}
+}
+
+/**
+ * Reformat base TOC render array to work with bootstrap javascript
+ *
+ * @param $toc
+ * 	TOC render array, generated by doc_import_create_toc
+ *
+ * @param $index
+ * 	link counter. Used internally.
+ *
+ * @return
+ * 	Adapted TOC render array
+ */
+ function _book_nav_bootstrapify_toc ($toc, &$index = 0) {
+    
+		if(isset($toc['items'])){
+				$items = $toc['items'];
+				$recurse = FALSE;
+		}
+		else {
+				$items = $toc;
+				$recurse = TRUE;
+		}
+		foreach($items as &$item) {
+				$index++;
+				$index_class = "toc-index-$index";
+
+				// If $item is not an array, it is a single entity; skip processing.
+				if (!is_array($item)) {
+								continue;
+				}
+				// If there is no 'children' element, this is a single list item. tag it and wrap it in a button element.
+				if(!isset($item['children'])) {
+								$link = $item['data'];
+								
+								$item['data'] = (stripos('class="', $link) !== FALSE) ? str_ireplace('class="', 'class="btn justify ', $link) : str_ireplace('">', '" class="btn justify">', $link); 
+								// Add CSS
+								$item['class'][] = 'single';
+								$item['class'][] = $index_class;
+				}
+				else {
+								
+								// Pick off the ['data'] element and extract the link contents, which will become the bootstrap button label
+								$link = str_replace(array(PHP_EOL), '',$item['data']);
+								preg_match('/<a.*?>(.*)<\/a>/iu', $link, $out);
+								$link_content = $out[1];
+								
+								// Replace the first element with the bootstrap button
+								$item['data'] = '<button type="button" class="btn btn-default justify collapsed" data-toggle="collapse" data-target="ul.' . $index_class . '">
+							<span class="glyphicon glyphicon-chevron-down"></span>
+							<span class="glyphicon glyphicon-chevron-right"></span>'
+							. $link_content	
+							. '</button>';
+							
+								// Insert the original link as the first child element
+								array_unshift($item['children'], array('data'=>$link, 'class'=>array('link-title')));
+								
+								// Add CSS
+								$item['class'][] = "has-children";
+								$item['class'][] = $index_class;
+				
+								// Recurse into array, process children
+								$children = _book_nav_bootstrapify_toc($item['children'], $index);
+								$item['children'] = $children;
+				}
+		}
+
+		// Replace ['items'] with altered list
+		if($recurse) {
+				return $items;
+		}
+		
+		// If only one first-level item exists, force it open.
+		if(count($items) == 1) {
+				$items[1]['data'] = str_replace(' collapsed', '', $items['data']);
+				$items[1]['class'][] = 'in';
+		}
+		$toc['items'] = $items;
+		return $toc;
+ }
+ 
+ /**
+  * Converts text in <a> tags to html entities.
+  *
+  * @param $link
+  * 	rendered HTML for a link.
+  *
+  * @return (string)
+  * 	The adapted HTML.
+  */
+ function _longform_escape_link_text($link) {
+    return preg_replace_callback(
+						'/<a.*?>(.*?)<\/a>/iu',
+						function($input) {return str_replace($input[1], htmlentities($input[1]), $input[0]);},
+						$link);
+ }
+ 
+/*
+ * Supplies left-nav multi-use field, with content and related content blocks
+ */
+function book_nav_multipass(){
+
+		//build return string
+		$block['prefix'] = '<div id="multipass">';
+ 
+		//$block['content'] = '<p>Hello!</p>';
+ 
+		$block['suffix'] = '</div>';
+  
+		foreach($block as $section){
+				$output .= $section;
+		}
+ 
+		return $output;
+}
+
+
+/**
+ * Implements hook_node_view_alter().
+ * Adds javascript and css files
+ * 
+ */
+function book_nav_page_alter(&$page) {
+
+		$use_nav_in_types = array('book', 'topic');
+		$menu_obj = menu_get_object();
+		
+		if(!is_object($menu_obj) || !in_array($menu_obj->type, $use_nav_in_types)) return;
+
+		// Define base path of book_nav module
+		$path = drupal_get_path('module','book_nav');
+		
+		// Send configuration parameters to javascript
+		$pass_to_js = array(
+				'table_collapse' => TRUE,
+				'procedure_collapse' => TRUE,
+				'procedure_collapse_threshold' => 2,
+				'click_to_expand' => t('Click to expand'),
+				'click_to_collapse' => t('Click to collapse'),
+  );
+    
+		// If the user is an editor, include the topic edit javascript
+		if(user_is_editor()) {
+				$pass_to_js['editor'] = TRUE;
+				$pass_to_js['insert'] =
+								'<div class="edit-wrapper list-group">'
+					   .'<a href="#" onclick="return false" class="list-group-item vertical-collapse-trigger"><span class="glyphicon glyphicon-align-justify"></span></a>'
+					   .'<a href="#" onclick="return false" class="list-group-item ajax-op-button edit-topic-button" data-mode="edit"><span class="glyphicon glyphicon-edit"></span> ' . t('Edit') . '</a>'
+					   .'<div href="#" onclick="return false" class="list-group-item workflow-op-button workflow-edit-button" data-mode="edit"><span class="glyphicon glyphicon-wrench"></span> ' . t('Workflow') . '<div class="workflow-slider"><div class="workflow-insert"></div></div></div>'
+								.'</div>';
+				$pass_to_js['basePath'] = base_path();
+				
+				drupal_add_js($path . '/topic-edit.js');
+				drupal_add_css($path . '/topic-edit.css');
+				drupal_add_css($path . '/workflow-manage.css');
+  }
+    
+		drupal_add_js(array('book_nav' => $pass_to_js), 'setting');
+
+		// Add javascript libraries
+		drupal_add_js($path . '/booknav.js');
+		drupal_add_js($path . '/booknav-toc-create.js');
+
+		drupal_add_js(drupal_get_path('module','print').'/js/replace_images.js'); //move to theme?
+		drupal_add_js($path . '/jquery-cookie/jquery.cookie.js');
+		
+		// Load stylesheets for documentation
+		drupal_add_css(drupal_get_path('module', 'book_nav') . '/css/document.styles.css');
+		drupal_add_css(drupal_get_path('module','book_nav') . '/css/doc_nav.css');
+}
+
+/**
+* Implements ds_field_theme_functions_info().
+*/
+function book_nav_ds_field_theme_functions_info() {
+  return array('theme_topic_display_field' => t('Topic display field'));
+}
+
+/**
+* Field theming function.
+*/
+function theme_topic_display_field($variables, $config) {
+  $output = '';
+
+  // Render the items without wrappers and label.
+  foreach ($variables['items'] as $delta => $item) {
+    $output .= drupal_render($item);
+  }
+
+  return $output;
+}
+
+/**
+ * Helper function that determines whether the "action" button is displayed in the fixed toolbar.
+ *
+ * @param $node
+ * 	The current node object
+ *
+ * @param $book
+ * 	The cover page node object
+ *
+ * @return TRUE if the action button should be displayed, otherwise FALSE.
+ * 
+ */
+function _doc_manage_actions_button_state($node, $book) {
+    
+    $state = FALSE;
+    
+    // Enter conditons here. Condition must evaluate to TRUE for the button to be displayed.
+    
+    // Enable button on internal book pages
+    if($node->book['depth'] != 1) $state = TRUE;
+    return $state;
+}
+
+
+
+function longform_toolbar_file_options($node){
+  $block_title = t("Downloads");
+  $file_download_title = t("PDF Downloads");
+  $generic_pdf_label = t ("Download&nbsp;a&nbsp;PDF");
+  
+  //build file download block. If the item is related to a controller, get the files uploaded there. Otherwise, refer to the book cover page.
+  if($node->field_document_relation && $node->type = 'book'){
+    $relation = relation_load($node->field_document_relation[LANGUAGE_NONE][0]['value']);
+    $book_node = node_load($relation->endpoints[LANGUAGE_NONE][0]['entity_id']);
+  }
+  else $book_node = node_load($node->book['bid']);
+  
+  if(count($book_node->field_manual_pdf) >= 1 || isset($book_node->field_auto_pdf)) {
+  
+    //assemble array of uploaded files
+  
+    $file_array = array();
+    foreach ($book_node->field_manual_pdf[LANGUAGE_NONE] as $file){
+      $temp = array();
+      $temp['filename'] = $file['filename'];
+      $temp['url'] = file_create_url($file['uri']);
+      switch ($file['filemime']){
+        case 'application/pdf':
+          $temp['type'] = 'pdf';
+          break;
+        default:
+          $temp['type'] = 'other';
+          break;
+      }
+      switch ($temp['type']) {
+	case 'pdf':
+	  $glyphicon = "<span class=\"glyphicon glyphicon-download\"></span>";
+	  break;
+	case 'other':
+	  $glyphicon = "<span class=\"glyphicon glyphicon-file\"></span>";
+	  break;
+      }
+      
+      $link = l($glyphicon . $generic_pdf_label, $temp['url'], array(
+	  'html' => TRUE,
+	  'attributes' => array(
+	    'class' => array($temp['type']),
+	    ),
+	  )
+       );
+      $file_list .= '<li class="file-downloads">' . $link . PHP_EOL;
+    }
+    
+    // Add auto-generated PDFs to the list.
+
+    $auto_pdf = $book_node->field_auto_pdf[LANGUAGE_NONE][0];
+
+    // Auto-generated PDFs will only appear if there are NO manual PDF uploads.
+    if($pdf_count == 0 && isset($auto_pdf)) {
+      $link = l('<span class="glyphicon glyphicon-download"></span>' . $generic_pdf_label, file_create_url($auto_pdf['uri']), array(
+	  'html' => TRUE,
+	  'attributes' => array(
+	    'class' => array('pdf', 'auto-generated'),
+	    ),
+	  )
+       );
+ 
+      $file_list .= '<li class="file-downloads">' . $link . PHP_EOL;
+    }
+
+    $file_block =  '<div id="file-downloads" class="menu-drop-options">
+			<h2 class="block-title">' . $block_title . '</h2>
+                        <ul class="files nav nav-pills nav-stacked">' . $file_list . '</ul>
+                    </div>';
+  }
+
+   return $file_list ? $file_block : FALSE; 
+
+}
+
+function longform_toolbar_print_options($node){
+    if (!module_exists('print')) return FALSE;
+    
+  $block_title = t("Print Options");
+
+  $print_link_label = t("Print this page");
+  
+    //collect print options
+    $glyphicon = '<span class="glyphicon glyphicon-print"></span>';
+    $print_link = extract_body(qp(print_insert_link(),'span')->contents()->unwrap()->find('a')->text($print_link_label)->prepend($glyphicon)->top()->html());
+    $print_list = '<li class="print-option">'.$print_link.'</li>'; 
+    
+    $print_block = '<div id="print-functions" class="menu-drop-options">
+		      <h2 class="block-title">' . $block_title . '</h2>
+                      <ul class="files nav nav-pills nav-stacked">'.$print_list.'</ul>
+                    </div>';
+                    
+   return $print_block;  
+
+}
+
+/**
+ * Helper function that adds a bootstrap tour to the page if needed.
+ *
+ * @param $node
+ * 	The current node object
+ *
+ * @param $book
+ * 	The cover page node object
+ *
+ * @return TRUE if the action button should be displayed, otherwise FALSE.
+ * 
+ */
+function _doc_manage_display_tour($node, $book) {
+    
+    $display_tour = FALSE;
+    
+    // Enter conditons here. Condition must evaluate to TRUE for the tour to be displayed.
+    
+    // Enable button on internal book pages
+    //if($node->book['depth'] != 1) $display_tour = TRUE;
+    
+    if($display_tour) {
+        drupal_add_js(drupal_get_path('module','book_nav') . '/includes/js/ui-tour.js');
+	drupal_add_css(drupal_get_path('module','doc_manage_core') . '/includes/ui-tour.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
+    }
+}
+
+/**
+ * Implements hook_panels_pane_content_alter()
+ *
+ * Alters outgoing content running through the panels engine.
+ *
+ * Currently, this hook processes:
+ * 	* Node Body -- Adds lazyloading to image tags
+ * 	* Node Body -- Strips embedded "page links" content
+ *
+ */
+function book_nav_panels_pane_content_alter($content, $pane, $args, $contexts) {
+
+    if(is_object($content) && $content->subtype == 'node:field_book_body') {
+	$body = $content->content[0]['#markup'];
+	
+	//Lazy-loadify images
+	$body = book_nav_lazyload_images($body);
+	
+	//Strip the embedded page-links div
+	$body = preg_replace('/<div id="page-links".*?>.*?<!--end link insert-->/siu', '', $body);
+	
+	$content->content[0]['#markup'] = $body;
+    }
+}
+
+/**
+ * Alters image attributes to expose lazyloader functionality.
+ *
+ * @var $content
+ * 	The HTML render array to process. Expects $content[0]['#markup'] to exist.
+ *
+ * @return $content
+ * 	The updated render array.
+ */
+function book_nav_lazyload_images($content) {
+
+    if (module_exists('lazyloader')) {
+	$placeholder_src = drupal_get_path('module','lazyloader') . '/loader/loader-3.gif';
+	$regex = '/<img.*?\ssrc="(.*?)".*?\/>/ui';
+	$content = preg_replace_callback(
+	    $regex,
+	    function($matches) use ($placeholder_src){
+		if(stripos($matches[0], 'data-src') !== FALSE) return $matches[0];
+		return qp($matches[0],'img')->attr('data-src', $matches[1])->attr('src', $placeholder_src)->html();//->attr('src', $placeholder_src)->html();
+		return str_replace('src="' . $matches[1] . '"', 'src="' . $placeholder_src . '" data-src="' . $matches[1] . '"', $matches[0]);
+	    },
+	    $content);
+    }
+    return $content;
+}

@@ -1,0 +1,1531 @@
+<?php
+
+/**
+ * Implements hook_action_info().
+ */
+function longform_translation_action_info() {
+  return array(
+    'longform_translation_generate_job_action' => array(
+      'type' => 'entity',
+      'label' => t('Technet shortcut to add jobs'),
+      'configurable' => FALSE,
+      'pass rows' => TRUE,
+    )
+  );
+}
+
+/**
+ * Implements hook_block_info().
+ */
+function longform_translation_block_info() {
+  $blocks['translation_dashboard'] = array(
+    'info' => t('Translation Dashboard'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view().
+ */
+function longform_translation_block_view($delta) {
+  
+  switch($delta){
+    case 'translation_dashboard':
+						$blocks['subject'] = t('Translation Dashboard');
+						$blocks['content'] = longform_translation_render_dashboard();
+						break;
+  }
+  
+  return $blocks;
+}
+
+/**
+ * Include and call the dashboard functions.
+ *
+ */
+function longform_translation_render_dashboard() {
+  module_load_include('inc', 'longform_translation', 'longform_translation_dashboard');
+  return longform_translation_dashboard();
+}
+
+/**
+ * Implements hook_action().
+ *
+ * Add this action to the Node Source Overview view.
+ *
+ * Build an array of selected nodes from views_bulk_operations.
+ * When the last one is read, call the routine to add tmgmt jobs.
+ *
+ */
+function longform_translation_generate_job_action(&$entity, $context = array()) {
+  global $selected_counter, $selected_nodes;
+  $selected_counter++;
+  $selected_total = $context['progress']['total'];
+
+  // build an array of objects for each node that was selected
+  $info = entity_get_info($context['entity_type']);
+  $nid = $entity->{$info['entity keys']['id']};
+  $selected_nodes[] = node_load($nid);
+
+  // on the last one, make the call to create the jobs
+  if ($selected_counter == $selected_total){
+    // NOTE: HARDCODED for testing!
+    $target_languages = array("fr", "zh-hans");
+    $jobs = longform_translation_add_tmgmt_jobs($selected_nodes, $target_languages);
+    // dpm("Jobs created: " . print_r($jobs, TRUE));
+  }
+}
+
+
+/**
+ * Given an array of nodes and an array of target languages:
+ * create a tmgmt job for each target language,
+ * then add to that job a tmgmt item for each node,
+ * return an array of tmgmt jobs.
+ *
+ * Adapted from:
+ *   module: tmgmt/sources/node/ui/tmgmt_node_ui.model
+ *   function: tmgmt_node_ui_checkout_multiple_action($nodes, $info)
+ *
+ * Assumption: source language is always 'en'
+ *
+ * @param array $nodes
+ *   Array of Drupal nodes.
+ * @param array $target_languages
+ *   Array of strings of language codes (example: 'fr', 'es', 'zh-hans').
+ *
+ */
+function longform_translation_add_tmgmt_jobs($nodes, $target_languages) {
+  $jobs = array();
+  foreach ((array)$target_languages as $target_language){
+    try{
+      // Create new job.
+      $job = tmgmt_job_create('en', $target_language, $GLOBALS['user']->uid);
+      // build an array to return a list of created jobs.
+      $jobs[] = $job;
+      foreach ($nodes as $node) {
+        if ($node->language == 'en') {
+          try{
+            // Add initial job item.
+            $job->addItem('entity', 'node', $node->nid);
+          }
+          catch(TMGMTException $e){
+            watchdog_exception('tmgmt', $e);
+            drupal_set_message(t('Unable to add job item for node %name.', array('%name' => $node->title)), 'error');
+          }
+        }
+      }
+    }
+    catch(TMGMTException $e){
+      watchdog_exception('tmgmt', $e);
+      drupal_set_message(t('Unable to add job item for node %name.', array('%name' => $node->title)), 'error');
+    }
+  }
+  return $jobs;
+}
+
+/**
+ * Returns an array of related translation items.
+ *
+ * @param $relation_type
+ * 	The machine name of the relation type to use. Defaults to 'tmgmt_jobs'.
+ *
+ * @param $controller
+ * 	This can be either the import ticket node OR a tmgmt job.
+ *
+ * @return (array)
+ * 	An array of entity pairs, keyed by relation ID.
+ */
+function longform_translation_tmgmt_query($relation_type = NULL, $controller = NULL){
+  //code adapted from relation_get_related_entity() in relation.module
+  
+  if (!$relation_type) {
+    $relation_type = 'tmgmt_jobs';
+  }
+  if (!$controller) $controller = menu_get_object();
+  
+    if($controller->type == 'import_ticket'){
+      $query = relation_query('node', $controller->nid);
+    }
+    elseif (isset($controller->tjid)) {
+      $query = relation_query('tmgmt_job', $controller->tjid);
+    }
+    if ($relation_type) {
+      $query->entityCondition('bundle', $relation_type);
+    }
+    $results = $query->execute();
+    
+    if ($results) {
+      $answers = relation_load_multiple(array_keys($results));
+      foreach($answers as $answer) {
+        //if the type property is set, return the last array element (the tmgmt job). Otherwise return the first one (the ticket).
+        $entities[$answer->rid] = isset($controller->type) ? array_pop(field_get_items('relation', $answer, 'endpoints')) : array_shift(field_get_items('relation', $answer, 'endpoints'));
+      }
+    }
+    else {
+      $entities = FALSE;
+    }
+  return $entities;
+}
+
+/**
+ * Display multilingual interface
+ *
+ * @param $ticket
+ * 	The ticket object
+ *
+ * @return
+ * 	Render array for multilingual actions and status updates
+ */
+function longform_translation_multilingual_options($ticket = NULL, $options = NULL) {
+  // *** Build render array ***
+
+  $wrap = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-12'),
+      ),
+    );
+
+  $wrap['title'] = array(
+    '#markup' => '<h2>Document Translations</h2>',
+  );
+
+  $wrap['body'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('row'),
+      ),
+    );
+  
+  if (doc_manage_get_book_pages($ticket) == NULL){
+    $form['intro'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('alert', 'alert-info'),
+        ),
+      );
+    
+    $form['intro']['text'] = array(
+      '#markup' => '<label>Translation jobs can\'t be set up before the document pages are created.</label>
+      <p>Once you\'ve completed the import steps, this tab will be available.</p>'
+    );
+    return $form;
+  }
+  
+  $form['left'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-3'),
+    ),
+  );
+  $form['left']['panel'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('panel', 'panel-default'),
+    ),
+  );
+  
+  $form['left']['panel']['head'] = array(
+    '#markup' => '<div class="panel-heading"><h3 class="panel-title">' . t('New translations') . '</h3></div>',
+  );
+  $form['left']['panel']['form'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('panel-body'),
+    ),
+  );
+  $form['left']['panel']['form']['content'] = drupal_get_form('_longform_translation_request_translation_form', $ticket);
+  
+  $form['center'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-6'),
+    ),
+  );
+  $form['center']['process']['panel'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('panel', 'panel-warning'),
+    ),
+  );
+  
+  $form['center']['process']['panel']['head'] = array(
+    '#markup' => '<div class="panel-heading"><h3 class="panel-title">' . t('In-process translation jobs') . '</h3></div>',
+  );
+  $form['center']['process']['panel']['body'] = longform_translation_job_status_table($ticket);
+
+  $form['center']['pending']['panel'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('panel', 'panel-warning'),
+    ),
+  );
+  
+  $form['center']['pending']['panel']['head'] = array(
+    '#markup' => '<div class="panel-heading"><h3 class="panel-title"><b>' . t('Pending translation jobs') . '</b> (' . t('waiting for ECO approval') . ')</h3></div>',
+  );
+  $form['center']['pending']['panel']['body'] = longform_translation_job_pending_table($ticket);
+  
+  $form['right'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-3'),
+    ),
+  );
+
+  $form['right']['panel'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('panel', 'panel-success'),
+    ),
+  );
+  
+  $form['right']['panel']['head'] = array(
+    '#markup' => '<div class="panel-heading"><h3 class="panel-title">' . t('Finished translations') . '</h3></div>',
+  );
+  $form['right']['panel']['body'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('panel-body'),
+    ),
+  );
+
+  $form['right']['panel']['body']['content'] = array(
+    '#markup' => _longform_translation_published_translations($ticket),
+    );
+  
+  return $wrap + $form;
+}
+
+/**
+ * Generate a list of checkboxes to submit to TMGMT as translation jobs
+ *
+ * @param $ticket
+ * 	The import ticket object
+ *
+ * @return
+ * 	The form with checkboxes
+ */
+function _longform_translation_request_translation_form($form, &$form_state, $ticket) {
+  
+  // Get the list of enabled system languages
+  // @TODO: Filter $list so it excludes already in-process or approved languages
+  $list = locale_language_list();
+  // Remove the current language from the selection set
+  unset ($list[$ticket->language]);
+  $existing_jobs = longform_translation_tmgmt_query('tmgmt_jobs',$ticket);
+  // Remove any existing translation jobs
+  if(count($existing_jobs) != 0){
+    foreach($existing_jobs as $existing) {
+      $job = tmgmt_job_load($existing['entity_id']);
+      unset ($list[$job->target_language]);
+    }
+  }
+  // Build the form
+  $form['checkboxes'] = array(
+    '#type' => 'checkboxes',
+    '#title' => 'Select languages',
+    '#options' => $list,
+  );
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Create jobs'),
+    '#submit' => array('longform_translation_create_translation_jobs_submit', $ticket),
+    '#attributes' => array(
+      'class' => array('pull-right'),
+    ),
+  );
+  return $form;
+
+}
+
+/**
+ * Process and submit translation requests.
+ *
+ * $param $form, $form_state
+ * 	Drupal form elements
+ *
+ */
+function longform_translation_create_translation_jobs_submit($form, &$form_state, $ticket = NULL) {
+  $ticket = is_null($ticket) ? menu_get_object() : $ticket;
+  $languages = array_filter($form_state['values']['checkboxes']);
+
+  // Set the job requests up as a batch
+  $ops[] = array('_longform_translation_create_translation_jobs_op', array($ticket, node_load_multiple(doc_manage_get_book_pages($ticket)), $languages));
+  $batch = array(
+      'operations' => $ops,
+      'file' => drupal_get_path('module', 'longform_translation') . '/longform_translation.inc',
+      'finished' => '_longform_translation_create_translation_jobs_finished',
+      'title' => t('Creating jobs...'),
+      'init_message' => t('Initializing...'),
+      'progress_message' => t('Processing task @current out of @total.'),
+      'error_message' => '<label>' . t('There was an error while creating translation jobs.' . '</label>'),
+  );
+  
+  batch_set($batch);
+  batch_process();
+}
+
+/**
+ * Translation setup batch operation
+ *
+ * @param $ticket
+ * 	Import ticket node object
+ *
+ * @param $pages
+ * 	(array) The page NIDs tracked by the import ticket
+ *
+ * @param $languages
+ * 	(array) The language codes to process.
+ */
+function _longform_translation_create_translation_jobs_op($ticket, $pages, $languages, &$context) {
+  if (empty($context['sandbox'])) {
+    $context['sandbox'] = array();
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['current_job'] = 0;
+    $context['results']['ticket'] = $ticket->nid;
+
+    // Save job count for the termination message.
+    $context['sandbox']['max'] = count($languages);
+    
+    // Other one-time prep
+    $job_ids = array();
+    
+  }
+  
+  // Retrieve the next group of sections
+  $result = array_slice($languages, $context['sandbox']['current_job'], 1); //last parameter is $limit. Caps number of jobs that can be run at once.
+
+  foreach ($result as $job) {
+
+    // Batch functions:   
+
+    // Create TMGMT Job
+    $new_jobs = longform_translation_add_tmgmt_jobs($pages, $job);
+    foreach($new_jobs as $new_job) {
+      $new_job->translator = 'file';
+      $new_job->save;
+      $new_job->label = $ticket->title . ' (' . $job . ')';
+
+      if($new_job->isTranslatable()) {
+        $new_job->requestTranslation();
+      }
+      
+      $endpoints = array();
+      $endpoints = array(
+        array('entity_type' => 'node', 'entity_id' => $ticket->nid),
+        array('entity_type' => 'tmgmt_job', 'entity_id' => $new_job->tjid),
+      );
+      
+      //now create the new relation, save it, and add it to $controller
+      $new_relation = relation_create('tmgmt_jobs',$endpoints);
+      $new_relation_id = relation_save($new_relation);
+
+      $context['results']['jobs'][$new_job->tjid] = $new_job;
+      $context['results']['relations'][$new_job->tjid] = $new_relation_id;
+    }
+    
+    $context['results']['processed_languages'][] = $job;    
+    // Update our progress information.
+    $context['sandbox']['progress']++;
+    $context['sandbox']['current_job']++;
+    $context['message'] = 'Creating job ' . $context['sandbox']['current_job'] . ' of ' . $context['sandbox']['max'] . ': ' . $job;
+    
+    if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+  }
+
+  }
+}
+
+function _longform_translation_create_translation_jobs_finished($success, $results, $operations) {
+
+  if ($success) {
+    drupal_set_message(count($results['jobs']) . ' translation jobs were created. Download the XLIFF files under the <b>multilingual</b> tab.','status');
+  }
+  else {
+    drupal_set_message('There was a problem creating your translation jobs. Check the <b>multilingual</b> tab for current job information.','error');
+  }
+}
+
+/**
+ * Generate a summary table of translation job statuses.
+ *
+ * @param $ticket
+ * 	The import ticket object
+ *
+ * @return
+ * 	The table render array
+ */
+function longform_translation_job_status_table($ticket) {
+  global $base_path;
+  $languages = locale_language_list('name');
+  $job_states = tmgmt_job_states();
+  $existing_jobs = longform_translation_tmgmt_query('tmgmt_jobs', $ticket);
+
+  foreach($existing_jobs as $existing) {
+    $jobs[$existing['entity_id']] = tmgmt_job_load($existing['entity_id']);
+  }
+  foreach ($jobs as $job) {
+    if($job->isFinished() || longform_translation_job_check_pending($job->tjid)) {
+      continue;
+    }
+    $label = $languages[$job->target_language];
+    //$state = '<span class="text-success">' . $job_states[$job->state] . '</span>';
+    $download = longform_translation_tmgmt_download_file($job, 'link');
+    $upload_form = render(drupal_get_form('longform_translation_tmgmt_file_upload_form_' . $job->tjid, $ticket, $job));
+    $delete_form = render(drupal_get_form('longform_translation_tmgmt_job_delete_form_' . $job->tjid, $ticket, $job));
+    $job_link = l(t('Go to TMGMT'), 'admin/tmgmt/jobs/' . $job->tjid, array('html' => TRUE, 'attributes' => array('class'=>array('btn','btn-default','btn-sm'))));
+    $rows[] = array(
+      'data' => array($label, $download, $upload_form, $delete_form),
+      //'class' => array($row_class),
+    );
+    $bulk_download_file_list[] = file_load(longform_translation_tmgmt_download_file($job,'fid'));
+    
+  }
+  if (count($rows) == 0) {
+    return array('#markup' => '<div class="panel-body"><span class="text-muted">There aren\'t any active translation jobs.</span></div>');
+  }
+  $language_head = '<p data-toggle="tooltip" data-placement="top" title="The language to be translated">' . t('Language') . '</p>';
+  $download_head = '<p data-toggle="tooltip" data-placement="top" title="Download the untranslated XLIFF file for distribution">' . t('Download') . '</p>';
+  $upload_head = '<p data-toggle="tooltip" data-placement="top" title="Upload and process one translated XLIFF file at a time">' . t('Upload') . '</p>';
+  $delete_head = '<p data-toggle="tooltip" data-placement="top" title="Delete this translation job. The original content will be left intact.">' . t('Delete') . '</p>';
+  $ops = array();
+  $ops['table'] = array(
+    '#theme' => 'table',
+    '#attributes' => array(
+      'class' => array('table', 'table-hover'),
+    ),
+    '#header' => array($language_head, $download_head, $upload_head, $delete_head ),
+    '#rows' => $rows,
+  );
+  $wrap = entity_metadata_wrapper('node',$ticket);
+  $part_number = $wrap->field_part_number->value();
+  $part_number = $part_number[0]->name;
+  $ops['footer'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('panel-footer'),
+    ),
+  );
+  $ops['footer']['bulk'] = drupal_get_form('longform_translation_tmgmt_bulk_ops_form', $bulk_download_file_list, $ticket->nid, $part_number);
+  return $ops;
+}
+
+/**
+ * Generate a summary table of pending translation jobs.
+ *
+ * @param $ticket
+ * 	The import ticket object
+ *
+ * @return
+ * 	The table render array
+ */
+function longform_translation_job_pending_table($ticket) {
+  global $base_path;
+  $languages = locale_language_list('name');
+  $job_states = tmgmt_job_states();
+  $existing_jobs = longform_translation_tmgmt_query('tmgmt_jobs', $ticket);
+  foreach($existing_jobs as $existing) {
+    $jobs[$existing['entity_id']] = tmgmt_job_load($existing['entity_id']);
+  }
+  foreach ($jobs as $job) {
+    $pending = longform_translation_job_check_pending($job->tjid);
+    $held = longform_translation_job_check_hold($job->tjid);
+    $finished = $job->isFinished();
+    
+    // Skip if the job isn't finished (it's still waiting to receive translated data),
+    // or if the job IS finished and the hold has been removed (it's been approved through ECO).
+    if($finished === FALSE || ($finished === TRUE && $held === FALSE)) {
+      continue;
+    }
+    
+    $label = $languages[$job->target_language];
+    $state = '<span class="text-success">' . $job_states[$job->state] . '</span>';
+    $download = render(drupal_get_form('longform_translation_tmgmt_eco_download_form_' . $job->tjid, $ticket, $job));
+    $approve_form = render(drupal_get_form('longform_translation_tmgmt_eco_approve_form_' . $job->tjid, $ticket, $job));
+    $revert_form = render(drupal_get_form('longform_translation_tmgmt_eco_revert_form_' . $job->tjid, $ticket, $job));
+    $job_link = l(t('Go to TMGMT'), 'admin/tmgmt/jobs/' . $job->tjid, array('html' => TRUE, 'attributes' => array('class'=>array('btn','btn-default','btn-sm'))));
+    $language_head = '<p data-toggle="tooltip" data-placement="top" title="The language to be translated">' . t('Language') . '</p>';
+    $download_head = '<p data-toggle="tooltip" data-placement="top" title="Download the ECO package (PDF and XLIFF) for approvals">' . t('Download ECO Package') . '</p>';
+    $approve_head = '<p data-toggle="tooltip" data-placement="top" title="Release this content on ECO approval">' . t('Approve') . '</p>';
+    $revert_head = '<p data-toggle="tooltip" data-placement="top" title="Revert this job (this will send it back to \'in-process translation jobs\'.">' . t('Revert') . '</p>';
+    
+    $rows[] = array(
+      'data' => array($label, array('data'=>$download,'class'=>array('active'),'style' => array('width:50%;')), $approve_form),//, $revert_form),
+      //'class' => array($row_class),
+    ); 
+  }
+  if (count($rows) == 0) {
+    return array('#markup' => '<div class="panel-body"><span class="text-muted">There aren\'t any pending translation jobs.</span></div>');
+  }
+  $table = array(
+    '#theme' => 'table',
+    '#attributes' => array(
+      'class' => array('table'),
+    ),
+    '#header' => array($language_head, $download_head, $approve_head),//, $revert_head ),
+    '#rows' => $rows,
+  );
+
+  return $table;
+}
+
+/**
+ * Checks whether a job is pending by querying the job item table for
+ * in-review job items.
+ *
+ * @param $tjid
+ *   The identifier of the job.
+ * @return bool
+ *   TRUE if the job is finished, FALSE otherwise.
+ */
+function longform_translation_job_check_pending($tjid) {
+  $query = new EntityFieldQuery();
+  return !(boolean) $query->entityCondition('entity_type', 'tmgmt_job_item')
+    ->propertyCondition('tjid', $tjid)
+    ->propertyCondition('state', TMGMT_JOB_ITEM_STATE_REVIEW, '<>')
+    ->range(0, 1)
+    ->count()
+    ->execute();
+}
+
+/**
+ * Checks whether a job is held (translation_job_hold flag is set)
+ *
+ * This is a band-aid solution for allowing a TMGMT job to finish,
+ * releasing the content so it can be used to create a PDF, but allowing
+ * the page manager to restrict public access to it.
+ *
+ */
+function longform_translation_job_check_hold($tjid) {
+  $flag = flag_get_flag('translation_job_hold');
+  return $flag->is_flagged($tjid);
+}
+
+/**
+ * Bulk XLIFF file operation triggers
+ *
+ */
+function longform_translation_tmgmt_bulk_ops_form($form, &$form_state, $file_list, $ticket_nid, $part_number) {
+  $form_state['stored']['files'] = $file_list;
+  $form_state['stored']['ticket'] = $ticket_nid;
+  $form_state['stored']['part_number'] = str_replace('/','-',$part_number);
+  $out = array();
+  $out['wrap'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('col-md-12'),
+      ),
+  );
+  //$out['wrap']['intro'] = array(
+  //  '#markup' => '<p class="text-warning">' . t('Bulk file operations:') . '</p>',
+  //);
+  $out['wrap']['download'] = array(
+      '#type' => 'submit',
+      '#value' => '<span class="glyphicon glyphicon-download"></span>' . t('Download a zipped set of all <b>untranslated</b> XLIFF files'),
+      '#submit' => array('longform_translation_bulk_download_xliff_submit'),
+      '#attributes' => array(
+        'class' => array('btn-default', 'btn-block')
+      ),
+  );
+  //$out['wrap']['upload'] = array(
+  //    '#type' => 'submit',
+  //    '#value' => t('Upload a zipped set of translated XLIFF files'),
+  //    '#submit' => array('longform_translation_bulk_upload_xliff_submit'),
+  //    '#attributes' => array(
+  //      'class' => array('btn-default', 'btn-block')
+  //
+  //    ),
+  //);
+  
+  //$upload_label = '<span class="glyphicon glyphicon-upload"></span>' . t('Upload a zipped set of <b>translated</b> XLIFF files');
+  //$out['wrap']['upload'] = longform_translation_bulk_upload_xliff_form($form, $form_state, $upload_label);
+  return $out;
+
+}
+
+function longform_translation_bulk_upload_xliff_form ($form, &$form_state, $label) {
+  $form['modal'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal', 'fade'),
+      'id' => 'bulk-xliff-upload-modal',
+    ),
+  );
+  $form['modal']['dialog'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-dialog'),
+    ),
+  );
+  $form['modal']['dialog']['content'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-content'),
+    ),
+  );
+  $form['modal']['dialog']['content']['header'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-header'),
+    ),
+  );
+  $form['modal']['dialog']['content']['header']['close'] = array(
+    '#markup' => '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>',
+  );
+  $form['modal']['dialog']['content']['header']['title'] = array(
+    '#markup' => '<h4 class="modal-title">Bulk Upload XLIFF files</h4>',
+  );
+
+  $form['modal']['dialog']['content']['body'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-body'),
+    ),
+  );
+  $form['modal']['dialog']['content']['body']['description'] = array(
+    '#markup' => '<p>Upload a zipped file containing one or more <b>translated</b> .xlf files. These will be matched to existing jobs and automatically approved.</p>
+                  <p class="alert alert-warning"><b>Note</b>: Translations will not be available to the public until they have been released after ECO review.</p>',
+  );
+  $supported_formats = array('zip');
+  $form_state['stored']['supported_formats'] = $supported_formats;
+  $form['modal']['dialog']['content']['body']['file'] = array(
+    '#type' => 'file',
+    '#title' => t('Upload file'),
+    '#size' => 50,
+    '#description' => t('Supported formats: @formats.', array('@formats' => implode(', ', $supported_formats))),
+  );
+  $form['modal']['dialog']['content']['footer'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-footer'),
+    ),
+  );
+  
+  $form['modal']['dialog']['content']['footer']['content'] = array();
+    
+  $form['modal']['dialog']['content']['footer']['content']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Upload and Import'),
+    '#submit' => array('longform_translation_bulk_upload_xliff_submit'),
+    '#attributes' => array(
+      'class' => array('btn', 'btn-success'),
+    ),
+  );
+
+  $form['reveal_upload_modal_trigger'] = array(
+    '#markup' => '<button type="button" class="btn btn-default btn-block" data-toggle="modal" data-target="#bulk-xliff-upload-modal">' . $label . '</button>',
+  );
+  return $form; 
+}
+
+/**
+ * Submit handler for bulk XLIFF uploads.
+ *
+ * Saves uploaded archive and unpacks it, then submits
+ * the enclosed jobs to TMGMT for processing.
+ */
+function longform_translation_bulk_upload_xliff_submit($form, &$form_state) {
+  if ($file = file_save_upload('file', array('file_validate_extensions' => array(implode(' ', $form_state['stored']['supported_formats']))))) {
+
+    // Get archive contents
+    $archive = new ZipArchive();
+    $opened = $archive->open(drupal_realpath($file->uri));
+    if (!$opened) {
+      drupal_set_message('The uploaded archive could not be opened.','error');
+      return FALSE;
+    }
+    $base = 'temporary://tmgmt_files';
+    $temppath = $base . '/' . $form_state['stored']['part_number'] . '/';
+    if(!is_dir($base)) {
+      mkdir ($base);
+    }
+    if(!is_dir($temppath)) {
+      mkdir ($temppath);
+    }
+    
+    // Extract the archive
+    $extraction = $archive->extractTo(drupal_realpath($temppath));
+    
+    // Iterate over contents, create temporary file objects, and extract job IDs
+    $xliffs = ziparchive_list_files($archive);
+    
+    foreach ($xliffs as $xliff) {
+      $file_obj = _longform_translation_build_file_object($temppath, $xliff);
+      $save = file_save($file_obj);
+      $temp = file_get_contents(drupal_realpath($save->uri));
+      
+      preg_match ('/job-id="(\d*?)"/sui',$temp,$job_id);
+      $saved[] = array('job_id' => $job_id[1], 'file' => $save);
+      unset($temp);
+    }
+
+    $archive->close();     
+    // Set the job requests up as a batch
+    $ops[] = array('_longform_translation_process_translation_jobs_op', array($saved));
+    $batch = array(
+        'operations' => $ops,
+        'file' => drupal_get_path('module', 'longform_translation') . '/longform_translation.inc',
+        'finished' => '_longform_translation_process_translation_jobs_finished',
+        'title' => t('Processing jobs...'),
+        'init_message' => t('Initializing...'),
+        'progress_message' => t('Processing task @current out of @total.'),
+        'error_message' => '<label>' . t('There was an error while processing translation jobs.' . '</label>'),
+    );
+    
+    batch_set($batch);
+    batch_process();
+  }  
+}
+
+
+/**
+ * Translation setup batch operation
+ *
+ * @param $ticket
+ * 	Import ticket node object
+ *
+ * @param $pages
+ * 	(array) The page NIDs tracked by the import ticket
+ *
+ * @param $languages
+ * 	(array) The language codes to process.
+ */
+function _longform_translation_process_translation_jobs_op($files) {
+  if (empty($context['sandbox'])) {
+    $context['sandbox'] = array();
+    $context['sandbox']['progress'] = 0;
+    $context['sandbox']['current_file'] = 0;
+    $context['results']['files_in'] = $files;
+    $context['results']['files_out'] = array();
+    
+    // Save job count for the termination message.
+    $context['sandbox']['max'] = count($files);
+    // Other one-time prep
+    $job_ids = array();
+  }
+  dpm('===start batch===');
+  dpm($context,'context');
+  
+  // Process the next group of files
+  $result = array_slice($files, $context['sandbox']['current_file'], 1); //last parameter is $limit. Caps number of jobs that can be run at once.
+  foreach ($result as $job) {
+    reset($job);
+    dpm($job['file']->filename,'job id ' . $job['job_id']);
+    // Batch functions:   
+    longform_translation_process_tmgmt_job($job['file'], tmgmt_job_load($job['job_id']));
+  }
+  
+  $context['results']['files_out'][$job['file']->fid] = $job['file']->filename;    
+  // Update our progress information.
+  $context['sandbox']['progress']++;
+  $context['sandbox']['current_file']++;
+  $context['message'] = 'Processing file ' . $context['sandbox']['current_file'] . ' of ' . $context['sandbox']['max'] . ': ' . $job['file']->filename;
+  if ($context['sandbox']['progress'] != $context['sandbox']['max']) {
+    $context['finished'] = $context['sandbox']['progress'] / $context['sandbox']['max'];
+    dpm('looping');
+  }
+  dpm($context,'>> context at end of batch run');
+}
+
+function _longform_translation_process_translation_jobs_finished($success, $results, $operations) {
+dpm($results,'results');
+    // Clean up temp files
+    $files = $results['files_in'];
+    dpm($files,'files to clean up');
+    foreach ($files as $file) {
+      file_delete($file);
+    }
+
+  if ($success) {
+    
+    // Clean up temp files
+    foreach ($results['files'] as $file) {
+      file_delete($file);
+    }
+    drupal_set_message(count($results['jobs']) . ' translation jobs were processed.','status');
+    dpm($results,'results');
+  }
+  else {
+    drupal_set_message('There was a problem processing your translation jobs. Check the <b>multilingual</b> tab for current job information.','error');
+  }
+}
+
+/**
+ * Utility function that builds a file object.
+ *
+ * Adapted from file_save_upload().
+ *
+ */
+function _longform_translation_build_file_object($temppath, $filename) {
+  
+  $xlf = $temppath . $filename;
+  global $user;
+  
+// Begin building file object.
+  $file = new stdClass();
+  $file->uid = $user->uid;
+  $file->status = 0;
+  $file->filename = $filename;
+  $file->uri = $xlf;
+  $file->filemime = file_get_mimetype($xlf);
+  $file->filesize = filesize($xlf);
+  return $file;
+}
+
+
+function longform_translation_bulk_download_xliff_submit ($form, &$form_state) {
+  global $base_url, $base_path;
+  $files = $form_state['stored']['files'];
+  $part_number = $form_state['stored']['part_number'];
+  if (!is_dir('temporary://tmgmt')) {
+    mkdir ('temporary://tmgmt');
+  }
+  $archive_uri = 'temporary://tmgmt/';
+  $archive_name = $part_number . '-xliff-all.zip';
+  $filepath = $archive_uri . $archive_name;
+  unset($zip);
+  $zip = new ZipArchive();
+  if ($zip->open(drupal_realpath($filepath), ZipArchive::OVERWRITE) === TRUE) {
+    foreach ($files as $file) {
+      $zip->addFile(drupal_realpath($file->uri), $file->filename);
+    }
+    
+    $zip->close();
+    // send the file to the browser as a download
+    force_file_download($filepath, $archive_name);
+  }
+  else {
+    drupal_set_message(t('The archive could not be created.'),'error');
+  }
+  
+}
+
+
+/**
+ * Return a link to a XLIFF file download for a TMGMT job
+ *
+ * @param $job
+ *  The TMGMT job object
+ *
+ * @param $type
+ *  Either 'link' (default), 'fid', 'uri', or 'file'
+ *
+ * @return
+ *  A styled download link, a file uri, or a file object, depending on $type
+ */
+function longform_translation_tmgmt_download_file($job, $type = 'link') {
+    $args = array(
+    ':module' => 'tmgmt_file',
+    ':type' => 'tmgmt_job',
+    ':id' => $job->tjid,
+  );
+  $result = db_query('SELECT fid FROM {file_usage} WHERE module = :module and type = :type and id = :id', $args);
+  $file = file_load(reset($result->fetchCol()));
+    if($file) {
+      switch ($type) {
+        case 'file':
+          return $file;
+        break;
+        case 'uri':
+          return $file->uri;
+        break;
+        case 'fid':
+          return $file->fid;
+        break;
+        default:
+          return l('<span class="glyphicon glyphicon-download"></span> XLIFF', file_create_url($file->uri), array('html' => TRUE, 'attributes' => array('class' => array('btn', 'btn-sm', 'btn-default'))));
+      }
+    }
+}
+
+/**
+ * Generic job delete form
+ *
+ */
+function longform_translation_tmgmt_job_delete_form($form, &$form_state, $ticket, $job) {
+  $form_state['tmgmt_job'] = $job;
+  $form_state['ticket'] = $ticket;
+  $form['submit'] = array(
+    '#type' => 'submit',
+    '#value' => '<span class="glyphicon glyphicon-remove"></span>',
+    '#submit' => array('longform_translation_tmgmt_job_delete_submit'),
+    '#attributes' => array(
+      'class' => array('btn-sm'),
+    ),
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for tmgmt job delete form
+ *
+ */
+function longform_translation_tmgmt_job_delete_submit($form, &$form_state) {
+  $job = $form_state['tmgmt_job'];
+  $job->delete();
+  drupal_set_message('Job deleted.','status');
+}
+
+/**
+ * Generic job approve form
+ *
+ */
+function longform_translation_tmgmt_eco_approve_form($form, &$form_state, $ticket, $job) {
+  $form_state['tmgmt_job'] = $job;
+  $form_state['ticket'] = $ticket;
+
+  $form['button-group'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('btn-group', 'pull-right'),      
+    ),
+  );
+  $form['button-group']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => '<span class="glyphicon glyphicon-ok"></span> Approve',
+    '#submit' => array('longform_translation_tmgmt_eco_approve_submit'),
+    '#attributes' => array(
+      'class' => array('btn-success'),
+    ),
+  );
+  $form['button-group']['drop'] = array(
+    '#markup' =>
+      '<button type="button" class="btn btn-success dropdown-toggle" data-toggle="dropdown">
+        <span class="caret"></span>
+        <span class="sr-only">Toggle Dropdown</span>
+      </button>
+      <ul class="dropdown-menu" role="menu">
+        <li>
+          <div class="panel panel-default">
+            <div class="panel-heading">' . t('Other actions') . '</div>
+              <div class="panel-body">',
+  );
+  
+  $form['button-group']['revert'] = array(
+    '#type' => 'submit',
+    '#value' => '<span class="glyphicon glyphicon-arrow-left"></span>' . t('Revert'),
+    '#submit' => array('longform_translation_tmgmt_eco_revert_submit'),
+    '#attributes' => array(
+      'class' => array('btn-danger', 'btn-block'),
+      'data-toggle' => 'tooltip',
+      'data-placement' => 'right',
+      'data-trigger' => 'hover',
+      'title' => 'Delete translated content (if any) and return this job to the in-process table, above',
+    ),
+    '#suffix' => '</div></div></li></ul>',
+  );
+  return $form;
+}
+
+/**
+ * Submit handler for tmgmt job approval form
+ *
+ * Removes the ECO hold flag on submitted jobs. This
+ * releases the translated content to the wild.
+ *
+ */
+function longform_translation_tmgmt_eco_approve_submit($form, &$form_state) {
+
+  $job = $form_state['tmgmt_job'];
+  $flag = flag_get_flag('translation_job_hold');
+  $flag->flag('unflag',$job->tjid);
+  drupal_set_message('The translation job <b>' . $job->label . '</b> has been approved.','status');
+}
+
+/**
+ * Submit handler for tmgmt job delete form
+ *
+ * Reverts all job items in the selected job from "In Review" to "In Progress",
+ * sending them back to the in-process queue.
+ *
+ */
+function longform_translation_tmgmt_eco_revert_submit($form, &$form_state) {
+  $job = $form_state['tmgmt_job'];
+  $tjiids = reset(longform_translation_get_job_items($job));
+  $items = tmgmt_job_item_load_multiple($tjiids);
+  $states = tmgmt_job_item_states();
+  foreach ($items as $item) {
+    $item->state = TMGMT_JOB_ITEM_STATE_ACTIVE;
+    $item->save();
+  }
+  $job->state = TMGMT_JOB_STATE_ACTIVE;
+  $job->save();
+  drupal_set_message('The translation job <b>' . $job->label . '</b> has been reverted. To promote it again, upload a new translated XLIFF file.','status');
+}
+
+/**
+ * Bulk XLIFF file operation triggers
+ *
+ */
+function longform_translation_tmgmt_eco_download_form($form, &$form_state, $ticket, $job) {
+  $form_state['stored']['ticket'] = $ticket;
+  $form_state['stored']['job'] = $job;
+  $fid = longform_translation_tmgmt_download_file($job, 'fid');
+  $file = file_load($fid);
+  $form_state['stored']['xliff'] = $file;
+
+  $out = array();
+  $out['wrap'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('col-md-12'),
+      ),
+  );
+  $wrap = entity_metadata_wrapper('node', $ticket);
+  $part_number = $wrap->language($job->target_language)->field_part_number[0]->value()->name;
+  $tmp = array_pop(explode('-', $part_number));
+  $part_number = !array_key_exists($tmp, locale_language_list()) ? $part_number.= '-' . $job->target_language: $part_number;
+  $form_state['stored']['part_number'] = $part_number;
+  
+  
+  $out['wrap']['textfield'] = array(
+    '#type' => 'textfield',
+    '#size' => 10,
+    '#value' => $part_number,
+    '#attributes' => array(
+      'class' => array(),
+      'data-toggle' => 'tooltip',
+      'data-trigger' => 'hover',
+      'data-placement' => 'top',
+      'data-html' => 'true',
+      'title' => 'This part number will be used in the generated PDF.',
+    ),
+    '#prefix' =>'<div class="input-group no-bottom-margin">',
+  );
+  $out['wrap']['download'] = array(
+      '#type' => 'submit',
+      '#value' => '<span class="glyphicon glyphicon-download"></span>',// . t('Download'),// . '&nbsp;',
+      '#submit' => array('longform_translation_eco_download_submit'),
+      '#attributes' => array(
+        'class' => array('btn-default')
+      ),
+      '#prefix' => '<span class="input-group-btn">',
+      '#suffix' => '</span></div>'
+  );
+
+  return $out;
+
+}
+
+function longform_translation_eco_download_submit ($form, &$form_state) {
+  $debug = FALSE;
+  global $base_url, $base_path;
+  //$files = file_load_multiple($form_state['stored']['files']);
+  $part_number = isset($form_state['input']['textfield']) ? $form_state['input']['textfield'] : $form_state['stored']['part_number'];
+  if (!is_dir('temporary://tmgmt')) {
+    mkdir ('temporary://tmgmt');
+  }
+  $archive_uri = 'temporary://tmgmt/';
+  $archive_name = 'eco-' . $part_number . '.zip';
+  $filepath = $archive_uri . $archive_name;
+  $ticket = $form_state['stored']['ticket'];
+  $language = $form_state['stored']['job']->target_language;
+  // Get PDF of translated content
+  pdfreactor_import_ticket_generate($ticket, $language);
+  
+  $wrap = entity_metadata_wrapper('node', $ticket);
+  $pdf = $wrap->language($language)->field_auto_pdf->value();
+  if(count($pdf) == 0) {
+    drupal_set_message('<b>ECO Export:</b> There is no PDF to include in the ECO archive. This probably means the PDF generation failed. See the other error messages in this box for more information.','error');
+    if ($debug) {
+      $pdf = $wrap->upload[0]->value();
+    }
+    else {
+      return;
+    }
+  }
+
+  // Add files to zip
+  $files[] = file_load($pdf['fid']);
+  $files[] = $form_state['stored']['xliff'];
+  
+  $zip = new ZipArchive;
+  if ($zip->open(drupal_realpath($filepath), ZipArchive::CREATE) === TRUE) {
+    foreach ($files as $file) {
+      $zip->addFile(drupal_realpath($file->uri), $file->filename);
+    }
+    
+    $zip->close();
+    // send the file to the browser as a download
+    force_file_download($filepath, $archive_name);
+  }
+  else {
+    drupal_set_message(t('The archive could not be created.'),'error');
+  }
+  
+}
+
+
+/**
+ * Generate a linked list of approved translations for the current ticket
+ *
+ * @param $ticket
+ * 	The import ticket object
+ *
+ * @return
+ * 	The linked list
+ */
+function _longform_translation_published_translations($ticket){
+  global $base_url;
+  $languages = locale_language_list('name');
+  $job_states = tmgmt_job_states();
+  $existing_jobs = longform_translation_tmgmt_query('tmgmt_jobs', $ticket);
+
+  foreach($existing_jobs as $existing) {
+    $jobs[$existing['entity_id']] = tmgmt_job_load($existing['entity_id']);
+  }
+  $flag = flag_get_flag('translation_job_hold');
+  foreach ($jobs as $job) {
+    if(!$job->isFinished() || $flag->is_flagged($job->tjid)) {
+      continue;
+    }
+    $page = reset($job->getItems());
+    $pages = doc_manage_get_book_pages_from_book_page($page->item_id);
+    $items[] = array(
+      'data' => l($languages[$job->target_language], $base_url . '/' . $job->target_language . '/node/' . $pages[1], array('html' => TRUE, 'attributes' => array('class'=> array()))),
+    );
+  }
+  
+  if (count($items) == 0) {
+    return '<p class="text-muted">' . t('There aren\'t any finished translations.') . '</p>';
+  }
+  
+  $list = theme_item_list(array('items' => $items, 'title' => NULL, 'type' => 'ul', 'attributes' => array()));
+  return $list;
+
+}
+
+/**
+ * Implements hook_forms()
+ *
+ * Allows translation utilities module to display multiple versions of the same form
+ *
+ */
+function longform_translation_forms($form_id, $args) {
+  $forms = array();
+  if (stripos($form_id, 'longform_translation_tmgmt_file_upload_form_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'longform_translation_tmgmt_file_upload_form');
+  }
+  if (stripos($form_id, 'longform_translation_tmgmt_job_delete_form_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'longform_translation_tmgmt_job_delete_form');
+  }
+  if (stripos($form_id, 'longform_translation_tmgmt_eco_download_form_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'longform_translation_tmgmt_eco_download_form');
+  }
+  if (stripos($form_id, 'longform_translation_tmgmt_eco_approve_form_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'longform_translation_tmgmt_eco_approve_form');
+  }
+  if (stripos($form_id, 'longform_translation_tmgmt_eco_revert_form_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'longform_translation_tmgmt_eco_revert_form');
+  }
+
+  return $forms;
+}
+
+/**
+ * Generate a generic file upload form for TMGMT
+ *
+ */
+function longform_translation_tmgmt_file_upload_form($form, &$form_state, $ticket, $job) {
+  
+  if (!isset($form_state['tmgmt_job'])) {
+    $form_state['tmgmt_job'] = $job;
+  }
+  $form['modal'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal', 'fade'),
+      'id' => 'upload-modal-' . $job->tjid,
+    ),
+  );
+  $form['modal']['dialog'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-dialog'),
+    ),
+  );
+  $form['modal']['dialog']['content'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-content'),
+    ),
+  );
+  $form['modal']['dialog']['content']['header'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-header'),
+    ),
+  );
+  $form['modal']['dialog']['content']['header']['close'] = array(
+    '#markup' => '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>',
+  );
+  $form['modal']['dialog']['content']['header']['title'] = array(
+    '#markup' => '<h4 class="modal-title">Upload an XLIFF file</h4>',
+  );
+
+  $form['modal']['dialog']['content']['body'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-body'),
+    ),
+  );
+  $supported_formats = array_keys(tmgmt_file_format_plugin_info());
+  $form['modal']['dialog']['content']['body']['file'] = array(
+    '#type' => 'file',
+    '#title' => t('Upload file'),
+    '#size' => 50,
+    '#description' => t('Supported formats: @formats.', array('@formats' => implode(', ', $supported_formats))),
+  );
+  $form['modal']['dialog']['content']['body']['auto_approve'] = array(
+    '#type' => 'checkbox',
+    '#title' => t('Automatically approve this content after importing'),
+    '#default_value' => 1,
+  );
+  $form['modal']['dialog']['content']['footer'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-footer'),
+    ),
+  );
+  
+  $form['modal']['dialog']['content']['footer']['content'] = array();
+    
+  $form['modal']['dialog']['content']['footer']['content']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Import'),
+    '#submit' => array('longform_translation_file_import_form_submit'),
+    '#attributes' => array(
+      'class' => array('btn', 'btn-success'),
+    ),
+  );
+
+  $form['reveal_modal_trigger'] = array(
+    '#markup' => '<button type="button" class="btn btn-sm btn-default" data-toggle="modal" data-target="#upload-modal-' . $job->tjid . '"><span class="glyphicon glyphicon-upload"></span> Upload</button>',
+  );
+  
+  return $form;
+}
+
+/**
+ * Process an uploaded file.
+ *
+ * This code is adapted from tmgmt_file.module: tmgmt_file_import_form_submit().
+ *
+ */
+function longform_translation_file_import_form_submit($form, &$form_state) {
+  // Ensure we have the file uploaded.
+  $job = $form_state['tmgmt_job'];
+  $supported_formats = array_keys(tmgmt_file_format_plugin_info());
+
+  if ($file = file_save_upload('file', array('file_validate_extensions' => array(implode(' ', $supported_formats))))) {
+    longform_translation_process_tmgmt_job($file, $job);
+  }
+  
+  //if($form_state['auto_approve']) {
+  //  
+  //}
+  //else {
+  //  drupal_set_message(t('<b>Warning:</b> This translation has been imported, but you must manually approve each field before it is available.'), 'warning');
+  //}
+}
+
+/**
+ * Process an xliff file as an incoming tmgmt job.
+ *
+ * @param $file
+ *  The file object (must be .xlf)
+ *
+ * @return
+ *  TRUE if successful, otherwise FALSE
+ */
+function longform_translation_process_tmgmt_job($file, $job) {
+  if ($job->state == 5) {
+    drupal_set_message('The job <b>' . $job->label . '</b> has already been imported and approved; file was skipped.', 'warning');
+    return;
+  }
+    $extension = pathinfo($file->uri, PATHINFO_EXTENSION);
+    $controller = tmgmt_file_format_controller($extension);
+    if ($controller) {
+      // Validate the file.
+
+      $validated_job = $controller->validateImport($file->uri);
+      if (!$validated_job) {
+        $job->addMessage('Failed to validate file, import aborted.', array(), 'error');
+      }
+      elseif ($validated_job->tjid != $job->tjid) {
+        $uri = $validated_job->uri();
+        $label = $validated_job->label();
+        $job->addMessage('Import file is from job <a href="@url">@label</a>, import aborted.', array('@url' => url($uri['path']), '@label' => $label));
+      }
+      else {
+        try {
+          // Validation successful, start import.
+          $job->addTranslatedData($controller->import($file->uri));
+          $job->addMessage('Successfully imported file.');
+          
+          // Set hold flag on the imported content.
+          // @TODO: This should be done via Rules, but Rules seems not to work correctly with global flags.
+          
+          $flag = flag_get_flag('translation_job_hold');
+          $flag->flag('flag', $job->tjid);
+          
+        } catch (Exception $e) {
+          $job->addMessage('File import failed with the following message: @message', array('@message' => $e->getMessage()), 'error');
+        }
+      }
+    }
+  
+  foreach ($job->getMessagesSince() as $message) {
+    // Ignore debug messages.
+    if ($message->type == 'debug') {
+      continue;
+    }
+    if ($text = $message->getMessage()) {
+      drupal_set_message(filter_xss($text), $message->type);
+    }
+  }
+  unset($job);
+  unset($file);
+}
+
+
+
+/**
+ * Returns TMGMT job IDs that use the current node.
+ *
+ *	@return (array)
+ *		An array of TMGMT job IDs.
+ *		
+ */
+function longform_translation_find_tjids() {
+		$node = menu_get_object();
+		if (!isset($node->nid)) {
+    return;
+  }
+		$result = db_query('SELECT tj.tjid, tj.tjiid FROM {tmgmt_job_item} tj WHERE tj.item_id = ' . $node->nid)->fetchAllAssoc('tjid');
+		foreach ($result as $res) {
+				$out[] = $res->tjid;
+		}
+		return $out;
+}
+
+/**
+ * Checks for translation hold flags
+ *
+ * @param (array) $tjids
+ * 	The TMGMT job IDs to check.
+ *
+ * @return (array)
+ *  An array of boolean values keyed by tjid. Returns TRUE if held, FALSE if not.
+ *  
+ */
+function longform_translation_check_translation_holds($tjids) {
+		$flag = flag_get_flag('translation_job_hold');
+		$jobs = tmgmt_job_load_multiple($tjids);
+		foreach ($jobs as $job) {
+				$out[$job->target_language] = $flag->is_flagged($job->tjid);
+		}
+		return $out;
+}
+
+/**
+ * Reroutes page requests based on translation holds
+ *
+ * This function checks the current content language against holds placed on the current node.
+ * If a hold is found, meaning the content is not yet ECO approved, the language is reset to
+ * English and the page reloaded.
+ *
+ */
+function longform_translation_route_page() {
+		$tjids = longform_translation_find_tjids();
+		
+		// If there are no job IDs, there will be nothing to check, and the content can pass.
+		if (!isset($tjids)) {
+				return TRUE;
+		}
+		
+		// Load the current node and get any holds associated with it
+		global $base_url, $language_content, $user;
+		$node = menu_get_object();
+		$holds = longform_translation_check_translation_holds($tjids);
+		
+		// If a hold exists for the current content language, reset to English and reload. Admins get a warning message.
+		if($holds[$language_content->language] === TRUE) {
+				if (user_is_administrator()) {
+						drupal_set_message('Attempted to access the ' . $language_content->name . ' version of this node, but it is flagged. Redirected to English.','warning');
+				}
+				$language_content->language = 'en';
+				drupal_goto(drupal_get_path_alias('node/' . $node->nid));
+		}
+}
+
+/**
+ * Force a file to immediately download.
+ *
+ * This function executes drupal_exit() after setting the headers, so
+ * it will kill the normal bootstrap process wherever it is called.
+ *
+ * @param $path
+ *  The uri of the file. Accepts streamwrappers.
+ *
+ * @param $filename
+ *  The filename to send in the Content-Disposition header.
+ *  
+ */
+function force_file_download($path, $filename) {
+  // Most of this is only necessary because of IE
+  header("Cache-Control: public");
+  header("Content-Type: application/octet-stream");
+  header("Cache-Control: no-store, no-cache, must-revalidate");
+  header("Cache-Control: post-check=0, pre-check=0");
+  header("Content-Disposition: attachment; filename=\"$filename\";" );
+  header("Content-Transfer-Encoding: binary");
+
+  $fp = fopen($path, 'rb');
+  fpassthru($fp);
+  drupal_exit();
+}
+
+/**
+ * Returns an array of tmgmt job items in a job
+ *
+ * @param
+ *  $job
+ *    The job entity.
+ *
+ * @return (array)
+ *  An array of job item ids, keyed by the job id.
+ */
+function longform_translation_get_job_items($job) {
+  $query = db_select('tmgmt_job_item', 'tji')
+    ->fields('tji', array('tjid', 'tjiid'))
+    ->condition('tjid', $job->tjid)
+    ->execute();
+  $result = $query->fetchAll();
+  foreach ($result as $row) {
+    $return[$row->tjid][] = $row->tjiid;
+  }
+  return $return;
+}
+
+/*
+ * List the component files in a ZipArchive archive.
+ *
+ * @param $zip
+ *  The ZipArchive object.
+ *
+ * @return
+ *  An array of files.
+ *
+ */
+function ziparchive_list_files($zip) {
+  $out = array();
+  for($i = 0; $i < $zip->numFiles; $i++) {
+    $out[] = $zip->getNameIndex($i);
+  }
+  return $out;
+}

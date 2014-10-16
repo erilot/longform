@@ -95,8 +95,8 @@
       </button>
     </div>
 
-    <?php if (!empty($technet_nav)): ?>
-      <?php print render($technet_nav['content']); ?>
+    <?php if (!empty($longform_nav)): ?>
+      <?php print render($longform_nav['content']); ?>
     <?php endif; ?>
     <?php if (!empty($primary_nav) || !empty($secondary_nav) || !empty($page['navigation'])): ?>
       <div class="navbar-collapse collapse">

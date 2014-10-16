@@ -1,0 +1,2024 @@
+<?php
+/**
+ * File: module functions
+ */
+
+function longform_core_init(){
+  //load libraries
+  drupal_add_js(drupal_get_path('module','longform_core') . '/includes/Longform.js');
+  drupal_add_library('system', 'ui');
+
+  // Load tour framework on non-administration pages.
+  // Specific tour JS files are added by each module as needed.
+  if(!path_is_admin(current_path())){
+    
+    // Insert a check for cookie here.
+    drupal_add_js(drupal_get_path('module','longform_core') . '/includes/bootstrap-tour/js/bootstrap-tour.js');
+    drupal_add_css(drupal_get_path('module', 'longform_core') . '/includes/bootstrap-tour/css/bootstrap-tour.min.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
+  
+  }
+
+}
+
+/**
+ * Implements hook_block_info()
+ */
+function longform_core_block_info(){
+  
+  $blocks['feedback'] = array(
+    'info' => t('Feedback form'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+  $blocks['longform_header'] = array(
+    'info' => t('Longform Header and Menu'),
+    'cache' => DRUPAL_CACHE_PER_PAGE,
+  );
+
+  return $blocks;
+}
+
+/**
+ * Implements hook_block_view()
+ *
+ * @param $delta
+ *
+ * @return
+ */
+function longform_core_block_view($delta){
+  
+  switch($delta){
+    case 'feedback':
+      $blocks['subject'] = t('Feedback');
+      $blocks['content'] = drupal_get_form('feedback_form');    
+      break;
+    
+    case 'longform_header':
+      $blocks['subject'] = t('Longform Header');
+      $blocks['content'] = longform_longform_header();
+      break;
+  }
+  return $blocks;
+}
+
+/**
+ * Generate Longform header, with logo and main menu options
+ *
+ */
+function longform_longform_header() {
+
+  global $user;
+  global $base_path;
+  $node = menu_get_object();
+
+  // change these to checks for group membership
+  $publisher = user_is_publisher();					// member of content publishing group
+  $lsg = user_is_group_member(56131) || user_is_administrator();	// member of learning solutions group (gid = 56131)
+
+  $publisher = TRUE;
+  $lsg = TRUE;
+
+  $theme_path = $base_path . drupal_get_path('theme','tn_bootstrap');
+  if($publisher) {
+    $tree = menu_tree('menu-Longform-publishing');
+    $publish_menu = drupal_render($tree);
+  }
+  
+  if($lsg) {
+    //$new_menu = drupal_render(menu_tree('menu-create-new-content'));
+    //$lsg_menu = drupal_render(menu_tree('menu-Longform-administration'));
+  }
+
+  $home = '<li class="first leaf active">
+	    <a href="' . $base_path . '" class="active">Home</a>
+	  </li>';
+
+  $bar = array();
+  $bar['bar'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('navbar-collapse', 'collapse'),
+    ),
+  );
+  $bar['bar']['nav']['prefix'] = array(
+    '#markup' => '<nav role="navigation">',
+  );
+  $bar['bar']['nav']['content'] = array();
+  $bar['bar']['nav']['suffix'] = array(
+    '#markup' => '</nav>',
+  );
+  
+  
+  // === Publishing menu ===
+  $publishing_menu = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('dropdown-menu', 'publishing', 'col-md-12', 'full-width'),
+    )
+  );
+  
+  // First subpanel (*create new content*)
+  $publishing_menu['first'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-1', 'drop-inner', 'col-sm-6', 'col-md-3', 'item-list'),
+    ),
+  );
+  $publishing_menu['first']['head'] = array(
+    '#markup' => '<h2>' . t('Add New Content') . '</h2>',
+  );
+  $publishing_menu['first']['head']['menu'] = menu_tree('menu-create-new-content');
+  
+  // Second subpanel (*Document Tracking*)
+  $publishing_menu['second'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-2', 'drop-inner', 'col-sm-6', 'col-md-3', 'item-list'),
+    ),
+  );
+  
+  $publishing_menu['second']['top'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('row', 'dropdown-inset'),
+    ),
+  );
+  $publishing_menu['second']['top']['bs'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-12'),
+    ),
+  );
+  $publishing_menu['second']['top']['bs']['head'] = array(
+    '#markup' => '<h2>' . t('Document Tracking') . '</h2>',
+  );
+  $publishing_menu['second']['top']['bs']['content'] = array(
+    '#markup' => longform_user_documents_menu($node, array('theme'=>'dropdown-menu')),
+  );
+  
+  $publishing_menu['second']['bottom'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('row', 'dropdown-inset'),
+    ),
+  );
+  $publishing_menu['second']['bottom']['bs'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-12'),
+    ),
+  );
+  $publishing_menu['second']['bottom']['bs']['head'] = array(
+    '#markup' => '<h2>' . t('Publishing Resources') . '</h2>',
+  );
+  $publishing_menu['second']['bottom']['bs']['content'] = array(
+    '#markup' => longform_publishing_resources_menu($node, array('theme'=>'dropdown-menu')),
+  );
+  
+  // Last subpanel (* Recent content *)
+  $publishing_menu['last'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-3', 'drop-inner', 'col-sm-11', 'col-md-6'),
+    ),
+  );
+  $publishing_menu['last']['head'] = array(
+    '#markup' => '<h2>' . t('My Recent Documents') . '</h2>',
+  );
+  $publishing_menu['last']['head']['menu'] = array(
+    '#markup' => views_embed_view('my_documents_menu_version_', 'my_documents_menu_block'),
+  );
+  
+  // Insert publishing bar into nav. Wrappers are hardcoded (no point sending them through list renderers).
+  $publishing_head = '<a href="#" title="Publishing tasks" data-target="#" class="dropdown-toggle" data-toggle="dropdown">' . t('Publishing') . ' <span class="caret"></span></a>
+';
+  $bar['bar']['nav']['content']['publishing']['#prefix'] = '<ul class="menu nav navbar-nav"><li class="dropdown">' . $publishing_head;
+  $bar['bar']['nav']['content']['publishing']['menu'] = $publishing_menu;
+  $bar['bar']['nav']['content']['publishing']['#suffix'] = '</li></ul>';
+  
+  if(user_is_logged_in()){
+    
+    $account = array();
+    $account = array(
+      '#type' => 'container',
+      '#attributes' => array(
+	'class' => array('dropdown-menu', 'account-menu'),
+      )
+    );
+    $account['inset'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+	'class' => array('row', 'dropdown-inset'),
+      ),
+    );
+    $account['inset']['bs'] = array(
+      '#type' => 'container',
+      '#attributes' => array(
+	'class' => array('col-md-12'),
+      ),
+    );
+    $account['inset']['bs']['head'] = array(
+      '#markup' => '<h2>' . t('Account Options') . '</h2>',
+    );
+    $account['inset']['bs']['head']['content'] = array(
+      '#markup' => longform_manage_user_self_service_menu($node, array('theme'=>'dropdown-menu')),
+    );
+  $account_head = '<a href="#" title="account" data-target="#" class="dropdown-toggle" data-toggle="dropdown">' . t('Account') . ' <span class="caret"></span></a>
+';
+  $bar['bar']['nav']['content']['account']['#prefix'] = '<ul class="menu nav navbar-nav navbar-right"><li class="dropdown">' . $account_head;
+  $bar['bar']['nav']['content']['account']['menu'] = $account;
+  $bar['bar']['nav']['content']['account']['#suffix'] = '</li></ul>';
+
+  
+  }
+	
+
+  return $bar;
+}
+
+function polycom_docsite_menu_tree($vars) {
+  //dpm($vars,'vars menu_ree');
+}
+
+function polycom_docsite_menu_tree__menu_longform_publishing($variables) {
+  return '<ul class="menu-publish ' . $variables['menu_parent'] . '">' . $variables['tree'] . '</ul>';
+}
+
+function polycom_docsite_menu_tree__menu_longform_administration($variables) {
+  return '<ul class="menu-lsg ' . $variables['menu_parent'] . '">' . $variables['tree'] . '</ul>';
+}
+
+function polycom_docsite_menu_tree__menu_create_new_content($variables) {
+  return '<ul class="menu-create-new nav nav-pills nav-stacked' . $variables['menu_parent'] . '">' . $variables['tree'] . '</ul>';
+}
+
+//function polycom_docsite_menu_link__menu_create_new_content($variables){
+//  $element = $variables['element'];
+//  $sub_menu = '';
+//
+//  $options = $element['#localized_options'];
+//  $options['html'] = TRUE;
+//  
+//  if ($element['#below']) {
+//    $sub_menu = drupal_render($element['#below']);
+//  }
+//  $output = l('<span class="glyphicon glyphicon-plus"></span> ' . $element['#title'], $element['#href'], $options);
+//  return '<li' . drupal_attributes($element['#attributes']) . '>' . $output . $sub_menu . "</li>\n";
+//}
+
+/**
+ * Utiltiy function to generate a themed button for the user's profile edit page
+ */
+function _longform_core_get_profile_edit_button() {
+  global $user;
+  
+}
+
+/**
+* Implements hook_field_formatter_info().
+*/
+function longform_core_field_formatter_info() {
+  
+  $info = array(
+    // Formatter for JSON toc's.
+    'longform_core_toc_array' => array(
+      'label' => t('TOC array'), 
+      'field types' => array('text', 'text_long'),
+      'description' => t('Renders a TOC array as boostrapiefied HTML.'),
+    ),
+    
+    // Formatter for PDF downloads (displays simple 'download PDF' message instead of filename).
+    'longform_core_download_link' => array(
+      'label' => t('File download link'),
+      'field types' => array('file'),
+      'description' => t('Presents a simple "download" link instead of the full filename'),
+    ),
+    
+    // Formatter for PDF downloads (displays simple 'download PDF' message instead of filename).
+    'longform_core_download_button' => array(
+      'label' => t('File download button'),
+      'field types' => array('file'),
+      'description' => t('Presents a simple "download" button instead of the full filename'),
+    ),
+    
+    // Formatter for import assignments (displays a button linked to the user's profile).
+    'longform_core_assigned_button' => array(
+      'label' => t('Assigned user button'),
+      'field types' => array('entity_reference'),
+      'description' => t('Displays a button with the user\'s name, linked to the user\'s profile.'),
+    ),
+    
+  );
+
+  return $info;
+}
+
+/**
+* Implements hook_field_formatter_view().
+*/
+function longform_core_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  $elements = array();
+    switch ($display['type']) {
+      
+      case 'longform_core_toc_array':
+	foreach ($items as $item) {
+	  $markup = theme_item_list(_book_nav_bootstrapify_toc(json_decode($item['value'], TRUE)));
+	  $elements[] = array(
+	    '#markup' => $markup,
+	  );
+	}
+	break;
+          
+      case 'longform_core_download_link':
+	foreach ($items as $delta => $item) {
+	$options = array(
+	  'html' => TRUE,
+	  'attributes' => array(
+	    'class' => array('formatter-link'),
+	  ),
+	);
+      	$elements[] = array(
+	  '#markup' => _build_download_link($delta, $item, $options),
+	);
+	}
+	break;
+      case 'longform_core_download_button':
+	foreach ($items as $delta => $item) {
+	  $options = array(
+	    'html' => TRUE,
+	    'attributes' => array(
+	      'class' => array('formatter-button', 'btn','btn-default'),
+	    ),
+	  );
+	  $elements[] = array(
+	    '#markup' => _build_download_link($delta, $item, $options),
+	  );
+	}
+	break;
+    } 
+
+    return $elements;
+}
+
+function _build_download_link($delta, $item, $options) {
+  $filetype = array_pop(explode('/',$item['filemime']));
+  
+  switch ($filetype) {
+    case 'zip':
+      $label = 'zip';
+      break;
+    case 'pdf':
+      $label = 'pdf';
+      break;
+    default:
+      $label = 'file';
+  }
+  return l('<span class="glyphicon glyphicon-download"></span> ' . t('Download !type', array('!type' => $label)), file_create_url($item['uri']), $options);
+}
+
+
+/**
+* Implements hook_theme().
+*/
+function longform_core_theme() {
+  return array(
+    'longform_core_Longform' => array(
+      'template' => 'longform_core_Longform',
+      'variables' => array(
+        'data' => NULL,
+      ),
+    ),
+  );
+}
+
+/**
+ * Implement hook_node_access()
+ *
+ * Control access to books that are not in the "published" workflow state.
+ * The core Drupal published/unpublished system can't be used here, since pages must already be 'published' (drupal state) before
+ * including them in a book. This hook defines who may view book pages that have not been advanced through through workflow states to
+ * the Techent "published" state (NOT the Drupal published state).
+ * 
+ */
+function longform_core_node_access($node, $op, $account) {
+  $type = is_string($node) ? $node : $node->type;
+
+
+  // Regulate book viewing permission: Only books in the "published" workflow state should be visible.
+  if ($type == 'book' && $op == 'view' && workflow_node_current_state($node) != 36) {
+
+  // Logged-in users can see unpublished content.
+   global $user;
+   $allow = array('Super Administrator',
+		  'Master Admin',
+		  'HTML Importer',
+		  'HTML Editor',
+		  'HTML Approver',
+		  'HTML Reviewer',
+		  'Content Publisher',
+		  'Translation Manager',
+		  );
+   
+   $book_view_perms = array_intersect($allow, array_values($user->roles));
+   // If they have any of these roles, then they can see unpublished book nodes.
+   if ($book_view_perms){
+      return NODE_ACCESS_ALLOW;
+    }
+    else {
+      return NODE_ACCESS_DENY;
+    }
+  }
+  return NODE_ACCESS_IGNORE;
+}
+
+
+function longform_core_page_alter(&$page){
+    //debuggers
+    //dpm(workflow_get_workflow_states_by_sid(31),'workflow state');
+
+    // Add polycom topic editing functions to page if a qualified user
+  if ($page['content']['system_main']['type']['#value'] = 'book') {
+    longform_core_topic_editor($page);
+  }
+    
+    //Whitebranding check
+    if(isset($_GET['partner']) || isset($_SESSION['Longform']['partner'])) {
+            
+      $partner = isset($_GET['partner']) ? $_GET['partner'] : $_SESSION['Longform']['partner'];
+      $term = reset(taxonomy_get_term_by_name($partner,'vocabulary_11'));
+      
+      //if the term is not matched, unset the session variable and reset to Longform default.
+      if(!$term) {
+	unset ($_SESSION['Longform']['partner']);
+	return;
+      }
+    
+      // The term is matched -- load JS and CSS files, get logo display HTML, and send it through to JS.
+      drupal_add_css(drupal_get_path('module','longform_core') . '/longform_whitebrand.css');
+      drupal_add_js(drupal_get_path('module','longform_core'). '/longform_whitebrand.js');
+      $image = array(
+	'style_name' => 'whitebranded_logo',
+	'path' => $term->field_whitebrand_logo[LANGUAGE_NONE][0]['uri'],
+	'alt' => $term->name,
+	'title' => $term->name,
+      );
+      
+      // Get logo display HTML by running through image cache
+      $file_html = theme('image_style', $image);
+      
+      // Pass HTML and partner name (used as CSS class) to Drupal.setting
+      // @TODO: There is probably a better Drupal way to override the logo image. Find it.
+      $settings = array(
+	'LongformWhiteBrand' => array(
+	  'imageHtml' => $file_html,
+	  'partner' => strtolower($term->name),
+	  ),
+      );
+      drupal_add_js($settings,'setting');
+      
+      // Add the partner term to the session variable so it continues through subsequent pageloads.
+      $_SESSION['Longform']['partner'] = strtolower($term->name);
+    }
+}
+
+function longform_core_topic_editor(&$page) {
+  
+  if (isset($page['content']['system_main']['main'])) {
+    $content = $page['content']['system_main']['main']['#markup'];
+    $content = htmlqp($content);
+  }
+  else return FALSE;
+  
+}
+
+function longform_core_add_topic_workflows() {
+  $page = menu_get_object();
+  dpm($page);
+  
+}
+/**
+ * Implements hook_permission(). 
+ */
+function longform_core_permission() {
+  return array(
+    'administer longform_core' => array(
+      'title' => t('administer longform_core'),
+      'description' => t('TODO Add a description for \'administer longform_core\''),
+    ),
+    'access longform_core' => array(
+      'title' => t('access longform_core'),
+      'description' => t('TODO Add a description for \'access longform_core\''),
+    ),
+  );
+}
+
+/**
+ * Implements hook_filter_info().
+ *
+ * Here we define the different filters provided by the module. For this example,
+ * time_filter is a very static and simple replacement, but it requires some
+ * preparation of the string because of the special html tags < and >. The
+ * foo_filter is more complex, including its own settings and inline tips.
+ */
+function longform_core_filter_info() {
+  $filters['filter_topic_workflows'] = array(
+    'title' => t('Insert Topic Workflows'),
+    'cache' => FALSE,
+    'description' => t('Each topic on a book page will have a workflow feedback/menu prepended.'),
+    'default settings' => array('user_roles' => array(3,16)),
+    'process callback' => '_longform_core_workflow_insert_process',
+    'tips callback' => '_longform_core_workflow_insert_tips',
+  );
+  return $filters;
+}
+
+/**
+ * Time filter process callback.
+ *
+ * Now, in the "process" step, we'll search for our escaped time tags and
+ * do the real filtering: replace the xml tag with the date.
+ */
+function _longform_core_workflow_insert_process($text, $filter) {
+  return $text;
+}
+
+
+/**
+ * Filter tips callback for time filter.
+ *
+ * The tips callback allows filters to provide help text to users during the
+ * content editing process. Short tips are provided on the content editing
+ * screen, while long tips are provided on a separate linked page. Short tips
+ * are optional, but long tips are highly recommended.
+ */
+function _longform_core_workflow_insert_tips($filter, $format, $long = FALSE) {
+  return t('Topics present will be detected, and workflow/edit forms attached to them. <b>This functionality is in development and not currently impemented.</b>');
+}
+
+
+
+/**
+ * Implements hook_menu().
+ */
+function longform_core_menu() {
+  $items = array();
+  $items['admin/Longform'] = array(
+    'title' => t('Longform'),
+    'description' => t('Longform Settings'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('polycom_admin_form'),
+    'access arguments' => array('access longform_core'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+  $items['admin/Longform/polycom_admin'] = array(
+    'title' => t('definio Admin'),
+    'description' => t('definio Admin'),
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('polycom_admin_form'),
+    'access arguments' => array('access longform_core'),
+    'type' => MENU_DEFAULT_LOCAL_TASK,
+    'weight' => -99,
+  );
+  $items['admin/Longform/workflows/workflow-report'] = array(
+    'title' => t('Workflows'),
+    'description' => t('Workflow report'),
+    'page callback' => 'longform_core_workflow_report',
+    'access arguments' => array('access content'),
+    'type' => MENU_NORMAL_ITEM,
+  );
+
+  return $items;
+}
+
+/**
+ * Implements hook_theme_registry_alter().
+ * 
+ */
+function polycom_docsite_theme_registry_alter(&$theme_registry) {
+  $theme_registry['status_messages']['function'] = '_custom_theme_status_messages';
+}
+
+/**
+ * Custom theme function that overrides
+ * theme('status_messages').
+ */
+function _custom_theme_status_messages($variables) {
+  $display = $variables['display'];
+  $output = '';
+    
+  $status_heading = array(
+    'status' => t('Status message'),
+    'error' => t('Error message'),
+    'warning' => t('Warning message'),
+  );
+  foreach (drupal_get_messages($display) as $type => $messages) {
+    switch ($type) {
+      case 'status':
+	$type = 'success';
+	break;
+      case 'error':
+	$type = 'danger';
+	break;
+    }
+    
+    $output .= "<div class=\"alert  alert-$type\"><button type=\"button\" class=\"close\" data-dismiss=\"alert\" aria-hidden=\"true\">&times;</button>" . PHP_EOL;
+    if (!empty($status_heading[$type])) {
+      $output .= '<h2 class="element-invisible">' . $status_heading[$type] . "</h2>" . PHP_EOL;
+    }
+    if (count($messages) > 1) {
+      $output .= " <ul>" . PHP_EOL;
+      foreach ($messages as $message) {
+        $output .= '  <li>' . $message . "</li>" . PHP_EOL;
+      }
+      $output .= " </ul>" . PHP_EOL;
+    }
+    else {
+      $output .= $messages[0];
+    }
+    $output .= "</div>" . PHP_EOL;
+  }
+  return $output;
+}
+/**
+ * Generates DPM displays of workflow components. For development only. Requires Devel to be installed and enabled.
+ */
+function longform_core_workflow_report(){
+  
+  if(!module_exists('devel')) {
+    drupal_set_message('The Devel module must be installed and enabled to generate this report.','error');
+    return FALSE;
+  }
+  
+  $wf = workflow_get_workflows();
+  foreach($wf as $w){
+    $states = workflow_get_workflow_states(array('wid' => $w->wid));
+    dpm($states, 'States for workflow [' . $w->name . '] (#' . $w->wid . ')');
+  }
+  return '<h1>Current workflows and states reported in DPM messages above.</h1>';
+}
+
+/**
+ * Implements hook_menu_alter()
+ */
+function longform_core_menu_alter(&$items){
+ // Remove "/node"
+ $items['node']['access callback'] = FALSE;
+
+ // Add 'user edit' link to administration menu
+ 
+ //dpm($items['user'],'items');
+}
+
+/**
+* Implements hook_entity_info_alter().
+* Creates a print view mode for documentation.
+*/
+function longform_core_entity_info_alter(&$entity_info) {
+  $entity_info['node']['view modes']['print_document'] = array(
+    'label' => t('Print Document'),
+    'custom settings' => TRUE,
+  );
+}
+
+/**
+ * Implements hook_workflow
+ * Currently does nothing (used for debugging only)
+ */
+
+function longform_core_workflow($op, $old_state, $new_state, $node, $force = TRUE) {
+ 
+  switch ($op) {
+    case 'transition permitted':
+      // The workflow module does nothing during this operation.
+      // This operation occurs when the list of available transitions
+      // is built. Your module's implementation could return FALSE
+      // here and disallow the presentation of the choice.
+      break;
+
+    case 'transition pre':
+      // The workflow module does nothing during this operation.
+      // But your module's implementation of the workflow hook could
+      // return FALSE here and veto the transition.
+      break;
+
+    case 'transition post':
+      break;
+
+    case 'transition delete':
+      break;
+  }
+}
+
+/**
+ * Implements hook_views_pre_render()
+ */
+
+function longform_core_views_pre_render(&$view){
+  
+  if($view->current_display) {
+    switch ($view->current_display){
+      case 'related_with_children':
+	longform_core_filter_current($view);
+	break;
+      case 'related_other_versions':
+	longform_core_filter_other($view);
+    }
+  }
+  else {
+    switch ($view->name) {
+    case 'document_tracking_by_user_':
+      break;
+    default:
+      break;    
+    }
+  }
+}
+
+/**
+ * Filter results to exclude unpublished documents.
+ *
+ * This is a hack workaround for a workflow bug (cannot filter by workflow state without throwing an error during view save).
+ *
+ */
+function longform_core_filter_other(&$view){
+  
+  $result = $view->result;
+  
+  foreach($result as $key => $record) {
+    if ($record->workflow_node_sid != 36) {
+      unset ($result[$key]);
+    }
+  }
+  $view->result = $result;
+  
+}
+
+
+/*
+ * Determines which records to include in the View. It includes:
+ *  - Documents with an exact match to current version
+ *  - Or, for each doctype:
+ *  ---Release Notes: returns all versions from current version until NEXT HIGHER version
+ *  ---Others: returns the first matching document with a LOWER version.
+ */
+function longform_core_filter_current(&$view, $current = NULL){
+  $node = menu_get_object();
+  
+  //get current software release and doctype from page being viewed
+  if(!$current){
+    $current = taxonomy_term_load($node->field_software_release[LANGUAGE_NONE][0]['tid'])->name;
+  }
+  $current_doctype = $node->field_document_type[LANGUAGE_NONE][0]['tid'];
+  $split_release = _longform_core_split_version($current);
+  
+  $doctypes = array();
+  $results = $view->result;
+  
+  //cycle through results and create index sub-array to operate on
+  foreach($results as $i=>$result){
+    $index[$i]['software_release'] = $result->field_field_software_release[0]['rendered']['#markup'];
+    $index[$i]['doctype'] = $result->field_field_document_type[0]['raw']['tid'];
+    $index[$i]['key'] = $i;
+    //assemble sub-array of document types present
+    if (!array_key_exists($index[$i]['doctype'],$doctypes)){
+      $tid = $index[$i]['doctype'];
+      $doctypes[$tid] = FALSE;
+    }
+  }
+
+  //iterate the derived index and produce a list of exact matches in $filtered. Remove doctypes from the list as they are matched.
+  foreach($index as $i=>&$item){
+    if($item['software_release'] == $current){
+      $tid = $item['doctype'];
+      $filtered[] = $results[$i];
+      //remove doctypes as they are found, UNLESS they are Release Notes (there can be more than one relevant RN document).
+      if ($tid != 1033){
+        unset($doctypes[$tid]);
+      }
+    }
+  }
+  
+  if($current_doctype != 1033){
+    unset($doctypes[$current_doctype]);
+  }
+  
+  //Any doctypes left in $doctypes were not matched, but do exist in the view results.
+  //
+  
+  foreach($doctypes as $doctype=>$matched){
+
+    $fuzzy = _longform_core_filter_array($index, NULL, $doctype);
+    switch ($doctype){
+      case 1033: //release notes are handled differently
+        foreach($fuzzy as &$item){
+          $query_split_release = _longform_core_split_version($item['software_release']);
+
+          if ($item['software_release'] > $current && ($query_split_release['major'] < $split_release['major'] + 1 && $query_split_release['minor'] < $split_release['minor'] + 1)){
+            $key = $item['key'];
+            $candidates[] = $item;
+            $filtered[] = $results[$key];
+          }
+        }
+        
+        break;
+      
+      default:
+        foreach($fuzzy as &$item){
+          if ($item['software_release'] < $current && ($query_split_release['major'] > $split_release['major'] - 1 && $query_split_release['minor'] > $split_release['minor'] - 1)){
+            $key = $item['key'];
+            $candidates[] = $item;
+            $filtered[] = $results[$key];
+          }
+        }
+        break;  
+    } 
+  }
+
+  //replace views object result with filtered array.
+  $view->result = $filtered;
+}
+
+/*
+ * Helper function which filters an array by key and/or value
+ */
+function _longform_core_filter_array($array, $key = NULL, $value = NULL){
+  if(!$key && !$value){
+    return FALSE;
+  }
+  
+  foreach($array as $array_key => $element){
+    if(array_key_exists($array_key,$element)|| in_array($value,$element)){
+      $result[$array_key] = $element;
+    }
+  }
+  return $result;
+}
+
+/*
+ * Helper function which splits a string release version (1.2.3.4) and returns a keyed array with each level identified.
+ */
+function _longform_core_split_version($version){
+  $release_array = explode('.',$version);  
+  $release['major'] = array_shift($release_array);
+  $release['minor'] = array_shift($release_array);
+  $release['maintenance'] = array_shift($release_array);
+  $release['update'] = array_shift($release_array);
+  return $release;
+}
+
+
+/**
+ * Simple check to see if the current user is an administrator. Returns TRUE if the user has one of roles 3 or 16, FALSE otherwise
+ */
+function longform_core_check_admin(){
+  global $user;
+  if (array_key_exists(3, $user->roles) || array_key_exists(16, $user->roles)){
+    return TRUE;
+  }
+  else{
+    return FALSE;
+  }
+}
+
+/**
+ * Related Document Queries
+ */
+
+ /**
+  * Return related releases
+  *
+  * @param $node
+  * 	The node to check. Can be passed as an node ID or a full object.
+  *
+  * @param $find
+  * 	The search key. This is one of 'doctypes', 'releases', or 'platforms'.
+  * 	
+  * @param $options
+  * (array) optional. Supported options are:
+  * 	'full': set TRUE to return an array of loaded entities instead of nids.
+  *	'unpublished': TRUE returns only unpublished nodes. This checks both drupal AND flag states.
+  * 	'all': TRUE returns nodes regardless of their published state.
+  * 	'links': TRUE returns an array of rendered links instead of plain text.
+  * 	'scope': determines the specificity of the results. Is one of:
+  * 		=> 'default': for release checks, this filters by the release of the current document.
+  * 		=> 'device': for release checks, finds all results for the current device. Returns a nested list array.
+  *
+  * @return: an array of documents with matching release tags. 
+  */
+ function longform_get_related($node, $find, $options = NULL) {
+  
+  if(!is_object($node) && is_numeric($node)) {
+    $node = node_load($node);
+  }
+  
+  $releases = field_get_items('node', $node, 'field_software_release');
+  $devices = field_get_items('node', $node, 'field_products');
+  $doctypes = field_get_items('node', $node, 'field_document_type');
+  $platforms = field_get_items('node', $node, 'field_platform');
+  
+  $filters = $options['scope'] ? $options['scope'] : 'default';
+  
+  // Build query
+  $query = new EntityFieldQuery();
+  $query
+				->entityCondition('entity_type', 'node')
+				->entityCondition('bundle', 'book');
+  
+  switch ($find) {
+    case 'doctypes':
+      if($releases){
+								$query->fieldCondition('field_software_release', 'tid', _longform_shift_array($releases), 'IN');
+      }
+      if($devices) {
+								$query->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN');
+      }
+      $query->propertyOrderBy('title', 'ASC');
+						break;
+    
+				case 'releases':
+      if($devices){
+								$query->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN');
+      }
+      if($doctypes && $filters == 'default'){
+								$query->fieldCondition('field_document_type', 'tid', _longform_shift_array($doctypes), 'IN');
+      }
+      $query->propertyOrderBy('nid', 'DESC');
+      break;
+				
+    case 'platforms':
+      if($devices){
+								$query->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN');
+      }
+      if($doctypes){
+								$query->fieldCondition('field_document_type', 'tid', _longform_shift_array($doctypes), 'IN');
+      }
+      if($releases){
+								$query->fieldCondition('field_software_release', 'tid', _longform_shift_array($releases), 'IN');
+      }
+      $query->propertyOrderBy('title', 'ASC');
+      break;
+  }
+
+  // If the platform field exists and this is not a platform search, include it as a condition.
+  if($platforms && $find != 'platforms'){
+    $query ->fieldCondition('field_platform', 'tid', _longform_shift_array($platforms), 'IN');   
+  }
+  
+  // Set publish filters:
+  // All = published and unpublished; unpublished = unpublished only, no options (default) = published only.
+  if (!$options['all']) {
+    $publish_state = $options['unpublished'] ? 0 : 1;
+    $query->propertyCondition('status', $publish_state);
+  }
+  
+  // Order results and execute
+  $result = $query->execute();
+  if (isset($result['node'])) {
+    $related_doc_nids = array_keys($result['node']);
+  }
+  
+  //// If a doctype search, run another query to collect Feature Profiles and add them to the result
+  //
+  //if($find == 'doctypes') {
+  //  $fps = new EntityFieldQuery();
+  //  $fps->entityCondition('entity_type', 'node')
+  //  ->entityCondition('bundle', 'book')
+  //  ->fieldCondition('field_document_type', 'tid', array(1201), 'IN')
+  //  ->fieldCondition('field_products', 'tid', _longform_shift_array($devices), 'IN')
+  //  ->propertyCondition('status', $publish_state)
+  //  ->propertyOrderBy('title', 'ASC');
+  //  
+  //  $fps_result = $fps->execute();
+  //  if (isset($fps_result['node'])) {
+  //    $fps_nodes = array_keys($fps_result['node']);
+  //  }
+  //
+  //  $related_doc_nids = array_merge($related_doc_nids, $fps_nodes);
+  //}
+  
+  // Retrieve a list of all books, and filter query results against the master list.
+  $all_books = book_get_books();
+  $related = array_filter($related_doc_nids, function($e) use ($all_books, $node){
+    if($e == $node->nid) return;
+    return (array_key_exists($e, $all_books) && $e != $node->nid ) ? $all_books[$e] : NULL;
+  });
+
+  // If this is a broader search (not limited to one doctype in a release search), do a secondary query to fetch the doctypes.
+  if ($find == 'releases' && $filters == 'full') {
+    $full_array = array();
+    
+		$nested = array();
+		$grouped = array();
+  $full = entity_load('node', $related);
+  foreach ($full as $match) {
+				$match_wrapper = entity_metadata_wrapper('node', $match);
+				$release = $match_wrapper->field_software_release->value();
+				$release = $release[0]->tid;
+			
+				$name = taxonomy_term_load($release)->name;
+				if(!array_key_exists($release, $nested)) {
+						$nested[$name]['data'] = '<a href="#term-' . $release . '" onclick="return false">' . taxonomy_term_load($release)->name . '</a>';
+						$nested[$name]['class'] = array('group-release');
+				}
+				if($options['grouped'] ){
+						$category = array_shift(taxonomy_get_parents($match_wrapper->field_document_type->value()->tid));
+						if(isset($grouped[$release]) && !array_key_exists('term-' . $release, $grouped[$release])){
+								$grouped['term-' . $release][$category->tid]['data'] = $category->name;
+								$grouped['term-' . $release][$category->tid]['class'] = array('nav', 'nav-pills', 'nav-stacked');
+						}
+						$grouped['term-' . $release][$category->tid]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+						$grouped['term-' . $release][$category->tid]['children'][$match->nid]['class'] = array('group-document');
+				}
+				else {
+						$nested[$name]['children'][$match->nid]['data'] = l(taxonomy_term_load($match_wrapper->field_document_type->value()->tid)->name, 'node/' . $match->nid, array('html'=>TRUE));
+				}
+  }
+      
+		switch ($options['grouped']) {
+			case TRUE:
+				arsort($grouped);
+				arsort($nested);
+				return array('parents' => $nested, 'children' => $grouped);
+				break;
+	
+			default:
+				arsort ($nested);
+				return $nested;
+				break;
+      }
+    }
+  
+  
+  // If the 'links' option is passed, load the entities and return an array of rendered links.
+  if($options['links']) {
+    $full = entity_load('node', $related);
+    foreach ($full as $target) {
+      if($node->book['bid'] == $target->nid) continue;
+      
+      switch ($find) {
+								case 'doctypes':
+										$links[] = l(taxonomy_term_load($target->field_document_type[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
+										break;
+								case 'releases':
+										$links[] = l(taxonomy_term_load($target->field_software_release[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
+										break;
+								case 'platforms':
+										$links[] = l(taxonomy_term_load($target->field_platform[LANGUAGE_NONE][0]['tid'])->name, 'node/' . $target->nid, array('html'=>TRUE));
+										break;
+      }
+    }
+    return $links;
+  }
+  
+  // return an array of nids, or loaded entities if option ['full'] is passed.
+  return $options['full'] ? entity_load('node', $related) : $related;
+}
+
+/**
+ * Find matching document types for a given release and device
+ */
+function longform_get_related_doctypes($node, $options) {
+  return longform_get_related($node, 'doctypes', $options);
+}
+
+/**
+ * Find matching releases for a given document type and device
+ */
+function longform_get_related_releases($node, $options) {
+  return longform_get_related($node, 'releases', $options);
+}
+
+/**
+ * Find matching releases for a given document type and device
+ */
+function longform_get_related_platforms($node, $options) {
+  return longform_get_related($node, 'platforms', $options);
+}
+
+/**
+ * Run through all elements in an array and array_shift each one. Returns the slimmed array.
+ */
+function _longform_shift_array($array) {
+  array_walk($array, function(&$item) {
+    $item = $item['tid'];
+  });
+  return $array;
+}
+
+/**
+ * Extracts content between <body></body> tags, exclusive
+ */
+function extract_body(&$content){
+  preg_match('/<body[^>]*>(.*)<\/body>/si', $content, $matches);
+  if (count($matches) > 0){
+    $content = $matches[1];
+  }
+  return $content;
+}
+
+/**
+ * Implements hook_save()
+ *
+ * @TODO: MOVE THIS TO A NEW OG MANAGER MODULE!!!
+ *
+ * If an import ticket is unassigned when saved, attempts to assign it to the creating user.
+ *
+ * Only fires under the following conditions:
+ *  - Initial save (nid does not exist)
+ *  - Node is not already assigned (field_doc_assigned_to is not set)
+ *
+ * Only modifies the node under the following conditions:
+ *  - User is a member of the "content publisher" group (56131).
+ *
+ */
+function longform_core_node_presave($node) {
+  
+  $wrapper = entity_metadata_wrapper('node', $node);
+  
+  if ($wrapper->getBundle() != 'import_ticket' || !isset($wrapper->field_doc_assigned_to)) return;
+  $assigned = $wrapper->field_doc_assigned_to->value();
+  
+  // Only attempt to assign this on initial creation, and if the user didn't already assign the node
+  if ($node->nid || $assigned) return;
+   
+    global $user;
+  
+    // Get the current user's membership object. Assumes LSG group (56131).
+    $current_user_membership = og_get_membership('node', 56131, 'user', $user->uid);
+    
+    // If the user is a member of the group, assign the node to them. Otherwise leave it unassigned.
+    if ($current_user_membership) {
+      $wrapper->field_doc_assigned_to->set($current_user_membership);
+      drupal_set_message('Import ticket was assigned automatically to ' . $user->name . '.');
+    }
+}
+
+
+/**
+ * Library functions that return TRUE or FALSE if a user has a given permission.
+ */
+
+ /**
+  * User is an HTML editor
+  * @return TRUE if the user is allowed to edit HTML, FALSE otherwise
+  */
+ function user_is_editor() {
+  global $user;
+  $editors = array(7);
+  
+  $validate = FALSE;
+  foreach($editors as $role) {
+    if (array_key_exists($role, $user->roles)) {
+      $validate = TRUE;
+      break;
+    }
+  }
+  return $validate ? TRUE: FALSE;
+ }
+ 
+ /**
+  * User is a content publisher
+  * @return TRUE if the user is allowed to publish content, FALSE otherwise
+  */
+ function user_is_publisher() {
+  global $user;
+  $publishers = array(7);
+  
+  foreach($publishers as $role) {
+    if (array_key_exists($role, $user->roles)) {
+      $validate = TRUE;
+      break;
+    }
+  }
+  return isset($validate) ? TRUE: FALSE;
+ }
+
+ /**
+  * User is a site administrator
+  * @return TRUE if the user is a master admin OR has node bypass permission
+  */
+ function user_is_administrator() {
+  global $user;
+  $admins = array(3,16);
+  
+  foreach($admins as $role) {
+    if (array_key_exists($role, $user->roles)) {
+      $validate = TRUE;
+      break;
+    }
+  }
+  return $validate || user_access('bypass node access') ? TRUE: FALSE;
+ }
+ 
+ /**
+  * Checks whether the current user is a member of a group.
+  *
+  * This is a wrapper function for og_is_member(). For more sophisticated
+  * checks beyond these default assumptions, use og_is_member() directly.
+  *
+  * @param $group_node
+  * 	Accepts either a group node object or a group node NID. If nothing is supplied,
+  * 	checks LSG membership (56131).
+  *
+  * @return
+  * 	TRUE if the user is a member of the given group, FALSE otherwise.
+  * 
+  */
+ function user_is_group_member($group_node = 56131) {
+  $gid = is_object($group_node) ? $group_node->nid : $group_node;
+  return og_is_member('node', $gid);
+ }
+ 
+ /**
+  * Override secondary menu theme
+  */
+ function polycom_docsite_menu_local_tasks(&$variables) {
+  $output = '';
+
+  if (!empty($variables['primary'])) {
+    $variables['primary']['#prefix'] = '<h2 class="element-invisible">' . t('Primary tabs') . '</h2>';
+    $variables['primary']['#prefix'] .= '<ul class="tabs nav nav-pills">';
+    $variables['primary']['#suffix'] = '</ul>';
+    $output .= drupal_render($variables['primary']);
+  }
+  if (!empty($variables['secondary'])) {
+    $variables['secondary']['#prefix'] = '<h2 class="element-invisible">' . t('Secondary tabs') . '</h2>';
+    $variables['secondary']['#prefix'] .= '<ul class="tabs secondary">';
+    $variables['secondary']['#suffix'] = '</ul>';
+    $output .= drupal_render($variables['secondary']);
+  }
+
+  return $output;
+}
+ 
+function polycom_docsite_menu_local_task(&$variables) {
+  $link = $variables['element']['#link'];
+  $link_text = $link['title'];
+
+  if (!empty($variables['element']['#active'])) {
+    // Add text to indicate active tab for non-visual users.
+    $active = '<span class="element-invisible">' . t('(active tab)') . '</span>';
+
+    // If the link does not contain HTML already, check_plain() it now.
+    // After we set 'html'=TRUE the link will not be sanitized by l().
+    if (empty($link['localized_options']['html'])) {
+      $link['title'] = check_plain($link['title']);
+    }
+    $link['localized_options']['html'] = TRUE;
+    $link_text = t('!local-task-title!active', array('!local-task-title' => $link['title'], '!active' => $active));
+  }
+  return '<li' . (!empty($variables['element']['#active']) ? ' class="active btn btn-default"' : ' class="btn btn-default"') . '>' . l($link_text, $link['href'], $link['localized_options']) . "</li>\n";
+}
+
+ 
+ /**
+  * Override field output for fields
+  */
+ function polycom_docsite_field($variables) {
+    $output = '';
+
+  // Render the label, if it's not hidden.
+  if (!$variables['label_hidden']) {
+    $output .= '<div class="field-label field-override"' . $variables['title_attributes'] . '>' . $variables['label'] . ':&nbsp;</div>';
+  }
+
+  // Render the items.
+  $output .= '<div class="field-items field-override"' . $variables['content_attributes'] . '>';
+  foreach ($variables['items'] as $delta => $item) {
+
+    $classes = 'field-item ' . ($delta % 2 ? 'odd' : 'even');
+    $output .= '<div class="' . $classes . '"' . $variables['item_attributes'][$delta] . '>' . drupal_render($item) . '</div>';
+  }
+  $output .= '</div>';
+
+  // Render the top-level DIV.
+  $output = '<div class="' . $variables['classes'] . '"' . $variables['attributes'] . '>' . $output . '</div>';
+
+  return $output;
+ }
+
+/**
+ * Implements theme_textfield().
+ *
+ * Overrides to include bootstrap form classes.
+ */
+function polycom_docsite_textfield($variables) {
+  $element = $variables['element'];
+  $element['#attributes']['type'] = 'text';
+  element_set_attributes($element, array('id', 'name', 'value', 'size', 'maxlength'));
+  _form_set_class($element, array('form-text', 'form-control'));
+
+  $extra = '';
+  if ($element['#autocomplete_path'] && drupal_valid_path($element['#autocomplete_path'])) {
+    drupal_add_library('system', 'drupal.autocomplete');
+    $element['#attributes']['class'][] = 'form-autocomplete';
+
+    $attributes = array();
+    $attributes['type'] = 'hidden';
+    $attributes['id'] = $element['#attributes']['id'] . '-autocomplete';
+    $attributes['value'] = url($element['#autocomplete_path'], array('absolute' => TRUE));
+    $attributes['disabled'] = 'disabled';
+    $attributes['class'][] = 'autocomplete';
+    $extra = '<input' . drupal_attributes($attributes) . ' />';
+  }
+
+  $output = '<input' . drupal_attributes($element['#attributes']) . ' />';
+
+  return $output . $extra;
+}
+
+/**
+ * Implements theme_button()
+ *
+ * Overrides to include bootstrap form classes.
+ */
+function polycom_docsite_button($variables) {
+  
+  $element = $variables['element'];
+  $element['#attributes']['type'] = 'submit';
+  element_set_attributes($element, array('id', 'name', 'value'));
+
+  $element['#attributes']['class'][] = 'form-' . $element['#button_type'];
+  
+  $do_not_style_these_ids = array('search-submit');
+  if(!in_array($element['#id'], $do_not_style_these_ids)) {
+    $element['#attributes']['class'][] = 'btn';
+    $element['#attributes']['class'][] = 'btn-primary';
+  }
+  
+  if (!empty($element['#attributes']['disabled'])) {
+    $element['#attributes']['class'][] = 'form-button-disabled disabled';
+  }
+
+  return '<input' . drupal_attributes($element['#attributes']) . ' />';
+}
+
+
+/**
+ * Implements theme_form_element()
+ *
+ */
+function tn_bootstrap_form_element($variables) {
+  $element = &$variables['element'];
+  $is_checkbox = FALSE;
+  $is_radio = FALSE;
+
+  // This function is invoked as theme wrapper, but the rendered form element
+  // may not necessarily have been processed by form_builder().
+  $element += array(
+    '#title_display' => 'before',
+  );
+
+  // Add element #id for #type 'item'.
+  if (isset($element['#markup']) && !empty($element['#id'])) {
+    $attributes['id'] = $element['#id'];
+  }
+
+  // Check for errors and set correct error class.
+  if (isset($element['#parents']) && form_get_error($element)) {
+    $attributes['class'][] = 'error';
+  }
+
+  if (!empty($element['#type'])) {
+    $attributes['class'][] = 'form-type-' . strtr($element['#type'], '_', '-');
+  }
+  if (!empty($element['#name'])) {
+    $attributes['class'][] = 'form-item-' . strtr($element['#name'], array(
+        ' ' => '-',
+        '_' => '-',
+        '[' => '-',
+        ']' => '',
+      ));
+  }
+  // Add a class for disabled elements to facilitate cross-browser styling.
+  if (!empty($element['#attributes']['disabled'])) {
+    $attributes['class'][] = 'form-disabled';
+  }
+  if (!empty($element['#autocomplete_path']) && drupal_valid_path($element['#autocomplete_path'])) {
+    $attributes['class'][] = 'form-autocomplete';
+  }
+  $attributes['class'][] = 'form-item';
+
+  // See http://getbootstrap.com/css/#forms-controls.
+  if (isset($element['#type'])) {
+    if ($element['#type'] == "radio") {
+      $attributes['class'][] = 'radio';
+      $is_radio = TRUE;
+    }
+    elseif ($element['#type'] == "checkbox") {
+      $attributes['class'][] = 'checkbox';
+      $is_checkbox = TRUE;
+    }
+    else {
+      $attributes['class'][] = 'form-group';
+    }
+  }
+
+  $description = FALSE;
+  $tooltip = FALSE;
+  // Convert some descriptions to tooltips.
+  // @see bootstrap_tooltip_descriptions setting in _bootstrap_settings_form()
+  if (!empty($element['#description'])) {
+    $description = $element['#description'];
+    if ($description === strip_tags($description) && strlen($description) <= 200) {
+      $tooltip = TRUE;
+      $attributes['data-toggle'] = 'tooltip';
+      $attributes['title'] = $description;
+    }
+  }
+
+  // Suppress outer <div> if a radio list (these will be styled as buttons instead)
+  $output = ($is_radio) ? '' : '<div' . drupal_attributes($attributes) . '>' . "\n";
+
+  // If #title is not set, we don't display any label or required marker.
+  if (!isset($element['#title'])) {
+    $element['#title_display'] = 'none';
+  }
+
+  $prefix = '';
+  $suffix = '';
+  if (isset($element['#field_prefix']) || isset($element['#field_suffix'])) {
+    // Determine if "#input_group" was specified.
+    if (!empty($element['#input_group'])) {
+      $prefix .= '<div class="input-group">';
+      $prefix .= isset($element['#field_prefix']) ? '<span class="input-group-addon">' . $element['#field_prefix'] . '</span>' : '';
+      $suffix .= isset($element['#field_suffix']) ? '<span class="input-group-addon">' . $element['#field_suffix'] . '</span>' : '';
+      $suffix .= '</div>';
+    }
+    else {
+      $prefix .= isset($element['#field_prefix']) ? $element['#field_prefix'] : '';
+      $suffix .= isset($element['#field_suffix']) ? $element['#field_suffix'] : '';
+    }
+  }
+
+  switch ($element['#title_display']) {
+    case 'before':
+    case 'invisible':
+      $output .= ' ' . theme('form_element_label', $variables);
+      $output .= ' ' . $prefix . $element['#children'] . $suffix . "\n";
+      break;
+
+    case 'after':
+      if ($is_radio || $is_checkbox) {
+        //$output .= ' ' . $prefix . $element['#children'] . $suffix;
+      }
+      else {
+        $variables['#children'] = ' ' . $prefix . $element['#children'] . $suffix;
+      }
+      $output .= ' ' . theme('form_element_label', $variables) . "\n";
+      break;
+
+    case 'none':
+    case 'attribute':
+      // Output no label and no required marker, only the children.
+      $output .= ' ' . $prefix . $element['#children'] . $suffix . "\n";
+      break;
+  }
+  if ($description) {
+    $output .= '<div class="help-block">' . $element['#description'] . "</div>\n";
+  }
+
+  $output .= ($is_radio) ? '' : "</div>\n";
+
+  return $output;
+}
+
+/**
+ * Overrides theme_form_element_label().
+ */
+function tn_bootstrap_form_element_label(&$variables) {
+  $element = $variables['element'];
+
+  // This is also used in the installer, pre-database setup.
+  $t = get_t();
+
+  // Determine if certain things should skip for checkbox or radio elements.
+  $skip = (isset($element['#type']) && ('checkbox' === $element['#type'] || 'radio' === $element['#type']));
+
+  // If title and required marker are both empty, output no label.
+  if ((!isset($element['#title']) || $element['#title'] === '' && !$skip) && empty($element['#required'])) {
+    return '';
+  }
+
+  // If the element is required, a required marker is appended to the label.
+  $required = !empty($element['#required']) ? theme('form_required_marker', array('element' => $element)) : '';
+
+  $title = filter_xss_admin($element['#title']);
+
+  $attributes = array();
+
+  // Style the label as class option to display inline with the element.
+  if ($element['#title_display'] == 'after' && !$skip) {
+    $attributes['class'][] = $element['#type'];
+  }
+  // Show label only to screen readers to avoid disruption in visual flows.
+  elseif ($element['#title_display'] == 'invisible') {
+    $attributes['class'][] = 'element-invisible';
+  }
+
+  if (!empty($element['#id'])) {
+    $attributes['for'] = $element['#id'];
+  }
+
+  // Insert radio and checkboxes inside label elements.
+  $output = '';
+  if (isset($variables['element']['#children']) && $element['#type'] == 'radio' || $element['#type'] == 'checkbox') {
+    $output .= $variables['element']['#children'];
+    unset($variables['element']['#children']);
+  }
+
+  if ($element['#type'] == 'radio') {
+    $attributes['class'][] = 'btn';
+    $attributes['class'][] = $element['#parents'][0] == 'workflow' ? 'btn-primary' : 'btn-default';
+    
+    // This is a really hacky way to accomplish this -- find a better method!
+    if(strpos($element['#children'], 'checked="checked"') !== FALSE) {
+      $attributes['class'][] = 'active';
+    }
+  }
+  
+  // Append label.
+  $output .= t('!title !required', array('!title' => $title, '!required' => $required));
+  // The leading whitespace helps visually separate fields from inline labels.
+  return ' <label' . drupal_attributes($attributes) . '>' . $output . "</label>\n";
+}
+
+
+/**
+ * Implements theme_preprocess_comment()
+ *
+ * Adds 'pull-right' class to comment link element
+ */
+function polycom_docsite_preprocess_comment(&$vars) {
+  $vars['links_attributes_array']['class'][] = 'pull-right';
+}
+
+/**
+ * Implements theme_preprocess_links()
+ *
+ * Changes inline key to 'list-inline' per bootstrap requirements
+ * Adds 'nav' and 'nav-pills' classes
+ */
+function polycom_docsite_preprocess_links(&$variables) {
+  if (isset($variables['attributes']) && isset($variables['attributes']['class'])) {
+    $inline_key = array_search('inline', $variables['attributes']['class']);
+    if ($inline_key) {
+      $variables['attributes']['class'][$inline_key] = 'list-inline';
+      $variables['attributes']['class'][] = 'nav';
+      $variables['attributes']['class'][] = 'nav-pills';      
+    }
+  }
+}
+
+function polycom_docsite_facetapi_item_list($vars) {
+  global $theme_key;
+  $theme_name = $theme_key;
+
+  $items = $vars['items'];
+  $title = $vars['title'];
+  $type = $vars['type'];
+  $attributes = $vars['attributes'];
+
+  // Override facet API lists to follow list group format
+    $attributes['class'][] = 'list-group';
+    $type = 'div';
+  
+  $output ='';
+  if (isset($title) && $title !== '') {
+    $output .= '<h3>' . $title . '</h3>';
+  }
+      
+      if (!empty($items)) {
+	$output .= "<$type" . drupal_attributes($attributes) . '>';
+	$num_items = count($items);
+	foreach ($items as $i => $item) {
+	  $attributes = array();
+	  $children = array();
+	  if (is_array($item)) {
+	    foreach ($item as $key => $value) {
+	      if ($key == 'data') {
+		$data = $value;
+	      }
+	      elseif ($key == 'children') {
+		$children = $value;
+	      }
+	      else {
+		$attributes[$key] = $value;
+	      }
+	    }
+	  }
+	  else {
+	    $data = $item;
+	  }
+    
+	  if (count($children) > 0) {
+	    // Render nested list.
+	    $data .= polycom_docsite_item_list(array('items' => $children, 'title' => NULL, 'type' => $type, 'attributes' => $attributes));
+	  }
+    
+	  if (at_get_setting('extra_item_list_classes', $theme_name) == 1) {
+	    if ($i & 1) {
+	      $attributes['class'][] = 'odd';
+	    }
+	    else {
+	      $attributes['class'][] = 'even';
+	    }
+	    if ($i == 0) {
+	      $attributes['class'][] = 'first';
+	    }
+	    if ($i == $num_items - 1) {
+	      $attributes['class'][] = 'last';
+	    }
+	  }
+	  //$attributes['class'][] = 'list-group-item';
+//	  $output .= '<div' . drupal_attributes($attributes) . '>' . $data . "</div>"; // no new line!
+	  $output .= $data ; // no new line!
+
+	}
+	$output .= "</$type>";
+      }
+}
+
+
+/**
+ * Returns HTML for a list or nested list of items.
+ *
+ * Adaptivetheme overrides this in order to insert extra classes into list
+ * items, including first, last and odd/even zebra classes.
+ *
+ * @param $vars
+ *   An associative array containing:
+ *   - items: An array of items to be displayed in the list. If an item is a
+ *     string, then it is used as is. If an item is an array, then the "data"
+ *     element of the array is used as the contents of the list item. If an item
+ *     is an array with a "children" element, those children are displayed in a
+ *     nested list. All other elements are treated as attributes of the list
+ *     item element.
+ *   - title: The title of the list.
+ *   - type: The type of list to return (e.g. "ul", "ol").
+ *   - attributes: The attributes applied to the list element.
+ */
+function polycom_docsite_item_list($vars) {
+
+  global $theme_key;
+  $theme_name = $theme_key;
+
+  $items = $vars['items'];
+  $title = $vars['title'];
+  $type = $vars['type'];
+  $attributes = $vars['attributes'];
+
+  // Override facet API lists to follow list group format
+  if(strpos($attributes['id'],'facetapi') !== FALSE) {
+    $attributes['class'][] = 'list-group';
+    $type = 'div';
+    $force_list_group = TRUE;
+  }
+  
+  $output ='';
+  if (isset($title) && $title !== '') {
+    $output .= '<h3>' . $title . '</h3>';
+  }
+
+  switch ($force_list_group) {
+    case TRUE:
+      
+      if (!empty($items)) {
+	$output .= "<$type" . drupal_attributes($attributes) . '>';
+	$num_items = count($items);
+	foreach ($items as $i => $item) {
+	  $attributes = array();
+	  $children = array();
+	  if (is_array($item)) {
+	    foreach ($item as $key => $value) {
+	      if ($key == 'data') {
+		$data = $value;
+	      }
+	      elseif ($key == 'children') {
+		$children = $value;
+	      }
+	      else {
+		$attributes[$key] = $value;
+	      }
+	    }
+	  }
+	  else {
+	    $data = $item;
+	  }
+	  $attributes['id'] = 'facetapi';
+	  if (count($children) > 0) {
+	    // Render nested list.
+	    $data .= polycom_docsite_item_list(array('items' => $children, 'title' => NULL, 'type' => $type, 'attributes' => $attributes));
+	  }
+    
+	  if (at_get_setting('extra_item_list_classes', $theme_name) == 1) {
+	    if ($i & 1) {
+	      $attributes['class'][] = 'odd';
+	    }
+	    else {
+	      $attributes['class'][] = 'even';
+	    }
+	    if ($i == 0) {
+	      $attributes['class'][] = 'first';
+	    }
+	    if ($i == $num_items - 1) {
+	      $attributes['class'][] = 'last';
+	    }
+	  }
+	  //$attributes['class'][] = 'list-group-item';
+//	  $output .= '<div' . drupal_attributes($attributes) . '>' . $data . "</div>"; // no new line!
+	  $output .= $data ; // no new line!
+
+	}
+	$output .= "</$type>";
+      }
+      break;
+    
+    default:
+      
+      if (!empty($items)) {
+	$output .= "<$type" . drupal_attributes($attributes) . '>';
+	$num_items = count($items);
+	foreach ($items as $i => $item) {
+	  $attributes = array();
+	  $children = array();
+	  if (is_array($item)) {
+	    foreach ($item as $key => $value) {
+	      if ($key == 'data') {
+		$data = $value;
+	      }
+	      elseif ($key == 'children') {
+		$children = $value;
+	      }
+	      else {
+		$attributes[$key] = $value;
+	      }
+	    }
+	  }
+	  else {
+	    $data = $item;
+	  }
+    
+	  if (count($children) > 0) {
+	    // Render nested list.
+	    $data .= theme_item_list(array('items' => $children, 'title' => NULL, 'type' => $type, 'attributes' => $attributes));
+	  }
+    
+	  if (at_get_setting('extra_item_list_classes', $theme_name) == 1) {
+	    if ($i & 1) {
+	      $attributes['class'][] = 'odd';
+	    }
+	    else {
+	      $attributes['class'][] = 'even';
+	    }
+	    if ($i == 0) {
+	      $attributes['class'][] = 'first';
+	    }
+	    if ($i == $num_items - 1) {
+	      $attributes['class'][] = 'last';
+	    }
+	  }
+	  $output .= '<li' . drupal_attributes($attributes) . '>' . $data . "</li>"; // no new line!
+	}
+	$output .= "</$type>";
+      }
+      //$output .= '</div>';
+  }
+  return $output;
+}
+
+/**
+ * Overrides theme_radios().
+ *
+ * Wraps radio groups in bootstrap <div>s
+ */
+function polycom_docsite_radios($variables) {
+  $element = $variables['element'];
+  $attributes = array();
+  if (isset($element['#id'])) {
+    $attributes['id'] = $element['#id'];
+  }
+  $element['#attributes']['class'][] = 'form-radios';
+  $element['#attributes']['class'][] = 'btn-group';
+
+  if (!empty($element['#attributes']['class'])) {
+    $attributes['class'] .= ' ' . implode(' ', $element['#attributes']['class']);
+  }
+  if (isset($element['#attributes']['title'])) {
+    $attributes['title'] = $element['#attributes']['title'];
+  }
+  
+    $attributes['data-toggle'] = 'buttons';
+    
+  return '<div' . drupal_attributes($attributes) . '>' . (!empty($element['#children']) ? $element['#children'] : '') . '</div>';
+}
+
+/**
+ * Overrides theme_container().
+ */
+function polycom_docsite_container($variables) {
+  $element = $variables['element'];
+
+  // Special handling for form elements.
+  if (isset($element['#array_parents'])) {
+    // Assign an html ID.
+    if (!isset($element['#attributes']['id'])) {
+      $element['#attributes']['id'] = $element['#id'];
+    }
+    // Add classes.
+    $element['#attributes']['class'][] = 'form-wrapper';
+    $element['#attributes']['class'][] = 'form-group';
+  }
+  return '<div' . drupal_attributes($element['#attributes']) . '>' . $element['#children'] . '</div>';
+}
+
+
+/**
+ * Overrides theme_form().
+ *
+ * Intercepts search forms and rewrites HTML to be a nice bootstrap input group.
+ *
+ * This is almost certainly a terrible way to do this, but no more time to mess around now!
+ */
+function tn_bootstrap_form($variables) {
+  $element = $variables['element'];
+  
+  // Pick off search forms and rewrite the HTML.
+  // @TODO: Figure out a better/"real" way to do this -- it works, but it smells awful.
+  if (strpos($element['#id'], '_search_') !== FALSE || strpos($element['#id'], '-search-') !== FALSE) {
+    $element['#children'] = longform_rewrite_html($element['#children'],
+	array(
+	  'format' => 'bootstrap',
+	  'type' => 'input_group',
+	  'variant' => array('search','after'),
+	  'class' => array(''),
+	  )
+	);
+  }
+  if (isset($element['#action'])) {
+    $element['#attributes']['action'] = drupal_strip_dangerous_protocols($element['#action']);
+  }
+  element_set_attributes($element, array('method', 'id'));
+  if (empty($element['#attributes']['accept-charset'])) {
+    $element['#attributes']['accept-charset'] = "UTF-8";
+  }
+  // Anonymous DIV to satisfy XHTML compliance.
+  return '<form' . drupal_attributes($element['#attributes']) . '><div>' . $element['#children'] . '</div></form>';
+}
+
+/**
+ * Rewrite form HTML to be bootstrap compliant.
+ *
+ * Accepts a string of HTML and an option array that dictates what to do with it.
+ * If no options are specified, the string is returned unaltered.
+ *
+ * @param $html
+ * 	A string of valid HTML. This is not checked for validity.
+ *
+ * @param $options
+ * 	An options array. 
+ */
+function longform_rewrite_html($html, $options = NULL) {
+  if (!$options) return;
+  $qp = htmlqp($html);
+  $class = $options['class'];
+  switch($options['format']) {
+    case 'bootstrap':
+    
+      switch ($options['type']) {
+      
+	case 'input_group':
+	  
+	  // Rewrite search fields to bundle the textfield and button together.
+	  
+	  // Note: This function currently drops labels, which is another indication that this is a terrible idea
+	  
+	  // I must reiterate that this is a giant hack, but I've run out of time so this will have to do for now
+	  
+	  // I am ashamed and yet I go on
+	  
+	  $text_field = $qp->find('input[type="text"]')->html();
+	  $submit_button = $qp->top()->find('button[type="submit"]')->removeClass('btn-primary')->addClass('btn-default')->html();
+	  $hidden_fields_qp = $qp->top()->find('input[type="hidden"]');
+   $hidden_fields = '';
+	  foreach($hidden_fields_qp as $hidden) {
+	    $hidden_fields .= $hidden->html() . PHP_EOL;
+	  }
+	  
+	  $class[] = 'input-group';
+	  $classes= array('class'=>$class);
+
+	  $output = '<div ' . drupal_attributes($classes) . '">';
+	  $output .= $text_field;
+	  $output .= '<span class="input-group-btn">';
+	  $output .= $submit_button;
+	  $output .= '</span></div>';
+	  $output .= $hidden_fields;
+	  
+	  break;
+	
+	default:
+	  break;
+      }
+      
+      break;
+    
+    default:
+      break;
+  }
+  return $output;
+}
+
+/**
+ * Implements hook_preprocess_page().
+ *
+ * @see page.tpl.php
+ */
+function tn_bootstrap_preprocess_page(&$variables) {
+  // Add information about the number of sidebars.
+  if (!empty($variables['page']['sidebar_first']) && !empty($variables['page']['sidebar_second'])) {
+    $variables['content_column_class'] = ' class="col-sm-6"';
+  }
+  elseif (!empty($variables['page']['sidebar_first']) || !empty($variables['page']['sidebar_second'])) {
+    $variables['content_column_class'] = ' class="col-sm-9"';
+  }
+  else {
+    $variables['content_column_class'] = ' class="col-sm-12"';
+  }
+
+  // Primary nav.
+  $variables['primary_nav'] = FALSE;
+  if ($variables['main_menu']) {
+    // Build links.
+    $variables['primary_nav'] = menu_tree(variable_get('menu_main_links_source', 'main-menu'));
+    // Provide default theme wrapper function.
+    $variables['primary_nav']['#theme_wrappers'] = array('menu_tree__primary');
+  }
+
+  // Longform user nav.
+  global $user;
+  if($user->uid && module_exists('longform_core')) {
+    $variables['longform_nav']['enabled'] = TRUE;
+    $variables['longform_nav']['content'] = longform_longform_header(menu_get_object());
+  }
+
+  // Secondary nav.
+  $variables['secondary_nav'] = FALSE;
+  if ($variables['secondary_menu']) {
+    // Build links.
+    $variables['secondary_nav'] = menu_tree(variable_get('menu_secondary_links_source', 'user-menu'));
+    // Provide default theme wrapper function.
+    $variables['secondary_nav']['#theme_wrappers'] = array('menu_tree__secondary');
+  }
+
+  $variables['navbar_classes_array'] = array('navbar');
+
+  if (theme_get_setting('bootstrap_navbar_position') !== '') {
+    $variables['navbar_classes_array'][] = 'navbar-' . theme_get_setting('bootstrap_navbar_position');
+  }
+  else {
+    $variables['navbar_classes_array'][] = 'container';
+  }
+  if (theme_get_setting('bootstrap_navbar_inverse')) {
+    $variables['navbar_classes_array'][] = 'navbar-inverse';
+  }
+  else {
+    $variables['navbar_classes_array'][] = 'navbar-default';
+  }
+}
+
+/**
+ * Implements theme_lt_unified_login_page()
+ *
+ * This way is better.
+ */
+
+function tn_bootstrap_lt_unified_login_page($variables) {
+
+  drupal_set_title(t('Log in to definio Longform'));
+  $login_form = $variables['login_form'];
+  $register_form = $variables['register_form'];
+  $active_form = $variables['active_form'];
+  $output = '';
+
+  $output .= '<div class="toboggan-unified-tbs ' . $active_form . '">';
+
+  // Create the initial message and links that people can click on.
+  $output .= '<div class="row">';
+  $output .= '<div class="col-md-3">';
+  $output .= '<ul class="nav nav-pills nav-stacked">';
+  $output .= '<li class="active"><a href="#login" data-toggle="pill">' . t('Log in') . '</a></li>';
+  $output .= '<li><a href="#register" data-toggle="pill">' . t('Create a new account') . '</a></li>';
+  
+  $output .= '</ul>'; 
+  $output .= '</div>'; // end left col
+
+  // Add the login and registration forms in.
+  $output .= '<div class="col-md-9 tab-content logo-behind">';
+  $output .= '<div id="login" class="tab-pane fade in active well well-sm frosted-light">' . $login_form . '</div>';
+  $output .= '<div id="register" class="tab-pane fade well well-sm frosted-light">' . $register_form . '</div>';
+  $output .= '</div>'; // end right col
+  $output .= '</div>'; // end row
+  $output .= '</div>';
+
+  return $output;
+}

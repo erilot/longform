@@ -1,6 +1,0 @@
-name = "Technet Translation Utilities"
-description = Utilities for translation in Technet
-core = 7.x
-package = "Doc Manager"
-version = "7.x-1.0"
-

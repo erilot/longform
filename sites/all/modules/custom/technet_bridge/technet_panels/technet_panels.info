@@ -1,4 +1,4 @@
-name = technet_panels export module
+name = longform_panels export module
 description = Export objects from CTools
 dependencies[] = page_manager
 package = Chaos tool suite

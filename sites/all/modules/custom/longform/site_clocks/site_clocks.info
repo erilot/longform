@@ -1,0 +1,9 @@
+name = "Site Clocks"
+description = "Generates canvas clocks for OG groups."
+package = "Longform"
+dependencies[] = doc_manage_core
+
+stylesheets[all][] = site_clocks.css
+core = 7.x
+php = 5
+version = 7.x-1.0

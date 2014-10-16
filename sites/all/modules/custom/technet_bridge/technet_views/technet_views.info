@@ -1,4 +1,4 @@
-name = technet_views export module
+name = longform_views export module
 description = Export objects from CTools
 dependencies[] = views
 package = Chaos tool suite

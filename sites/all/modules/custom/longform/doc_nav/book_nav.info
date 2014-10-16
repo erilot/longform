@@ -1,0 +1,4 @@
+name = Book Navigation System
+description = Custom book navigation system, integrated with Twitter Bootstrap
+core = 7.x
+package = Longform

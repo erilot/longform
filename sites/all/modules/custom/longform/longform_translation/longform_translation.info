@@ -1,0 +1,6 @@
+name = "Longform Translation Utilities"
+description = Utilities for translation in Longform
+core = 7.x
+package = Longform
+version = "7.x-1.0"
+

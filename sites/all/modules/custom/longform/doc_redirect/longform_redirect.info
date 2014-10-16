@@ -1,0 +1,8 @@
+name = "Document Release Redirect"
+description = "Notifies users when a newer version of a document is available. Implements a redirect scheme for application-provided paths"
+dependencies[] = longform_core
+dependencies[] = book_nav
+
+package = "Longform"
+core = 7.x
+version = 7.x-1.0
