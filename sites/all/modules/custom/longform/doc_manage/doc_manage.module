@@ -147,7 +147,12 @@ function doc_manage_block_info() {
                                       'info' => t('Document management toolbar'),
                                       'cache' => DRUPAL_NO_CACHE,
                                       );
-  
+  $blocks['document_manage_dashboard'] = array(
+    'info' => t('Technet user dashboard'),
+    'cache' => DRUPAL_NO_CACHE,
+  );
+
+
   return $blocks;
 }
 
@@ -156,7 +161,7 @@ function doc_manage_block_info() {
  * Implements hook_block_view().
  */
 function doc_manage_block_view($delta) {
-  
+  $blocks = array();
   switch($delta){
     
     case 'queue_import':
@@ -236,10 +241,21 @@ function doc_manage_block_view($delta) {
       $blocks['subject'] = t('Display and manage subsets of document publication');
       $blocks['content'] = doc_manage_toolbar();
      break;
+
+    case 'document_manage_dashboard':
+      //define block
+      $blocks['subject'] = t('Technet user dashboard');
+      $blocks['content'] = doc_manage_build_dashboard();
+      break;
   }
   
   return $blocks;
+}
 
+function doc_manage_build_dashboard(){
+  module_load_include('inc', 'doc_manage');
+  module_load_include('inc', 'doc_manage', 'dashboard/doc_manage_dashboard');
+  return longform_site_dashboard();
 }
 
 function doc_manage_toolbar() {

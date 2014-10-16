@@ -359,7 +359,7 @@ if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
 				}
 }
 else {
-				ini_set('error_reporting', E_WARNING);
+				ini_set('error_reporting', E_ALL);
 }
 
 

@@ -12,7 +12,7 @@
   * Release Version values.
   */
  
-function doc_redirect_page_alter(&$page){
+function longform_redirect_page_alter(&$page){
   
 
 }
@@ -22,7 +22,7 @@ function doc_redirect_page_alter(&$page){
  * Provides a block for administrators that displays the "always current" link for this document.
  */
 
-function doc_redirect_block_info() {
+function longform_redirect_block_info() {
   // TODO Rename block deltas (e.g. delta-0) to readable strings.
   $blocks['link_current'] = array(
                               'info' => t('Current Version Link'),
@@ -35,12 +35,12 @@ function doc_redirect_block_info() {
 /**
  * Implements hook_block_view().
  */
-function doc_redirect_block_view($delta) {
+function longform_redirect_block_view($delta) {
   switch($delta){   
     case 'link_current':
       //define block 
       $blocks['subject'] = t('Permalink to Current Version');
-      $blocks['content'] = doc_redirect_permalink_current();    
+      $blocks['content'] = longform_redirect_permalink_current();
     break;
   }
   return $blocks;
@@ -49,7 +49,7 @@ function doc_redirect_block_view($delta) {
 /**
  * Displays administrator notice containing the always-current permalink for this device type/document type/language.
  */
-function doc_redirect_permalink_current(){
+function longform_redirect_permalink_current(){
   $node = menu_get_object();
   if($node->type == 'book' && user_is_logged_in()){
    global $base_url;   
@@ -81,7 +81,7 @@ function doc_redirect_permalink_current(){
  * Function returns the redirect links for a given controller document.
  * Returns an array: ['adaptive'] is the always-current permalink, and ['override'] is for this specific software version.
  */
-function doc_redirect_get_adaptive_permalink(){
+function longform_redirect_get_adaptive_permalink(){
   $node = menu_get_object();
   if($node->type == 'import_ticket' && user_is_logged_in()){
    global $base_url;   
@@ -132,44 +132,44 @@ function doc_redirect_get_adaptive_permalink(){
  * Establishes /current/ as the path for version redirection
  * Creates summary pages with index keys
  */
-function doc_redirect_menu(){
+function longform_redirect_menu(){
  $items['current'] = array(
-    'page callback' => 'doc_redirect_go',
+    'page callback' => 'longform_redirect_go',
     'access arguments' => array('access content'), //TRUE,//array('access content'),
     'type' => MENU_CALLBACK,
   );
  $items['reference'] = array(
-  'page callback' => 'doc_redirect_reference',
+  'page callback' => 'longform_redirect_reference',
   'access arguments' => array('access content'),
   'type' => MENU_NORMAL_ITEM,
  );
  $items['reference/doctypes'] = array(
-  'page callback' => 'doc_redirect_doctypes',
+  'page callback' => 'longform_redirect_doctypes',
   'access arguments' => array('access content'),
   'type' => MENU_NORMAL_ITEM,
  );
  $items['reference/devicetypes'] = array(
-  'page callback' => 'doc_redirect_devicetypes',
+  'page callback' => 'longform_redirect_devicetypes',
   'access arguments' => array('access content'),
   'type' => MENU_NORMAL_ITEM,
  );
  $items['reference/platforms'] = array(
-  'page callback' => 'doc_redirect_platforms',
+  'page callback' => 'longform_redirect_platforms',
   'access arguments' => array('access content'),
   'type' => MENU_NORMAL_ITEM,
  );
  $items['reference/releases'] = array(
-  'page callback' => 'doc_redirect_releases',
+  'page callback' => 'longform_redirect_releases',
   'access arguments' => array('access content'),
   'type' => MENU_NORMAL_ITEM,
  );
  $items['reference/roles'] = array(
-  'page callback' => 'doc_redirect_roles',
+  'page callback' => 'longform_redirect_roles',
   'access arguments' => array('access content'),
   'type' => MENU_NORMAL_ITEM,
  );
  $items['reference/marketing'] = array(
-  'page callback' => 'doc_redirect_marketing',
+  'page callback' => 'longform_redirect_marketing',
   'access arguments' => array('access content'),
   'type' => MENU_NORMAL_ITEM,
  );
@@ -178,7 +178,7 @@ function doc_redirect_menu(){
 }
 
 /**
- * Callback for doc_redirect_menu
+ * Callback for longform_redirect_menu
  * Accepts the arguments specified in order:
  *  %1: language code
  *  %2: $doc_type (document type TID)
@@ -190,7 +190,7 @@ function doc_redirect_menu(){
  *  Looks for the highest release version number with those parameters and redirects to that node if found
  *  If not found, redirects to the archive page.
  */
-function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $arg_6 = NULL){
+function longform_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $arg_6 = NULL){
   
   $vocabularies = array('platform','external_user_role','vocabulary_8', 'vocabulary_12');
   $languages = db_query('SELECT * FROM {languages} ORDER BY weight ASC, name ASC')->fetchAllAssoc('language');
@@ -270,12 +270,12 @@ function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $
   }
   
   //perform query
-  $destination = doc_redirect_find_target($language, $doc_type, $product_type, $device_platform, $version_override);
+  $destination = longform_redirect_find_target($language, $doc_type, $product_type, $device_platform, $version_override);
   
   //if nothing was returned and the language is not English, reset the language to English and try again.
   if(!isset($destination['target_node']) && $language != 'en'){
     $default_language = 'en';
-    $destination = doc_redirect_find_target($default_language, $doc_type, $product_type, $device_platform, $version_override);
+    $destination = longform_redirect_find_target($default_language, $doc_type, $product_type, $device_platform, $version_override);
     if(isset($destination['target_node'])){
       drupal_set_message('The required document is not available in ' . $languages[$language]->name . ', but it is available in English. Switching to the English-language version.','warning');
     }
@@ -332,7 +332,7 @@ function doc_redirect_go($arg_1, $arg_2, $arg_3, $arg_4 = NULL, $arg_5 = NULL, $
 /**
  * Displays a grid of all taxonomy metadata
  */
-function doc_redirect_reference() {
+function longform_redirect_reference() {
   
   $vids = array (8,12,14,21,41,11);
   
@@ -374,7 +374,7 @@ function doc_redirect_reference() {
  * Callback for current/doctypes
  * displays a list of document types an ID#s.
  */
-function doc_redirect_doctypes(){
+function longform_redirect_doctypes(){
   $vid = 8;
   $output = array(
     'heading' => array(
@@ -470,7 +470,7 @@ $items = array();
  * Callback for current/devicetypes
  * displays a list of device types an ID#s.
  */
-function doc_redirect_devicetypes(){
+function longform_redirect_devicetypes(){
   $vid = 12;
   $output = array(
     'heading' => array(
@@ -489,7 +489,7 @@ function doc_redirect_devicetypes(){
  * Callback for current/platforms
  * displays a list of device platforms an ID#s.
  */
-function doc_redirect_platforms(){
+function longform_redirect_platforms(){
   $vid = taxonomy_vocabulary_get_names();
   $output = array(
     'heading' => array(
@@ -508,7 +508,7 @@ function doc_redirect_platforms(){
  * Callback for current/releases
  * displays a list of software releases and ID#s.
  */
-function doc_redirect_releases(){
+function longform_redirect_releases(){
   $vid = taxonomy_vocabulary_get_names();
   $output = array(
     'heading' => array(
@@ -527,7 +527,7 @@ function doc_redirect_releases(){
  * Callback for current/roles
  * displays a list of external user roles.
  */
-function doc_redirect_roles(){
+function longform_redirect_roles(){
   $vid = taxonomy_vocabulary_get_names();
   $output = array(
     'heading' => array(
@@ -546,7 +546,7 @@ function doc_redirect_roles(){
  * Callback for current/roles
  * displays a list of external user roles.
  */
-function doc_redirect_marketing(){
+function longform_redirect_marketing(){
   $vid = taxonomy_vocabulary_get_names();
   $output = array(
     'heading' => array(
@@ -592,7 +592,7 @@ function taxonomy_term_get_by_vid($vid) {
  * Returns FALSE if there was an error, or if already on the current version.
  */
 
-function doc_redirect_find_target($language, $doc_type, $product_type, $device_platform = NULL, $version_override = NULL){
+function longform_redirect_find_target($language, $doc_type, $product_type, $device_platform = NULL, $version_override = NULL){
   
   if(isset($device_platform)){
     $query = "

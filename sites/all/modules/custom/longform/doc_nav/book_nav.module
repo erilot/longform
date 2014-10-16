@@ -843,7 +843,7 @@ function book_nav_title_block(){
     // Build warnings
         
     // Determine latest release and set alert if we aren't there
-    $target_release = doc_redirect_find_target($this_language, $this_doctype_tid, $this_device_tid, $this_platform_tid);
+    $target_release = longform_redirect_find_target($this_language, $this_doctype_tid, $this_device_tid, $this_platform_tid);
     $target_release_name = taxonomy_term_load($target_release['target_release'])->name;
     $target_node = $target_release['target_node'];
     // Set main title
@@ -1424,9 +1424,9 @@ function book_nav_page_alter(&$page) {
 				$pass_to_js['editor'] = TRUE;
 				$pass_to_js['insert'] =
 								'<div class="edit-wrapper list-group">'
-					.'<a href="#" onclick="return false" class="list-group-item vertical-collapse-trigger"><span class="glyphicon glyphicon-align-justify"></span></a>'
-					.' <a href="#" onclick="return false" class="list-group-item ajax-op-button edit-topic-button" data-mode="edit"><span class="glyphicon glyphicon-edit"></span> ' . t('Edit') . '</a>'
-					.'<div href="#" onclick="return false" class="list-group-item workflow-op-button workflow-edit-button" data-mode="edit"><span class="glyphicon glyphicon-wrench"></span> ' . t('Workflow') . '<div class="workflow-slider"><div class="workflow-insert"></div></div></div>'	    
+					   .'<a href="#" onclick="return false" class="list-group-item vertical-collapse-trigger"><span class="glyphicon glyphicon-align-justify"></span></a>'
+					   .'<a href="#" onclick="return false" class="list-group-item ajax-op-button edit-topic-button" data-mode="edit"><span class="glyphicon glyphicon-edit"></span> ' . t('Edit') . '</a>'
+					   .'<div href="#" onclick="return false" class="list-group-item workflow-op-button workflow-edit-button" data-mode="edit"><span class="glyphicon glyphicon-wrench"></span> ' . t('Workflow') . '<div class="workflow-slider"><div class="workflow-insert"></div></div></div>'
 								.'</div>';
 				$pass_to_js['basePath'] = base_path();
 				
@@ -1445,7 +1445,7 @@ function book_nav_page_alter(&$page) {
 		drupal_add_js($path . '/jquery-cookie/jquery.cookie.js');
 		
 		// Load stylesheets for documentation
-		drupal_add_css(drupal_get_path('module', 'book_nav') . '/css/polycom.styles.css');
+		drupal_add_css(drupal_get_path('module', 'book_nav') . '/css/document.styles.css');
 		drupal_add_css(drupal_get_path('module','book_nav') . '/css/doc_nav.css');
 }
 

@@ -1,0 +1,4 @@
+name = Longform Feeds
+description = Feeds implementation for Document Manager
+core = 7.x
+package = "Longform"

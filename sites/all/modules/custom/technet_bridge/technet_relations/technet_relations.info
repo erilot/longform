@@ -1,4 +1,4 @@
-name = technet_relations export module
+name = longform_relations export module
 description = Export objects from CTools
 dependencies[] = relation
 package = Chaos tool suite

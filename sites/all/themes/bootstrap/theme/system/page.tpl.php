@@ -101,7 +101,7 @@
           <?php if (!empty($primary_nav)): ?>
             <?php print render($primary_nav); ?>
           <?php endif; ?>
-          <?php if (!empty($technet_nav)): ?>
+          <?php if (!empty($longform_nav)): ?>
             <?php print 'hi there!'; ?>
           <?php endif; ?>
           <?php if (!empty($secondary_nav)): ?>

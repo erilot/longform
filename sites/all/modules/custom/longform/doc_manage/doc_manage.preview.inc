@@ -22,7 +22,7 @@ function doc_manage_preview_form_create($form, &$form_state){
 
   
   module_load_include ('inc', 'doc_import', 'doc_import.build');
-  drupal_add_css(drupal_get_path('theme', 'tn_bootstrap') . '/css/polycom.styles.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
+  drupal_add_css(drupal_get_path('theme', 'tn_bootstrap') . '/css/document.styles.css', array('group' => CSS_DEFAULT, 'every_page' => TRUE));
 
   $ticket = menu_get_object();
   if(!file_exists("public://import-source-files/" . $ticket->nid . "/converted.lck") || $ticket->field_publish_ticket_relation[LANGUAGE_NONE]) return $form;

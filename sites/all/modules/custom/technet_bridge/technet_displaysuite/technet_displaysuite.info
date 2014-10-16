@@ -1,4 +1,4 @@
-name = technet_displaysuite export module
+name = longform_displaysuite export module
 description = Export objects from CTools
 dependencies[] = ds
 package = Chaos tool suite

@@ -33,9 +33,9 @@ function tn_bootstrap_preprocess_page(&$variables) {
   // Technet user nav.
   global $user;
   if($user->uid) {
-    $variables['technet_nav']['enabled'] = TRUE;
+    $variables['longform_nav']['enabled'] = TRUE;
     dpm('aaahhahhaha');
-    $variables['technet_nav']['content'] = drupal_render(_block_get_renderable_array(_block_render_blocks(array(block_load('doc_manage_core', 'technet_header'),))));
+    $variables['longform_nav']['content'] = drupal_render(_block_get_renderable_array(_block_render_blocks(array(block_load('doc_manage_core', 'longform_header'),))));
   }
 
   // Secondary nav.

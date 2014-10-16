@@ -79,7 +79,8 @@ function longform_longform_header() {
 
   $theme_path = $base_path . drupal_get_path('theme','tn_bootstrap');
   if($publisher) {
-    $publish_menu = drupal_render(menu_tree('menu-Longform-publishing'));
+    $tree = menu_tree('menu-Longform-publishing');
+    $publish_menu = drupal_render($tree);
   }
   
   if($lsg) {

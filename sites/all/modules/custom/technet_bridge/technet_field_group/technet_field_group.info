@@ -1,4 +1,4 @@
-name = technet_field_group export module
+name = longform_field_group export module
 description = Export objects from CTools
 dependencies[] = field_group
 package = Chaos tool suite

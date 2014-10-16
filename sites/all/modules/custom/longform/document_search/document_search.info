@@ -1,9 +1,8 @@
-;$Id document_search.info $
 name = "Document Search"
 description = "Creates a search block that is restricted to the current book."
 dependencies[] = book_nav
 
-package = "Doc Manager"
+package = "Longform"
 core = 7.x
 
 version = 7.x-1.0

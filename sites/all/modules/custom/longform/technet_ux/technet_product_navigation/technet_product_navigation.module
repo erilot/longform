@@ -1,0 +1,7 @@
+<?php
+/**
+ * @file
+ * Code for the Technet product navigation feature.
+ */
+
+include_once 'longform_product_navigation.features.inc';
