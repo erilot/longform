@@ -218,7 +218,7 @@ if(!defined('PANTHEON_ENVIRONMENT')) {
 						array (
 								'default' => 
 								array (
-										'database' => 'definio-demo',
+										'database' => 'definio',
 										'username' => 'root',
 										'password' => 'diablo01',
 										'host' => 'localhost',
