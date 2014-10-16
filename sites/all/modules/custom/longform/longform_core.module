@@ -5,7 +5,8 @@
 
 function longform_core_init(){
   //load libraries
-  drupal_add_js(drupal_get_path('module','longform_core') . '/includes/Longform.js');
+  drupal_add_js(drupal_get_path('module','longform_core') .
+    '/includes/longform.js');
   drupal_add_library('system', 'ui');
 
   // Load tour framework on non-administration pages.
