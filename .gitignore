@@ -47,3 +47,7 @@ Thumbs.db
 # KOMODO EDIT #
 ###############
 *.komodoproject
+
+# PHPSTORM #
+############
+.idea
