@@ -21,7 +21,11 @@ abstract class WorkflowD7Base {
   /**
    * Constructor, stub for D8 WidgetBase.
    */
-  public function __construct(array $field, array $instance, $entity_type = '', stdClass $entity = NULL) {
+  public function __construct(array $field, array $instance, $entity_type = '', $entity = NULL) {
+    if (!empty($entity) && !is_object($entity)) {
+      throw new Exception('Entity should be an object.');
+    }
+
     // Properties for Widget and Field.
     $this->field = $field;
     $this->instance = $instance;
@@ -52,28 +56,6 @@ abstract class WorkflowD7Base {
       $field_info = $this->settings();
       return $field_info['workflow']['settings'][$key];
     }
-  }
-
-//  /*
-//   * Stub for getEntity() method on the Field and FieldItem class.
-//   */
-//  protected function getEntity() {
-//    return $this->entity;
-//  }
-
-//  protected function setEntity(object $entity, $entity_type) {
-//    $this->entity = $entity;
-//    $this->entity_type = $entity_type;
-//  }
-
-  /*	
-   * Saves an entity.
-   *
-   * Usage: call this externally if the WorkflowItem isn't called from node_save/update itself,
-   * E.g., from workflow_cron().
-   */
-  public function entitySave($entity_type, $entity) {
-    return ($entity_type == 'node') ? node_save($entity) : entity_save($entity_type, $entity);
   }
 
 }

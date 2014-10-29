@@ -682,8 +682,15 @@ function doc_manage_generic_field_form($form, &$form_state, $field_machine_name,
     $form_state['sandbox']['node'] = $ticket;
   }
 
-  $form = field_default_form('node', $ticket, field_info_field($field_machine_name), field_info_instance('node', $field_machine_name, $ticket->type), LANGUAGE_NONE, field_get_items('node', $ticket, $field_machine_name), $form, $form_state);
-  //$form[$field_machine_name]['#attributes']['name'] = 'form-name-' . $field_machine_name;
+  $form = field_default_form(
+    'node',
+    $ticket,
+    field_info_field($field_machine_name),
+    field_info_instance('node', $field_machine_name, $ticket->type),
+    LANGUAGE_NONE,
+    field_get_items('node', $ticket, $field_machine_name),
+    $form,
+    $form_state);
 
   // Remove description
   //unset ($form['field_document_archive'][LANGUAGE_NONE][0]['#description']);
@@ -1065,13 +1072,14 @@ function doc_manage_render_workflow($ticket = NULL) {
  * @return matched pair as a keyed array
  *
  */
-function _get_tab_pair($id, $state, $type, $label) {
+function _get_tab_pair($id, $state, $type, $label){
 
   return array(
     'wrapper' => _render_workflow_tab_wrapper($id, $state, $type),
-    'tab' => array('data' => '<a href="#' . $id . '" data-toggle="' . $type . '">' . $label . '</a>'),
+    'tab' => array('data' => '<a href="#' . $id . '" data-id="' . $id . '" data-toggle="' . $type . '">' . $label . '</a>'),
   );
 }
+
 
 
 function _doc_manage_render_publish_panel($ticket, $states, $counts, $ready_to_publish, $published) {

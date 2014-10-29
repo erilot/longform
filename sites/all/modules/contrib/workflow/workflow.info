@@ -1,11 +1,14 @@
-name = Workflow
-description = "Allows the creation and assignment of arbitrary workflows to node types."
+name = Workflow API
+description = Workflow API. (Enable Workflow Node or Workflow Field to add arbitrary workflows to entities.)
 package = Workflow
 core = 7.x
-files[] = workflow.pages.inc
+
+dependencies[] = entity
 
 files[] = includes/Entity/Workflow.php
 files[] = includes/Entity/WorkflowState.php
+files[] = includes/Entity/WorkflowConfigTransition.php
+files[] = includes/Entity/WorkflowTransitionController.php
 files[] = includes/Entity/WorkflowTransition.php
 files[] = includes/Entity/WorkflowScheduledTransition.php
 
@@ -13,11 +16,9 @@ files[] = includes/Field/WorkflowD7Base.php
 files[] = includes/Field/WorkflowItem.php
 files[] = includes/Field/WorkflowDefaultWidget.php
 
-files[] = includes/Test/WorkflowUnitTest.test
-
-; Information added by drupal.org packaging script on 2013-10-26
-version = "7.x-1.2+107-dev"
+; Information added by Drupal.org packaging script on 2014-07-15
+version = "7.x-2.4"
 core = "7.x"
 project = "workflow"
-datestamp = "1382797202"
+datestamp = "1405454629"
 

@@ -1,0 +1,950 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: ericlotze
+ * Date: 2014-10-17
+ * Time: 10:44 AM
+ */
+
+/**
+ * Implements hook_entity_info().
+ */
+function longform_entities_entity_info() {
+  $info = array();
+  $info['longform_ticket'] = array(
+    'label' => t('Longform Ticket'),
+    'base table' => 'longform_ticket',
+    'entity keys' => array(
+      'id' => 'tid',
+      'label' => 'title',
+    ),
+    'entity class' => 'LongformTicket',
+    'controller class' => 'LongformTicketController',
+    'views controller class' => 'EntityDefaultViewsController',
+    'uri callback' => 'entity_class_uri',
+    'admin ui' => array(
+      'path' => 'admin/longform/ticket',
+      'controller class' => 'LongformTicketUIController',
+      'file' => 'longform_entities.admin.inc',
+    ),
+    'module' => 'longform_entities',
+    'access callback' => 'longform_ticket_access_callback',
+    'fieldable' => TRUE,
+    'bundles' => array(
+      'longform_ticket' => array(
+        'label' => t('Document ticket'),
+        'admin' => array(
+          'path' => 'admin/longform/ticket',
+          'access arguments' => array('administer tickets'),
+        ),
+      ),
+    ),
+  );
+
+  $info['longform_set'] = array(
+    'label' => t('Longform Set'),
+    'base table' => 'longform_set',
+    'entity keys' => array(
+      'id' => 'sid',
+      'label' => 'name',
+    ),
+    'entity class' => 'LongformSet',
+    'controller class' => 'LongformSetController',
+    'views controller class' => 'EntityDefaultViewsController',
+    'uri callback' => 'entity_class_uri',
+    'admin ui' => array(
+      'path' => 'admin/longform/set',
+      'controller class' => 'LongformSetUIController',
+      'file' => 'longform_entities.admin.inc',
+    ),
+    'module' => 'longform_entities',
+    'access callback' => 'longform_set_access_callback',
+    'fieldable' => TRUE,
+    'bundles' => array(
+      'longform_set' => array(
+        'label' => t('Document Set'),
+        'admin' => array(
+          'path' => 'admin/longform/set',
+          'access arguments' => array('administer sets'),
+        ),
+      ),
+    ),
+
+  );
+
+  return $info;
+}
+
+/**
+ *  Implements hook_entity_property_info().
+ */
+function longform_entities_entity_property_info() {
+  $info = array();
+
+  $properties = &$info['longform_ticket']['properties'];
+  $properties['tid'] = array(
+    'label' => 'Ticket ID',
+    'description' => 'The internal ID number of this ticket',
+    'type' => 'integer',
+    'schema field' => 'tid'
+  );
+  $properties['created'] = array(
+    'label' => 'Created',
+    'description' => 'When the ticket was created',
+    'type' => 'date',
+    'schema field' => 'created'
+  );
+  $properties['title'] = array(
+    'label' => 'Ticket name',
+    'description' => 'The name of the document ticket',
+    'type' => 'text',
+    'schema field' => 'title',
+    'setter callback' => 'entity_property_verbatim_set'
+  );
+  $properties['uid'] = array(
+    'label' => 'User',
+    'description' => 'The user the ticket belongs to',
+    'type' => 'user',
+    'schema field' => 'uid',
+  );
+  $properties['restrictions'] = array(
+    'label' => 'Restrictions',
+    'description' => 'Restrictions that have been placed on this ticket',
+    'type' => 'boolean',
+    'schema field' => 'restrictions',
+  );
+
+  $info['longform_set']['properties'] = array(
+    'sid' => array(
+      'label' => 'Set ID',
+      'description' => 'The internal ID number of this longform set',
+      'type' => 'integer',
+      'schema field' => 'sid',
+    ),
+    'name' => array(
+      'label' => 'Name',
+      'description' => 'The name of the longform set',
+      'type' => 'text',
+      'schema field' => 'name',
+      'setter callback' => 'entity_property_verbatim_set'
+    ),
+    'created' => array(
+      'label' => 'Created',
+      'description' => 'When the set was created',
+      'type' => 'date',
+      'schema field' => 'created',
+    ),
+    'uid' => array(
+      'label' => 'User',
+      'description' => 'The user the set belongs to',
+      'type' => 'user',
+      'schema field' => 'uid',
+    ),
+    'build_temporary' => array(
+      'label' => 'Temporary build field',
+      'description' => 'Internal use only - contains in-progress set building information',
+      'type' => 'struct',
+    ),
+  );
+  return $info;
+}
+
+/**
+ * Implements hook_fields_extra_fields().
+ */
+function longform_entities_field_extra_fields() {
+  $extra = array();
+  $extra['longform_set']['longform_set'] = array(
+    'form' => array(
+      'name' => array(
+        'label' => 'Set name',
+        'description' => 'The name of this set entity',
+        'weight' => 0,
+      ),
+    ),
+    'display' => array(
+      'name' => array(
+        'label' => 'Set name',
+        'description' => 'The name of this set entity',
+        'weight' => 0,
+      ),
+    ),
+  );
+  return $extra;
+}
+
+/**
+ * Get the currently loaded longform entity. Equivalent to menu_get_object().
+ *
+ */
+function longform_entities_get_entity() {
+  $menu_item = menu_get_item();
+  dpm($menu_item,'menu item');
+  $set = $menu_item['map'][1]->data;
+
+}
+
+/**
+ * Implements hook_forms().
+ *
+ * Allows factory-generated forms to be present multiple times on a page.
+ * Note that to invoke one of these forms, a unique ID must be appended to the form function name.
+ * Example: drupal_get_form('form_name_01') or drupal_get_form('form_name_02').
+ *
+ * See http://drupal.org/node/1970846.
+ */
+function longform_entities_forms($form_id, $args) {
+  $forms = array();
+  if (stripos($form_id, 'longform_entities_ticket_title_edit_form_') !== FALSE) {
+    $forms[$form_id] = array('callback' => 'longform_entities_ticket_title_edit_form');
+  }
+  return $forms;
+}
+
+
+/**
+ *  Custom widget implementation
+ */
+
+
+/**
+ *  Implements hook_field_formatter_info().
+ */
+function longform_entities_field_formatter_info() {
+  $references = array(
+    'set_ticket_view' => array(
+      'label' => 'Ticket view for sets',
+      'description' => 'Reformats ticket entityreferences to show more relevant info',
+      'field types' => array('entityreference'),
+      'settings' => array(),
+    ),
+  );
+  return $references;
+}
+
+/**
+ *  Implements hook_field_formatter_view().
+ *
+ *  Widgets are expected to return render arrays inside an index array,
+ *  so we return our single result as array[0] => render_array.
+ *
+ */
+function longform_entities_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
+  return (array(0 => longform_administer_tickets($entity, $items)));
+}
+
+/**
+ * Interactive display of entity reference fields.
+ * Administrators will see additional administrative options including edit, delete, and add.
+ *
+ * @param $form
+ * @param $form_state
+ *
+ * @param $set
+ *  The currently loaded entity, passed in from hook_field_formatter_view()
+ *
+ * @param $items
+ *  An array of items, passed in from hook_field_formatter_view()
+ *
+ */
+function longform_administer_tickets($set, $items) {
+
+  // Clean up and remove broken entity references. These occur when a referenced entity is deleted,
+  // since entity reference fields are not cleaned up automatically.
+  // This is (for now) the only place references will be accessed, so it makes sense to do it here on demand
+  // instead of globally. This may change if the entityreferences get used elsewhere!
+  longform_set_clean_entityreferences($set);
+
+  global $user;
+  $user_is_admin = user_access('administer_tickets', $user) ? TRUE : FALSE;
+
+  $header = array(
+    array('data' => 'Type', 'class' => array('col-md-1')),
+    array('data' => 'Title', 'class' => array('col-md-3')),
+    array('data' => 'Owned by', 'class' => array('col-md-1')),
+  );
+  if ($user_is_admin) {
+    $header[] = array('data' => 'Admin', 'class' => array('col-md-1'));
+  }
+  $rows = array();
+  foreach ($items as $label => $item) {
+    $ticket = entity_metadata_wrapper('longform_ticket', reset($item));
+    try {
+      $title = $ticket->title->value();
+
+    } catch (Exception $e) {
+      continue;
+    }
+
+    // Build the row of cells.
+    // Administrators will get extra forms and options here, depending on their permissions settings.
+    // Note: Fields that are generated multiple times must be called with the form name and a "_uniqueID" suffix,
+    // such as an ID. Example: drupal_get_form('longform_entities_ticket_title_edit_form_' . $tid).
+    $cells = array(
+      array('data' => '<b>' . longform_ticket_get_doctypes($ticket) . '</b>'),
+      array('data' => user_is_administrator() ? drupal_get_form('longform_entities_ticket_title_edit_form_' . $ticket->tid->value(), $ticket) : $ticket->title->value()),
+      array('data' => l($ticket->uid->value()->name, 'user/' . $ticket->uid->value()->uid, array('attributes' => array('class' => array('btn', 'btn-default'))))),
+    );
+    if ($user_is_admin) {
+      $button_opts = array(
+        'attributes' => array(
+          'class' => array('btn', 'btn-default', 'text-danger'),
+        ),
+        'html' => TRUE,
+        'query' => array('destination' => current_path()),
+      );
+      $cells[]['data'] = array(
+        'group' => array(
+          '#type' => 'container',
+          '#attributes' => array(
+            'class' => 'btn-group',
+          ),
+          'edit' => array(
+            '#markup' => l('<span class="glyphicon glyphicon-edit"></span>', 'admin/longform/ticket/manage/' . $ticket->tid->value(), $button_opts),
+          ),
+          'delete' => array(
+            '#markup' => l('<span class="glyphicon glyphicon-remove text-danger"></span>', 'admin/longform/ticket/manage/' . $ticket->tid->value() . '/delete', $button_opts),
+          ),
+        ),
+      );
+    }
+    $rows[] = $cells;
+  }
+
+  if (count($rows) == 0) {
+    $rows[]['data'][] = array(
+      'data' => array('#markup' => '<label class="text-warning">None yet!</label>'),
+      'colspan' => count($header),
+      'class' => array('warning'),
+    );
+  }
+
+  if ($user_is_admin) {
+
+    $modal_trigger = array(
+      '#markup' => '<a class="btn btn-warning" data-toggle="modal" data-target="#add-ticket-modal">' . t('Add new items') . '</a>'
+    );
+
+    $rows[]['data'] = array(
+      array(
+        'data' => $modal_trigger,
+        'colspan' => count($header),
+      ),
+    );
+  }
+
+  $table = array(
+    '#theme' => 'table',
+    '#header' => $header,
+    '#rows' => $rows,
+    '#attributes' => array(
+      'class' => array('table', 'table-condensed'),
+    ),
+  );
+
+  $out = array();
+  $out['title'] = array(
+    '#markup' => '<h3>' . t('Tickets in this set') . '</h3>',
+  );
+  $out['table'] = $table;
+  if (user_access('administer_tickets', $user)) {
+    $out['modal'] = drupal_get_form('longform_set_add_ticket_form', $set, $items);
+  }
+  return ($out);
+}
+
+function longform_set_add_ticket_form($form, &$form_state, $set, $items) {
+
+  $form_state['longform_set'] = $set;
+
+  $form = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal', 'fade'),
+      'id' => 'add-ticket-modal',
+    ),
+  );
+  $form['dialog'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-dialog', 'modal-lg'),
+    ),
+  );
+
+  $form['dialog']['modal-content'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-content'),
+    ),
+  );
+  $form['dialog']['modal-content']['modal-header'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-header'),
+    ),
+  );
+  $form['dialog']['modal-content']['modal-header']['content'] = array(
+    '#markup' =>
+      '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <h4 class="modal-title">' . t('Add new documents') . '</h4>',
+  );
+  $form['dialog']['modal-content']['modal-body'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-body'),
+    ),
+  );
+  $form['dialog']['modal-content']['modal-body']['content'] = array(
+    'switcher' => array(
+      '#markup' => book_nav_vocab_nav_block('document_types', 'term'),
+    ),
+    'build_container' => array(
+      '#type' => 'container',
+      '#attributes' => array(
+        'class' => array('panel', 'build-container'),
+      ),
+      'container-inner' => array(
+        '#type' => 'container',
+        '#attributes' => array(
+          'class' => array('panel-body', 'build-container-inner'),
+        ),
+      ),
+    ),
+    'term_selection' => array(
+      '#type' => 'hidden',
+      '#value' => '',
+      '#attributes' => array(
+        'class' => array('data-store'),
+        'id' => 'data-store',
+      ),
+    )
+  );
+
+  $form['dialog']['modal-content']['modal-footer'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('modal-footer'),
+    ),
+  );
+  $form['dialog']['modal-content']['modal-footer']['cancel'] = array(
+    '#markup' => '<button type="button" class="btn btn-default ticket-add-cancel" data-dismiss="modal">' . t('Cancel') . '</button>',
+  );
+  $form['dialog']['modal-content']['modal-footer']['submit'] = array(
+    '#type' => 'submit',
+    '#id' => 'add-ticket-submit',
+    '#submit' => array('longform_add_ticket'),
+    '#value' => t('Add tickets'),
+    '#attributes' => array(
+      'class' => array('disabled'),
+    ),
+  );
+
+  return $form;
+
+}
+
+
+/**
+ * Provides an edit field for the ticket title, if the user is allowed to change ticket titles
+ *
+ * @param $ticket
+ *  The ticket object passed in from the form constructor functions
+ *
+ * @return array
+ */
+function longform_entities_ticket_title_edit_form($form, &$form_state, $ticket) {
+  $form_state['longform']['longform_ticket'] = $ticket;
+  $form_state['longform']['tid'] = $ticket->tid->value();
+  $form = array(
+    '#prefix' => '<div id="ajax-replace-' . $ticket->tid->value() . '">',
+    '#suffix' => '</div>',
+  );
+  $form['wrap'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('input-group', 'title-wrapper-' . $ticket->tid->value()),
+//      'id' => 'title-form-' . $ticket->tid->value(),
+    ),
+  );
+  $form['wrap']['field'] = array(
+    '#type' => 'textfield',
+    '#value' => $ticket->title->value(),
+    '#attributes' => array(
+      'class' => array('form-control'),
+    ),
+  );
+  $form['wrap']['submit'] = array(
+    '#type' => 'submit',
+//    '#id' => 'ticket-edit-submit-' . $ticket->tid->value(),
+    '#value' => t('Update'),
+    '#prefix' => '<span class="input-group-btn">',
+    '#suffix' => '</span>',
+//    '#submit' => array('longform_entities_ticket_title_edit_form_callback'),
+    '#ajax' => array(
+      'callback' => 'longform_entities_ticket_title_edit_form_callback',
+      'wrapper' => 'ajax-replace-' . $ticket->tid->value(),
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  return $form;
+}
+
+//function longform_entities_ticket_title_edit_form_validate($form, &$form_state) {
+//
+//}
+
+function longform_entities_ticket_title_edit_form_callback($form, &$form_state) {
+  dpm($form_state,'form state');
+  $tid = $form_state['longform']['tid'];
+  if ($form_state['input']['field'] === $form_state['values']['field']) {
+    // Nothing changed.
+    drupal_set_message('nothing changed.');
+    return $form;
+  }
+
+  // The value was changed -- update the ticket.
+  $ticket = entity_metadata_wrapper('longform_ticket', $tid);
+  $ticket->title = $form_state['input']['field'];
+  $ticket->save();
+//  return $ticket->title->value();
+  return $form;
+}
+
+/**
+ * Submit function for longform_administer_ticket_form(): add tickets
+ *
+ * @param $form
+ * @param $form_state
+ */
+function longform_add_ticket($form, &$form_state) {
+  $set = $form_state['longform_set'];
+  $set_wrap = entity_metadata_wrapper('longform_set', $set->sid);
+  $terms_to_add = explode(',', $form_state['input']['term_selection']);
+  if (count($terms_to_add) === 0) {
+    drupal_set_message('No terms were added.', 'error');
+    return FALSE;
+  }
+  $common_fields = longform_get_common_fields('longform_ticket', 'longform_ticket', 'longform_set', 'longform_set');
+  global $user;
+  foreach($terms_to_add as $term) {
+
+    // Build title elements
+    // Releases
+    $releases = $set_wrap->field_software_release->value();
+
+    $rels = array();
+    foreach ($releases as $rel) {
+      $rels[] = $rel->name;
+    }
+
+    // Products
+    $products = $set_wrap->field_products->value();
+    $prods = array();
+    foreach ($products as $prod) {
+      $prods[] = $prod->name;
+    }
+
+    $properties = array(
+      'uid' => $user->uid,
+      'title' => taxonomy_term_load($term)->name . ' ' . t('for') . ' ' . implode(', ', $prods) . ': ' . (count($rels) == 1 ? t('Version') : t('Versions')) . ' ' . implode(', ', $rels),
+    );
+    $ticket = entity_create('longform_ticket', $properties);
+
+    // Field values are inherited from the parent docset
+    foreach($common_fields as $field) {
+      $ticket->$field = $set->$field;
+    }
+    $ticket = entity_metadata_wrapper('longform_ticket', $ticket);
+    $ticket->field_document_type->set(array($term));
+    $ticket->save();
+    $tickets[] = $ticket->tid->value();
+  }
+
+  // Add entity reference fields to the docset
+  $current_refs = $set_wrap->field_set_ticket->value();
+  if (!$current_refs) {
+    $current_refs = array();
+  }
+
+  // This seems hacky, but if I don't iterate through this array I end up with a mix of objects and tids.
+  $refs = array();
+  foreach ($current_refs as $c) {
+    $refs[] = $c->tid;
+  }
+  $refs = array_merge($refs, $tickets);
+  $set_wrap->field_set_ticket->set($refs);
+  $set_wrap->save();
+}
+
+/**
+ * Returns an array of fields found in both provided entities.
+ *
+ * example:
+ *  To find fields common in document ticket entities and book nodes, call this function
+ *  like this:
+ *    $fields = longform_get_common_fields('longform_ticket', 'longform_ticket', 'node', 'book');
+ *
+ */
+function longform_get_common_fields($first_entity_type, $first_entity_bundle, $second_entity_type, $second_entity_bundle){
+  $fields =  array_filter(
+    field_info_field_map(),
+    function($array) use ($first_entity_type, $first_entity_bundle, $second_entity_type, $second_entity_bundle){
+      if(isset ($array['bundles'][$first_entity_type])
+        && isset ($array['bundles'][$second_entity_type])
+        && in_array($first_entity_bundle, $array['bundles'][$first_entity_type])
+        && in_array($second_entity_bundle, $array['bundles'][$second_entity_type])) {
+          return TRUE;
+      }
+      else {
+        return FALSE;
+      }
+    });
+  return array_keys($fields);
+}
+
+/**
+ * Returns a comma-separated list of software release terms
+ *
+ * @param $ticket
+ *  A wrapped ticket entity
+ *
+ * @return
+ *  A comma-separated list of software release terms found on the ticket entity
+ */
+function longform_ticket_get_releases($ticket) {
+  return longform_ticket_get_terms($ticket, 'field_software_release');
+}
+/**
+ * Returns a comma-separated list of software release terms
+ *
+ * @param $ticket
+ *  A wrapped ticket entity
+ *
+ * @return
+ *  A comma-separated list of software release terms found on the ticket entity
+ */
+function longform_ticket_get_doctypes($ticket) {
+  return longform_ticket_get_terms($ticket, 'field_document_type');
+}
+
+/**
+ * @param $ticket
+ *  A wrapped ticket entity
+ *
+ * @param $term
+ *  A term machine name to get
+ *
+ * @param string $mode
+ *  The format that should be returned. Options are:
+ *    'csv' (default) : comma-separated string
+ *    'array' : associative array, keyed by TID
+ *
+ * @return
+ *  Either a string or an array, as determined by $mode
+ */
+function longform_ticket_get_terms($ticket, $term, $mode = 'csv') {
+  if (!isset($ticket->$term)) {
+    return '&mdash;';
+  }
+  $out = array();
+  foreach ($ticket->$term->getIterator() as $delta => $item) {
+    $out[$item->tid->value()] = $item->name->value();
+  }
+  switch ($mode) {
+    case 'array':
+      return $out;
+    break;
+
+    case 'list' :
+      return array(
+        '#theme' => 'item-list',
+        '#title' => NULL,
+        '#type' => 'ul',
+        '#attributes' => NULL,
+        '#items' => $out,
+      );
+    break;
+
+    case 'csv':
+      return implode(', ', $out);
+    break;
+  }
+}
+
+/**
+ * Implements hook_permission().
+ */
+function longform_entities_permission() {
+  return array(
+    'administer tickets' => array(
+      'title' => t('Administer Longform Tickets'),
+    ),
+    'view tickets' => array(
+      'title' => t('View Longform Tickets'),
+    ),
+    'administer_sets' => array(
+      'title' => t('Administer Longform Sets'),
+    ),
+    'view sets' => array(
+      'title' => t('View Longform Sets'),
+    ),
+  );
+}
+
+/**
+ * Provide access check for administering tickets
+ *
+ */
+function longform_ticket_access_callback($op, $ticket = NULL, $account = NULL) {
+  if ($op == 'view' && user_access('view tickets', $account)) {
+    return TRUE;
+  }
+  else if (user_access('administer tickets', $account)) {
+    return TRUE;
+  }
+}
+
+/**
+ * Provide access check for administering sets
+ *
+ */
+function longform_set_access_callback($op, $set = NULL, $account = NULL) {
+  if ($op == 'view' && user_access('view sets', $account)) {
+    return TRUE;
+  }
+  else if (user_access('administer sets', $account)) {
+    return TRUE;
+  }
+}
+
+/**
+ * Implements hook_load().
+ *
+ */
+function longform_entities_longform_ticket_load($id) {
+  //dpm($id, 'loading');
+}
+
+class LongformTicket extends Entity {
+
+  /**
+   * Override this in order to implement a custom default URI and specify
+   * 'entity_class_uri' as 'uri callback' hook_entity_info().
+   */
+  protected function defaultUri() {
+    return array('path' => 'ticket/' . $this->identifier());
+  }
+}
+
+
+class LongformTicketController extends EntityAPIController {
+
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $build = parent::buildContent($entity, $view_mode, $langcode, $content);
+    $build['title'] = array(
+      '#type' => 'markup',
+      '#markup' => '<h1>This ticket is: ' . $entity->title . '</h1>',
+    );
+    $build['owner'] = array(
+      '#markup' => 'Created by ' . user_load($entity->uid)->name . ' on ' . date('l F d, Y', $entity->created),
+    );
+    return $build;
+  }
+
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    global $user;
+    if($entity->is_new == TRUE) {
+      $entity->created = REQUEST_TIME;
+    }
+    $entity->uid = $user->uid;
+    return parent::save($entity, $transaction);
+  }
+
+  }
+
+
+/**
+ * Class LongformTicketUIController
+ *
+ * Extends EntityDefaultUIController
+ *
+ * Provides administration UI functions
+ */
+class LongformTicketUIController extends EntityDefaultUIController {
+
+  /**
+   * Generates the table headers for the overview table.
+   */
+  protected function overviewTableHeaders($conditions, $rows, $additional_header = array()) {
+    $header = $additional_header;
+    array_unshift($header, t('Ticket name'));
+    if (!empty($this->entityInfo['exportable'])) {
+      $header[] = t('Status');
+    }
+    // Add operations with the right colspan.
+    $header[] = array('data' => t('Operations'), 'colspan' => $this->operationCount());
+    return $header;
+  }
+}
+
+/**
+ * Class LongformSet
+ *
+ * Extends entity class
+ *
+ */
+class LongformSet extends Entity {
+
+  /**
+   * Override this in order to implement a custom default URI and specify
+   * 'entity_class_uri' as 'uri callback' hook_entity_info().
+   */
+  protected function defaultUri() {
+    return array('path' => 'set/' . $this->identifier());
+  }
+}
+
+
+/**
+ * Class LongformSetController
+ *
+ * Extends EntityAPI Controller (view and CRUD)
+ *
+ */
+class LongformSetController extends EntityAPIController {
+
+  public function buildContent($entity, $view_mode = 'full', $langcode = NULL, $content = array()) {
+    $build = parent::buildContent($entity, $view_mode, $langcode, $content);
+    $build['name'] = array(
+      '#type' => 'markup',
+      '#markup' => '<h1>This set is called: ' . $entity->name . '</h1>',
+    );
+    $build['owner'] = array(
+      '#markup' => 'Created by ' . user_load($entity->uid)->name . ' on ' . date('l F d, Y', $entity->created),
+    );
+    return $build;
+  }
+
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    global $user;
+    if($entity->is_new == TRUE) {
+      $entity->created = REQUEST_TIME;
+    }
+    $entity->uid = $user->uid;
+    return parent::save($entity, $transaction);
+  }
+
+}
+
+
+/**
+ * Class LongformSetUIController
+ *
+ * Extends EntityDefaultUIController
+ *
+ * Provides administration UI functions
+ */
+class LongformSetUIController extends EntityDefaultUIController {
+
+  /**
+   * Generates the table headers for the overview table.
+   */
+  protected function overviewTableHeaders($conditions, $rows, $additional_header = array()) {
+    $header = $additional_header;
+    array_unshift($header, t('Set name'));
+    if (!empty($this->entityInfo['exportable'])) {
+      $header[] = t('Status');
+    }
+    // Add operations with the right colspan.
+    $header[] = array('data' => t('Operations'), 'colspan' => $this->operationCount());
+    return $header;
+  }
+}
+
+/**
+ * Implements hook_menu().
+ */
+function longform_entities_menu() {
+  $items = array();
+  $items['longform_demo'] = array(
+    'title' => 'Demo page',
+    'page callback' => 'longform_entities_demo_page',
+    'access callback' => TRUE,
+    'menu' => 'navigation',
+  );
+  $items['ticket'] = array(
+    'title' => 'Ticket page',
+    'page callback' => 'longform_entities_ticket_page',
+    'access callback' => TRUE,
+    'menu' => 'navigation',
+  );
+  $items['set'] = array(
+    'title' => 'Set page',
+    'page callback' => 'longform_entities_set_page',
+    'access callback' => TRUE,
+    'menu' => 'navigation',
+  );
+  return $items;
+}
+
+
+/**
+ *  Callback for ticket view page.
+ *
+ */
+function longform_entities_ticket_page($tid) {
+
+  // This should fit in an autoloader, but hook_load() doesn't seem to fire
+  $ticket = reset(entity_load('longform_ticket', array($tid)));
+  $ticket_entity = entity_view('longform_ticket', array($ticket->tid => $ticket));
+  drupal_set_title($ticket->title);
+  return $ticket_entity;
+}
+/**
+ *  Callback for set view page.
+ *
+ */
+function longform_entities_set_page($sid) {
+  // This should fit in an autoloader, but hook_load() doesn't seem to fire
+  $set = reset(entity_load('longform_set', array($sid)));
+  $set_entity = entity_view('longform_set', array($set->tid => $set));
+  drupal_set_title($set->title);
+  return $set_entity;
+}
+
+/**
+ * Callback for /longform page.
+ *
+ */
+function longform_entities_demo_page() {
+  $ticket = entity_load('longform_ticket', array(1));
+//dpm(entity_get_info('longform_ticket'), 'ticket info');
+//   Or load it with EFQ.
+  $query = new EntityFieldQuery();
+  $query->entityCondition('entity_type', 'longform_ticket');
+  $results = $query->execute();
+  return 'hello there!';
+}
+
+/**
+ *  Library functions
+ */
+
+function longform_set_clean_entityreferences($set) {
+  $wrap = entity_metadata_wrapper('longform_set', $set);
+  $changed = array();
+  foreach ($wrap->field_set_ticket->getIterator() as $ref) {
+    try {
+      $refs[] = $ref->tid->raw();
+    }
+    catch (Exception $e) {
+      $changed[] = $ref->raw();
+      $ref->set(NULL);
+    }
+  }
+  if (count($changed) > 0) {
+    drupal_set_message ('<b>Notice</b>: Cleaned up ' . count($changed) . ' broken entityreference(s).');
+    $wrap->save();
+  }
+}

@@ -51,3 +51,8 @@ Thumbs.db
 # PHPSTORM #
 ############
 .idea
+
+# BOOTSTRAP #
+#############
+/sites/all/themes/tn_bootstrap/bootstrap/
+node_modules

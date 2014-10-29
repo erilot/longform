@@ -24,8 +24,14 @@ regions[page_bottom]    = 'Page bottom'
 ;; Stylesheets
 ;;;;;;;;;;;;;;;;;;;;;
 
-stylesheets[all][] = css/style.css
-  
+; During development, get stylesheets from the bootstrap project directory.
+; Comment this line out and uncomment the 'production' line when committing changes.
+;
+stylesheets[all][] = bootstrap/dist/css/bootstrap.css
+
+; Production source is here. Make sure you've copied the dist directory from /bootstrap.
+;;stylesheets[all][] = dist/css/bootstrap-min.css
+
 ; For information on choosing the desired method, please read the Drupal
 ; Bootstrap sub-theme "how-to" documentation:
 ; https://drupal.org/node/1978010
@@ -37,7 +43,8 @@ stylesheets[all][] = css/style.css
 ; ;;;;;;;;;;;;;;;;;;;;;
 ; ;; Scripts
 ; ;;;;;;;;;;;;;;;;;;;;;
-; 
+;
+ scripts[] = 'dist/js/bootstrap.min.js'
 ; scripts[] = 'bootstrap/js/affix.js'
 ; scripts[] = 'bootstrap/js/alert.js'
 ; scripts[] = 'bootstrap/js/button.js'
@@ -52,7 +59,7 @@ stylesheets[all][] = css/style.css
 ; scripts[] = 'bootstrap/js/transition.js'
 ;
 ; ; Disable BootstrapCDN if using Bootstrap source files in your sub-theme.
-; settings[bootstrap_cdn] = ''
+ settings[bootstrap_cdn] = ''
 
 
 ; ;-------------------------

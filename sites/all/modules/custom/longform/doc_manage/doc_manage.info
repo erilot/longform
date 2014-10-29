@@ -4,7 +4,7 @@ package = "Longform"
 dependencies[] = longform_core
 dependencies[] = querypath
 dependencies[] = relation
-dependencies[] = workflow
+;dependencies[] = workflow
 
 core = 7.x
 php = 5

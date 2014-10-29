@@ -41,6 +41,18 @@ function longform_translation_block_view($delta) {
 }
 
 /**
+ * Implements hook_dashboard_create()
+ *
+ * Sends the translation dashboard to the dashboard manager
+ *
+ * @return mixed
+ */
+function longform_translation_dashboard_create(){
+  module_load_include('inc', 'longform_translation', 'longform_translation_dashboard');
+  return longform_translation_dashboard(t('Translation Dashboard'));
+}
+
+/**
  * Include and call the dashboard functions.
  *
  */

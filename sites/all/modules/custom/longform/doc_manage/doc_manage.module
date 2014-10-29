@@ -56,17 +56,6 @@ function doc_manage_permission() {
 }
 
 /**
- * Implements hook_help().
- */
-function doc_manage_help($path, $arg) {
-  switch ($path) {
-    case 'admin/help#doc_manage':
-      $output = t('Help for Doc Manage');
-      return $output;
-  }
-}
-
-/**
  * Implements hook_menu().
  */
 function doc_manage_menu() {
@@ -78,7 +67,7 @@ function doc_manage_menu() {
     'access arguments' => array('access content'),
     'type' => MENU_NORMAL_ITEM,
   );
-  $items['admin/technet/manage/conversion/convert-single'] = array(
+  $items['admin/longform/manage/conversion/convert-single'] = array(
     'title' => 'Convert a single topic',
     'description' => 'Run conversion processes on one topic at a time.',
     'file' => 'doc_manage.topics.inc',

@@ -7,16 +7,16 @@
 /**
  * Implements hook_workflow_operations().
  *
- * @param $op
+ * @param string $op
  *   'top_actions': Allow modules to insert their own front page action links.
  *   'operations': Allow modules to insert their own workflow operations.
  *   'state':  Allow modules to insert state operations.
- * @param $workflow
+ * @param Workflow $workflow
  *   The current workflow object.
- * @param $state
+ * @param WorkflowState $state
  *   The current state object.
  */
-function hook_workflow($op, object $workflow, object $state) {
+function hook_workflow_operations($op, object $workflow, object $state) {
   switch ($op) {
     case 'top_actions':
       $actions = array();
@@ -30,6 +30,11 @@ function hook_workflow($op, object $workflow, object $state) {
       // The workflow_admin_ui module creates links to add a new state,
       // edit the workflow, and delete the workflow.
       // Your module may add to these actions.
+      return $actions;
+
+    case 'workflow':
+      $actions = array();
+      // Allow modules to insert their own workflow operations.
       return $actions;
 
     case 'state':

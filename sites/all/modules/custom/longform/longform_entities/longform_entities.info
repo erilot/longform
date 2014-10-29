@@ -1,0 +1,8 @@
+name = Longform Entities
+description = Defines longform entity types
+package = Longform
+core = 7.x
+
+version = "7.x-1.0-dev"
+core = "7.x"
+

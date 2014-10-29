@@ -1,7 +1,8 @@
 <?php
+
 /**
  * @file
- *   Provides node access permissions based on workflow states.
+ * Provides node access permissions based on workflow states.
  */
 
 /**
@@ -10,7 +11,7 @@
  * Update grants when a node changes workflow state.
  * This is already called when node_save is called.
  */
-function workflow_access_workflow($op, $old_sid, $sid, $node) {
+function workflow_access_workflow($op, $id, $new_sid, $entity, $force, $entity_type = '', $field_name = '', $transition = NULL) {
   // ALERT:
   // This is a tricky spot when called on node_insert as part of the transition from create to state1.
   // node_save invokes this function as a hook before calling node_access_acquire_grants.
@@ -26,10 +27,13 @@ function workflow_access_workflow($op, $old_sid, $sid, $node) {
   //
   switch ($op) {
     case 'transition post':
-      if ($old_state = WorkflowState::load($old_sid)) {
-        if ($old_sid != $sid && (empty($node->is_new) || !$node->is_new)) {
-          node_access_acquire_grants($node);
-        }
+      // This is only used for Workflow Node.
+      // In some other location, we make sure that 'transition post' is only
+      // called for Workflow Node, never for Workflow Field. We do not need
+      // that hook, since you can use the core event 'node_presave' and 'node_save'.
+      // Node_access functions are only for nodes with a state change and a valid new state.
+      if ($entity_type == 'node' && !isset($entity->is_new)) {
+        node_access_acquire_grants($entity);
       }
       break;
   }

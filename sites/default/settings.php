@@ -348,7 +348,7 @@ ini_set('session.cookie_lifetime', 2000000);
 if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
 				switch ($_SERVER['PANTHEON_ENVIRONMENT']) {
 								case 'dev':
-												ini_set('error_reporting', E_WARNING);
+												ini_set('error_reporting', E_ERROR | E_WARNING);
 												break;
 								case 'test':
 												ini_set('error_reporting', 0);
@@ -359,7 +359,7 @@ if (isset($_SERVER['PANTHEON_ENVIRONMENT'])) {
 				}
 }
 else {
-				ini_set('error_reporting', E_ALL);
+				ini_set('error_reporting', E_ERROR | E_WARNING);
 }
 
 

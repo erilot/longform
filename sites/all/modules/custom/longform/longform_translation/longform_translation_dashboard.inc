@@ -15,7 +15,7 @@
   *
   */
 	
-function longform_translation_dashboard($title) {
+function longform_translation_dashboard($title = NULL) {
 		//$opts['title'] = $title;
 		$opts['intro'] = '<b>Welcome to the Technet Translation Manager Dashboard!</b><br/>You can track upcoming, in-progress, and finished work here. If there\'s another view you\'d like to see here, please <a href="mailto:eric.lotze@polycom.com">let me know</a>!';
 		$opts['panes'] = array(
@@ -60,6 +60,12 @@ function longform_translation_dashboard($title) {
 		);
 		
 		longform_dashboard_add_js($title, $opts);
-		return longform_dashboard_pane_create($opts);
+
+		return array(
+    'id' => 'translation_manager',
+    'show' => FALSE,
+    'title' => t('Translation Manager'),
+    'content' => longform_dashboard_pane_create($opts),
+  );
 
 }

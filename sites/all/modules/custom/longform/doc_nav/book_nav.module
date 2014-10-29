@@ -1657,7 +1657,7 @@ function book_nav_lazyload_images($content) {
     if (module_exists('lazyloader')) {
 	$placeholder_src = drupal_get_path('module','lazyloader') . '/loader/loader-3.gif';
 	$regex = '/<img.*?\ssrc="(.*?)".*?\/>/ui';
-	$content = preg_replace_callback(
+      $content = preg_replace_callback(
 	    $regex,
 	    function($matches) use ($placeholder_src){
 		if(stripos($matches[0], 'data-src') !== FALSE) return $matches[0];
@@ -1667,4 +1667,349 @@ function book_nav_lazyload_images($content) {
 	    $content);
     }
     return $content;
+}
+
+function book_nav_product_documents_navigator_block($tid = NULL) {
+
+  $tid = book_nav_get_current_tid();
+  if (!isset($tid)) {
+    return;
+  }
+
+  // Query documentation
+  $query = db_select('node','n');
+  $query->join('book', 'b', 'n.nid = b.bid');
+  $query->join('field_data_taxonomy_vocabulary_12', 'device', 'n.nid = device.entity_id');
+  $query->join('field_data_taxonomy_vocabulary_8','doctype', 'n.nid = doctype.entity_id');
+  $query->join('field_data_field_software_release', 'fsr', 'n.nid = fsr.entity_id');
+
+  $query->groupBy('b.bid');
+  $query->condition('fsr.bundle', array('book'), 'IN')
+        ->condition('device.taxonomy_vocabulary_12_tid', $tid, '=')
+        ->fields('n', array('nid','title'))
+        ->fields('b', array('mlid'))
+        ->fields('fsr', array('field_software_release_tid'))
+        ->fields('doctype', array('taxonomy_vocabulary_8_tid'));
+  $result = $query->execute()->fetchAllAssoc('nid');
+  $option_all = array('All' => '- Any -');
+
+  // Arrange list by release
+  foreach($result as $nid => $record) {
+    $this_release = $record->field_software_release_tid;
+    $nodes_by_release[$this_release][] = $nid;
+    $nodes_by_doctype[$record->taxonomy_vocabulary_8_tid][] = $nid;
+  }
+
+  $doctype_objects = taxonomy_term_load_multiple(array_keys($nodes_by_doctype));
+  $release_objects = taxonomy_term_load_multiple(array_keys($nodes_by_release));
+
+  foreach ($doctype_objects as $doctype) {
+    $parents = reset(taxonomy_get_parents($doctype->tid));
+    $doctype_to_parent_map[$doctype->tid] = $parents->tid;
+    $parents_index[$parents->tid] = $parents->name;
+  }
+  foreach($release_objects as $release) {
+    $release_index[$release->tid] = $release->name;
+  }
+  foreach($doctype_objects as $doctype) {
+    $doctype_index[$doctype->tid] = $doctype->name;
+  }
+
+  // Collect doctype parents
+  $doctype_grouping = array();
+  foreach($result as $temp) {
+    $doctype_grouping[$doctype_to_parent_map[$temp->taxonomy_vocabulary_8_tid]][$temp->nid] = $temp->title;
+    $nodes_by_doctype_group[$temp->nid] = $doctype_to_parent_map[$temp->taxonomy_vocabulary_8_tid];
+  }
+  arsort($release_index);
+
+  // build tree
+
+  foreach($release_index as $release_tid => $release) {
+    $items[$release_tid] = array('data' => $release);
+
+    foreach($doctype_grouping as $group => $nids) {
+      $items[$release_tid]['children'][$release_tid . '-' . $group] = array('data' => $parents_index[$group]);
+    }
+
+    foreach($nodes_by_doctype_group as $nid => $grouping) {
+      if (!in_array($nid, $nodes_by_release[$release_tid])) {
+        continue;
+      }
+      $items[$release_tid]['children'][$release_tid . '-' . $grouping]['children'][$nid] = array('data' => l($result[$nid]->title,'node/'.$nid));
+    }
+  }
+  $list = theme_item_list(array('type' => 'ul', 'title' => NULL, 'attributes' => array(), 'items' => $items));
+  $split = book_nav_split_taxonomy_tree($items);
+  $cols = book_nav_render_tree_cols($split['by depth'], taxonomy_vocabulary_load(14)->name);
+  $prefix = '<div class="panel panel-default"><div class="panel-heading"><h3 class="panel-title">Available Documentation</h3></div><div class="panel-body">';
+  $suffix = '</div></div>';
+  $nothing = '<div class="alert alert-warning"><label>We don\'t have any documents for this product.</label><p>Try selecting a more-specific or less-specific product above. You can also try looking on this product\'s official <a href="support.polycom.com">support page</a>.</p></div>';
+  return $prefix . (isset($cols) ? $cols : $nothing) . $suffix;
+}
+
+function book_nav_vocab_nav_block($vocab, $mode = 'page'){
+  $vid = is_numeric($vocab) ? $vocab : taxonomy_vocabulary_machine_name_load($vocab)->vid;
+  $alttree = book_nav_build_tree(taxonomy_get_tree($vid));
+  $split = book_nav_split_vocab_tree($alttree, $mode);
+  return book_nav_render_tree_cols($split['by depth'], $split['mode']);
+}
+
+function book_nav_render_dev_container(){
+
+  $alttree = book_nav_build_tree(taxonomy_get_tree(12));
+
+  $split = book_nav_split_vocab_tree($alttree);
+
+  $cols = book_nav_render_tree_cols($split['by depth'], $split['mode']);
+
+  return $cols;
+}
+/**
+ * Render a multicolumn set of links.
+ *
+ * The $split argument must be an array of link data prepared by book_nav_split_vocab_tree.
+ *
+ * @param (array) $split
+ * 	An array of link data prepared by book_nav_split_vocab_tree().
+ *
+ * @param (string) $title
+ * 	A string to insert in the header of the first column. Optional.
+ *
+ * @param (integer) $limit_cols
+ * 	A minimum number of bootstrap medium columns each rendered column can occupy. Use this to prevent
+ * 	columns from shrinking to unusable widths in vocabs with a large number of levels.
+ * 	Use '0' to remove the downward limit. Defaults to 3.
+ *
+ * @return
+ * 	Rendered HTML.
+ */
+function book_nav_render_tree_cols($split, $mode = 'page', $title = '&nbsp;', $limit_cols = 3) {
+  if (count($split) == 0) return;
+
+  // Determine the number of columns and preset the bootstrap column widths (rounding down).
+  if($limit_cols) {
+    $col_width = (12/count($split)) > $limit_cols ? (integer)(12/count($split)) : $limit_cols;
+  }
+
+  // Prevent the resulting width from dropping below 3
+  $col_width = $col_width < 3 ? 3 : $col_width;
+
+  // Build HTML
+  $prefix = '<div class="row chooser-wrapper">';
+  $suffix = '</div>';
+  $out = '';
+  foreach ($split as $num => $col) {
+    $out = '<div id="column-' . $num . '" data-column="' . $num . '" class="col-md-' . $col_width . ' switcher-column column-' . $num . '">' . PHP_EOL;
+    if($num == 0) {
+      $out.='<div id="term-0">';
+      $out.=theme_item_list(array('type' => 'ul', 'title' => $title, 'items' => $col, 'attributes' => array('class' => array('nav','nav-stacked','nav-pills','taxonomy-switcher', 'mode-'.$mode)))) . PHP_EOL;
+      $out.='</div>';
+    }
+    else {
+      foreach ($col as $key => $item) {
+        $out.='<div id="term-' . $key . '" style="display:none" class="child-col">';
+        $key = array_pop(explode('-', $key));
+        $out.=theme_item_list(array('type' => 'ul', 'title' => (taxonomy_term_load($key)->name), 'items' => $item, 'attributes' => array('class' => array('nav','nav-stacked','nav-pills','taxonomy-switcher', 'mode-'.$mode)))) . PHP_EOL;
+        $out.='</div>';
+      }
+    }
+    $out.='</div>' . PHP_EOL;
+    $cols[$num] = $out;
+  }
+  $rendered = '';
+  foreach($cols as $col) {
+    $rendered.=$col;
+  }
+  //$out.='</div>';
+  return $prefix . $rendered . $suffix;
+}
+
+
+function book_nav_build_tree($flat_tree){
+  $tree = array();
+  $last_term_stack = array();
+  $anonymous = user_is_anonymous();
+  foreach ($flat_tree as &$term) {
+    $wrap = entity_metadata_wrapper('taxonomy_term',$term->tid);
+    $internal = isset($wrap->field_internal) ? $wrap->field_internal->value() : FALSE;
+    if ($internal == TRUE && $anonymous == TRUE) continue;
+    while(count($last_term_stack) > 0){
+      if(in_array(end($last_term_stack)->tid, $term->parents)) {
+        $lastTerm = end($last_term_stack);
+        $lastTerm->children[]=$term;
+        array_push($last_term_stack,$term);
+        break;
+      } else {
+        array_pop($last_term_stack);
+      }
+    }
+    if(empty($last_term_stack)){
+      $tree[] =$term;
+      array_push($last_term_stack, $term);
+    }
+  }
+  return $tree;
+}
+
+function book_nav_split_vocab_tree($tree, $mode = 'page', $recurring = FALSE, $parent_tid = 0, &$by_depth = array(), $depth = 0) {
+  if (count($tree)) {
+
+    foreach ($tree as $term) {
+      $uri = taxonomy_term_uri($term);
+      $path = file_create_url($uri['path']);
+      if ($mode == 'term') {
+        $base_link = '<a href="#" data-tid="' . $term->tid . '" data-term="' . $term->name . '" data-selector="#term-' . $term->tid . '" class="term-selector';
+      }
+      else {
+        $base_link = '<a href="' . $path . '" data-selector="#term-' . $term->tid . '" class="term-selector';
+      }
+
+      if(isset($term->children)){
+        $item = array(
+          'data' => $base_link . ' invalid">' . $term->name . '<span class="glyphicon glyphicon-play pull-right"></span></a>'
+        );
+        $depth++;
+        $children = book_nav_split_vocab_tree($term->children, $mode, TRUE, $term->tid, $by_depth, $depth);
+        $item['children'] = $children;
+
+        // Strip children arrays for self-contained $by_depth arrays
+        foreach($children as &$child) {
+          if (isset($child['children'])){
+            unset($child['children']);
+          }
+        }
+        $by_depth[$depth][$term->tid] = $children;
+        $depth--;
+      }
+      else {
+        $item = array('data' => $base_link . ' valid">' . $term->name . '</a>');
+
+      }
+      if (isset($term->children)) {
+      }
+      if ($term->depth == 0) {
+        $by_depth[0][$term->tid] = $item;
+        unset($by_depth[0][$term->tid]['children']);
+      }
+      $items[$term->tid] = $item;
+    }
+  }
+
+  if ($recurring) {
+    return $items;
+  }
+  ksort($by_depth);
+  return array('items' => $items, 'by depth' => $by_depth, 'mode' => $mode);
+}
+
+function book_nav_split_taxonomy_tree($tree, $recurring = FALSE, $parent_tid = 0, &$by_depth = array(), $depth = 0) {
+  if (count($tree)) {
+    foreach ($tree as $id => $term) {
+      if(stripos($term['data'], '<a href') !== 0 ) {
+        $item = array('data' => '<a href="#" onclick="return false" data-selector="#term-' . $id . '" class="term-selector">' . $term['data'] . '</a>');
+      }
+      else {
+        $item = $term;
+      }
+      if (isset($term['children'])) {
+        $depth++;
+        $children = book_nav_split_taxonomy_tree($term['children'], TRUE, $id, $by_depth, $depth);
+        $item['children'] = $children;
+
+        // Strip children arrays for self-contained $by_depth arrays
+        foreach($children as &$child) {
+          if (isset($child['children'])){
+            unset($child['children']);
+            $child['child'] = TRUE;
+          }
+          else {
+            $child['data'] = str_replace('class="', 'class="disabled ', $child['data']);
+          }
+        }
+        $by_depth[$depth][$id] = $children;
+        $depth--;
+      }
+      if ($depth == 0) {
+        $by_depth[0][$id] = $item;
+        unset($by_depth[0][$id]['children']);
+        $by_depth[0][$id]['child'] = TRUE;
+      }
+      $items[$id] = $item;
+    }
+  }
+
+  if ($recurring) {
+    return $items;
+  }
+  ksort($by_depth);
+  return array('items' => $items, 'by depth' => $by_depth);
+}
+
+/**
+ * Return a list of parents for the currently-viewed term.
+ *
+ * @return
+ * 	A rendered list.
+ */
+function book_nav_show_term_parents() {
+  $tid = book_nav_get_current_tid();
+  $parents = taxonomy_get_parents($tid);
+  return _book_nav_build_taxonomy_list($parents, '<span class="glyphicon glyphicon-arrow-left text-muted"></span> ' . t('Less specific'), array('nav','nav_stacked'), NULL);
+}
+
+/**
+ * Return a list of children for the currently-viewed term.
+ *
+ * @return
+ * 	A rendered list.
+ */
+function book_nav_show_term_children() {
+  $tid = book_nav_get_current_tid();
+  $children = taxonomy_get_children($tid);
+  return _book_nav_build_taxonomy_list($children, t('More specific') . ' <span class="glyphicon glyphicon-arrow-right text-muted"></span>', array('nav','nav_stacked'), NULL);
+}
+
+/**
+ * Build a linked list from an array of taxonomy term objects.
+ *
+ * @param (array) $objects
+ * 	An array of taxonomy term objects
+ *
+ * @param (string)
+ * 	The title to use in the list. Can be NULL.
+ *
+ * @param (array) $list_classes
+ * 	An array of class names to apply to the overall list
+ *
+ * @param (array) $item_classes
+ * 	An array of class names to apply to each list item
+ *
+ * @return
+ * 	A rendered list.
+ */
+function _book_nav_build_taxonomy_list($objects, $title = NULL, $list_classes = array(), $item_classes = array()){
+  if (count($objects) == 0) {
+    return;
+  }
+
+  foreach($objects as $obj) {
+    $items[] = l($obj->name, 'taxonomy/term/'.$obj->tid, array('attributes' => array('class' => $item_classes)));
+  }
+  return theme_item_list(array('type' => 'ul', 'title' => $title, 'items' => $items, 'attributes' => array('class'=> $list_classes)));
+}
+
+/**
+ * Gets the current taxonomy term from the URL.
+ *
+ * Assumes a taxonomy structure of '/taxonomy/term/tid'.
+ *
+ * @return (integer)
+ *		The currently in-view taxonomy term ID.
+ */
+function book_nav_get_current_tid() {
+  // Attempt to get the vid from the URL.
+  if (arg(0) == 'taxonomy' && arg(1) == 'term') {
+    return arg(2);
+  }
 }

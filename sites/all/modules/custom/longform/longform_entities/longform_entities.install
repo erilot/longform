@@ -1,0 +1,117 @@
+<?php
+/**
+ * Created by PhpStorm.
+ * User: ericlotze
+ * Date: 2014-10-17
+ * Time: 10:39 AM
+ */
+
+/**
+ * Implements hook_uninstall().
+ */
+function longform_entities_uninstall() {
+}
+
+
+/**
+ * Implements hook_schema().
+ */
+function longform_entities_schema() {
+  $schema['longform_ticket'] = array(
+    'description' => 'The base table for longform tickets.',
+    'fields' => array(
+      'tid' => array(
+        'description' => 'The primary identifier for a longform ticket.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'title' => array(
+        'description' => 'The title of this ticket, always treated as non-markup plain text.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that owns this ticket; initially, this is the user that created it.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the ticket was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'restrictions' => array(
+        'description' => 'Restrictions placed on this ticket content. 0 (default) is unrestricted.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'translatable' => array(
+        'description' => 'Whether this content will be translated',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+    ),
+    'indexes' => array(
+      'ticket_created' => array('created'),
+      'uid' => array('uid'),
+      'restrictions' => array('restrictions')
+    ),
+    'unique keys' => array(
+      'tid' => array('tid'),
+    ),
+    'primary key' => array('tid'),
+  );
+
+  $schema['longform_set'] = array(
+    'description' => 'The base table for longform sets.',
+    'fields' => array(
+      'sid' => array(
+        'description' => 'The primary identifier for a longform set.',
+        'type' => 'serial',
+        'unsigned' => TRUE,
+        'not null' => TRUE,
+      ),
+      'name' => array(
+        'description' => 'The title of this set, always treated as non-markup plain text.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'uid' => array(
+        'description' => 'The {users}.uid that owns this set; initially, this is the user that created it.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'created' => array(
+        'description' => 'The Unix timestamp when the set was created.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'build_temporary' => array(
+        'description' => 'Temporary holding area for in-progress data sets',
+        'type' => 'blob',
+        'not null' => FALSE,
+        'default' => NULL,
+      ),
+    ),
+    'indexes' => array(
+      'set_created' => array('created'),
+      'uid' => array('uid'),
+    ),
+    'unique keys' => array(
+      'sid' => array('sid'),
+    ),
+    'primary key' => array('sid'),
+  );
+  return $schema;
+}

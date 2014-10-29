@@ -5,87 +5,138 @@
  * Contains workflow\includes\Entity\WorkflowState.
  */
 
-class WorkflowState {
+class WorkflowStateController extends EntityAPIController {
+
+  public function save($entity, DatabaseTransaction $transaction = NULL) {
+    // Create the machine_name.
+    if (empty($entity->name)) {
+      if ($label = $entity->state) {
+        $entity->name = str_replace(' ', '_', strtolower($label));
+      }
+      else {
+        $entity->name = 'state_' . $entity->sid;
+      }
+    }
+
+    $return = parent::save($entity, $transaction);
+    if ($return) {
+      $workflow = $entity->getWorkflow();
+      // Maintain the new object in the workflow.
+      $workflow->states[$entity->sid] = $entity;
+    }
+
+    // Reset the cache for the affected workflow.
+    workflow_reset_cache($entity->wid);
+
+    return $return;
+  }
+
+  public function delete($ids, DatabaseTransaction $transaction = NULL) {
+    // @todo: replace with parent.
+    foreach ($ids as $id) {
+      if ($state = workflow_state_load($id)) {
+        $wid = $state->wid;
+        db_delete('workflow_states')
+          ->condition('sid', $state->sid)
+          ->execute();
+
+        // Reset the cache for the affected workflow.
+        workflow_reset_cache($wid);
+      }
+    }
+  }
+
+}
+
+class WorkflowState extends Entity {
   // Since workflows do not change, it is implemented as a singleton.
-  private static $states = array();
+  protected static $states = array();
 
   public $sid = 0;
   public $wid = 0;
   public $weight = 0;
-  private $sysid = 0;
-  private $state = ''; // @todo: rename to 'label'.
+  public $sysid = 0;
+  public $state = ''; // @todo D8: remove $state, use $label/$name. (requires conversion of Views displays.)
   public $status = 1;
-  private $workflow = NULL;
 
   /**
    * CRUD functions.
    */
 
-  public function __construct($sid = 0, $wid = 0) {
-    if (empty($sid) && empty($wid)) {
-      // automatic constructor when casting an array or object.
+  /**
+   * Constructor.
+   *
+   * @param int $wid
+   *   The Workflow ID for which a new State is created.
+   * @param string $name
+   *   The name of the new State. If '(creation)', a CreationState is generated.
+   */
+  public function __construct(array $values = array(), $entityType = 'WorkflowState') {
+    // Please be aware that $entity_type and $entityType are different things!
+    // Keep oficial name and external name equal.
+    if (isset($values['name'])) {
+      $values['state'] = $values['name'];
+    }
+    // Set default values for '(creation)' state.
+    if (!empty($values['is_new']) && $values['name'] == WORKFLOW_CREATION_STATE_NAME) {
+      $values['sysid'] = WORKFLOW_CREATION;
+      $values['weight'] = WORKFLOW_CREATION_DEFAULT_WEIGHT;
+    }
+    parent::__construct($values, $entityType);
+
+    if (empty($values)) {
+      // Automatic constructor when casting an array or object.
+      // Add pre-existing states to cache (not new/temp ones).
       if (!isset(self::$states[$this->sid])) {
         self::$states[$this->sid] = $this;
       }
     }
-    elseif (empty($sid)) {
-      // Creating an dummy/new state for a workflow.
-      // Do not add to 'cache' self::$tates.
-      	$this->wid = $wid;
-    }
-    else {
-      // Fetching an existing state for a workflow.
-      if (!isset(self::$states[$sid])) {
-        self::$states[$sid] = WorkflowState::load($sid, $wid);
-      }
-      // State may not exist.
-      if (self::$states[$sid]) {
-        // @todo: this copy-thing should not be necessary.
-        $this->sid = self::$states[$sid]->sid;
-        $this->wid = self::$states[$sid]->wid;
-        $this->weight = self::$states[$sid]->weight;
-        $this->sysid = self::$states[$sid]->sysid;
-        $this->state = self::$states[$sid]->state;
-        $this->status = self::$states[$sid]->status;
-        $this->workflow = self::$states[$sid]->workflow;
-      }
-    }
   }
 
-  /**
-   * Creates and returns a new WorkflowState object.
-   *
-   * $return WorkflowState $state 
-   *  A new WorkflowState object
-   *
-   * "New considered harmful".
-   */
-  public static function create($sid, $wid) {
-    $state = new WorkflowState($sid, $wid);
-    return $state;
-  }
+/*
+  // Implementing clone needs a list of tid-less transitions, and a conversion
+  // of sids for both States and ConfigTransitions.
+  // public function __clone() {}
+ */
 
   /**
-   * Alternative constructor, via a static function, loading objects from table {workflow_states}.
+   * Alternative constructor, loading objects from table {workflow_states}.
+   *
+   * @param int $sid
+   *   The requested State ID
+   * @param int $wid
+   *   An optional Workflow ID, to check if the requested State is valid for the Workflow.
+   *
+   * @return mixed $state
+   *   WorkflowState if state is successfully loaded,
+   *   NULL if not loaded,
+   *   FALSE if state does not belong to requested Workflow.
    */
-  public static function load($sid) {
-    $states = self::getStates($sid);
+  public static function load($sid, $wid = 0) {
+    $states = self::getStates();
     $state = isset($states[$sid]) ? $states[$sid] : NULL;
+    if ($wid && $state && ($wid != $state->wid)) {
+      return FALSE;
+    }
     return $state;
   }
 
   /**
    * Get all states in the system, with options to filter, only where a workflow exists.
-   * @param $sid   : the requested State ID
-   * @param $wid   : the requested Workflow ID
-   * @param $reset : an option to refresh all caches.
-   * @return       : an array of states.
    *
-   * @deprecated workflow_get_workflow_states() --> WorkflowState::getStates()
-   * @deprecated workflow_get_workflow_states_all() --> WorkflowState::getStates()
-   * @deprecated workflow_get_other_states_by_sid($sid) --> WorkflowState::getStates()
+   * @param $wid
+   *   The requested Workflow ID.
+   * @param bool $reset
+   *   An option to refresh all caches.
+   *
+   * @return array $states
+   *   An array of cached states.
+   *
+   * @deprecated workflow_get_workflow_states --> workflow_state_load_multiple
+   * @deprecated workflow_get_workflow_states_all --> workflow_state_load_multiple
+   * @deprecated workflow_get_other_states_by_sid --> workflow_state_load_multiple
    */
-  public static function getStates($sid = 0, $wid = 0, $reset = FALSE) {
+  public static function getStates($wid = 0, $reset = FALSE) {
     if ($reset) {
       self::$states = array();
     }
@@ -103,19 +154,11 @@ class WorkflowState {
       $query->execute()->fetchAll(PDO::FETCH_CLASS, 'WorkflowState');
     }
 
-    if (!$sid && !$wid) {
+    if (!$wid) {
       // All states are requested and cached: return them.
       return self::$states;
     }
-
-    // If only 1 State is requested and cached: return this one.
-    if ($sid) {
-      // The sid may be deactivated/non-existent.
-      $state = isset(self::$states[$sid]) ? self::$states[$sid] : self::$states[$sid] = NULL;
-      return array($sid => $state);
-    }
-
-    if ($wid) {
+    else {
       // All states of only 1 Workflow is requested: return this one.
       $result = array();
       foreach (self::$states as $state) {
@@ -127,94 +170,72 @@ class WorkflowState {
     }
   }
 
-  public static function getStatesByName($name, $wid) {
-    foreach($states = WorkflowState::getStates(0, $wid) as $state) {
-      if ($name != $state->getName()) {
-        unset($states[$state->sid]);
+  /**
+   * Get all states in the system, with options to filter, only where a workflow exists.
+   *
+   * May return more then one State, since a name is not (yet) an UUID.
+   */
+  public static function loadByName($name, $wid = 0) {
+    foreach ($states = self::getStates($wid) as $state) {
+      if ($name == $state->getName()) {
+        return $state;
       }
     }
-    return $states;
-  }
-
-  /**
-   * Save (update/insert) a Workflow State into table workflow_states.
-   * @deprecated: workflow_update_workflow_states() --> WorkflowState->save()
-   */
-  function save() {
-    // Convert all properties to an array, the previous ones, too.
-    $data['sid'] = $this->sid;
-    $data['wid'] = $this->wid;
-    $data['weight'] = $this->weight;
-    $data['sysid'] = $this->sysid;
-    $data['state'] = $this->state;
-    $data['status'] = $this->status;
-
-    if (!empty($this->sid) && count(WorkflowState::load($this->sid)) > 0) {
-      drupal_write_record('workflow_states', $data, 'sid');
-    }
-    else {
-      drupal_write_record('workflow_states', $data);
-    }
-  }
-
-  /**
-   * Given data, delete from workflow_states.
-   */
-  function delete() {
-    db_delete('workflow_states')
-      ->condition('sid', $this->sid)
-      ->execute();
+    return NULL;
   }
 
   /**
    * Deactivate a Workflow State, moving existing nodes to a given State.
+   *
+   * @param int $new_sid
+   *   The state ID, to which all affected entities must be moved.
+   *
    * @deprecated workflow_delete_workflow_states_by_sid() --> WorkflowState->deactivate() + delete()
    */
-  function deactivate($new_sid) {
-    $sid = $this->sid;
-    // Notify interested modules. We notify first to allow access to data before we zap it.
-    module_invoke_all('workflow', 'state delete', $sid, NULL, NULL, FALSE);
+  public function deactivate($new_sid) {
+    global $user; // We can use global, since deactivate() is a UI-only function.
 
-    // Node API: Re-parent any nodes that we don't want to orphan, whilst deactivating a State.
-    // @todo Field API: Re-parent any nodes that we don't want to orphan, whilst deactivating a State.
+    $current_sid = $this->sid;
+    $force = TRUE;
+
+    // Notify interested modules. We notify first to allow access to data before we zap it.
+    // E.g., Node API (@todo Field API):
+    // - re-parents any nodes that we don't want to orphan, whilst deactivating a State.
+    // - delete any lingering node to state values.
+    module_invoke_all('workflow', 'state delete', $current_sid, $new_sid, NULL, $force);
+
+    // Re-parent any nodes that we don't want to orphan, whilst deactivating a State.
+    // This is called in WorkflowState::deactivate().
+    // @todo: reparent Workflow Field, whilst deactivating a state.
     if ($new_sid) {
-      global $user;
       // A candidate for the batch API.
       // @TODO: Future updates should seriously consider setting this with batch.
-      $node = new stdClass();
-      $node->workflow_stamp = REQUEST_TIME;
-      foreach (workflow_get_workflow_node_by_sid($sid) as $data) {
-        $node->nid = $data->nid;
-        $node->workflow = $sid;
-        $data = array(
-          'nid' => $node->nid,
-          'sid' => $new_sid,
-          'uid' => $user->uid,
-          'stamp' => $node->workflow_stamp,
-        );
-        workflow_update_workflow_node($data, $sid, t('Previous state deleted'));
+
+      $comment = t('Previous state deleted');
+      foreach (workflow_get_workflow_node_by_sid($current_sid) as $workflow_node) {
+        // @todo: add Field support in 'state delete', by using workflow_node_history or reading current field.
+        $entity_type = 'node';
+        $entity = entity_load_single('node', $workflow_node->nid);
+        $field_name = '';
+        $transition = new WorkflowTransition();
+        $transition->setValues($entity_type, $entity, $field_name, $current_sid, $new_sid, $user->uid, REQUEST_TIME, $comment);
+        $transition->force($force);
+        // Execute Transition, invoke 'pre' and 'post' events, save new state in workflow_node, save also in workflow_node_history.
+        // For Workflow Node, only {workflow_node} and {workflow_node_history} are updated. For Field, also the Entity itself.
+        $new_sid = workflow_execute_transition($entity_type, $entity, $field_name, $transition, $force);
       }
     }
+    // Delete any lingering node to state values.
+    workflow_delete_workflow_node_by_sid($current_sid);
 
-    // Find out which transitions this state is involved in.
-    $preexisting = array();
-    foreach (workflow_get_workflow_transitions_by_sid_involved($sid) as $data) {
-      $preexisting[$data->sid][$data->target_sid] = TRUE;
+    // Delete the transitions this state is involved in.
+    $workflow = workflow_load_single($this->wid);
+    foreach ($workflow->getTransitionsBySid($current_sid, 'ALL') as $transition) {
+      $transition->delete();
     }
-
-    // Delete the transitions.
-    foreach ($preexisting as $from => $array) {
-      foreach (array_keys($array) as $target_id) {
-        if ($transition = workflow_get_workflow_transitions_by_sid_target_sid($from, $target_id)) {
-          workflow_delete_workflow_transitions_by_tid($transition->tid);
-        }
-      }
+    foreach ($workflow->getTransitionsByTargetSid($current_sid, 'ALL') as $transition) {
+      $transition->delete();
     }
-
-    // Node API: Delete any lingering node to state values.
-    workflow_delete_workflow_node_by_sid($sid);
-    // @todo: Field API: Delete any lingering node to state values.
-    //workflow_delete_workflow_field_by_sid($sid);
 
     // Delete the state. -- We don't actually delete, just deactivate.
     // This is a matter up for some debate, to delete or not to delete, since this
@@ -224,7 +245,7 @@ class WorkflowState {
     $this->save();
 
     // Clear the cache.
-    self::$states = array();
+    self::getStates(0, TRUE);
   }
 
   /**
@@ -234,106 +255,277 @@ class WorkflowState {
   /**
    * Returns the Workflow object of this State.
    *
-   * @return
-   *  Workflow object.
+   * @return Workflow
+   *   Workflow object.
    */
-  function getWorkflow() {
-    return isset($this->workflow) ? $this->workflow : Workflow::load($this->wid);
+  public function getWorkflow() {
+    if (isset($this->workflow)) {
+      return $this->workflow;
+    }
+    return workflow_load_single($this->wid);
+  }
+
+  public function setWorkflow($workflow) {
+    $this->wid = $workflow->wid;
+    $this->workflow = $workflow;
   }
 
   /**
    * Returns the Workflow object of this State.
    *
-   * @return
-   *  boolean TRUE if state is active, else FALSE.
+   * @return bool
+   *   TRUE if state is active, else FALSE.
    */
-  function isActive() {
-    return (boolean) $this->status;
+  public function isActive() {
+    return (bool) $this->status;
   }
 
-  function isCreationState() {
+  public function isCreationState() {
     return $this->sysid == WORKFLOW_CREATION;
   }
 
   /**
-   * Returns the allowed values for the current state.
-   * @deprecated workflow_field_choices() --> WorkflowState->getOptions()
+   * Determines if the Workflow Form must be shown.
+   *
+   * If not, a formatter must be shown, since there are no valid options.
+   *
+   * @return bool $show_widget
+   *   TRUE = a form (a.k.a. widget) must be shown; FALSE = no form, a formatter must be shown instead.
    */
-  function getOptions($entity_type, $entity, $force = FALSE) {
-  global $user;
-  static $cache = array(); // Entity-specific cache per page load.
-
-  $choices = array();
-
-  if (!$entity) {
-    // If no entity is given, no result (e.g., on a Field settings page)
-    $choices = array();
-    return $choices;
-  }
-
-  $entity_id = _workflow_get_entity_id($entity_type, $entity);
-  $sid = $this->sid;
-  $workflow = Workflow::load($this->wid);
-
-  // Get options from page cache.
-  if (isset($cache[$entity_type][$entity_id][$force][$sid])) {
-    $choices = $cache[$entity_type][$entity_id][$force][$sid];
-    return $choices;
-  }
-
-  if ($workflow) {
-    $roles = array_keys($user->roles);
-
-    // If user is node author or this is a new page, give the authorship role.
-    if (($user->uid == $entity->uid && $entity->uid > 0) || empty($entity_id)) {
-      $roles += array('author' => 'author');
+  public function showWidget($entity_type, $entity, $field_name, $user, $force) {
+    $options = $this->getOptions($entity_type, $entity, $field_name, $user, $force);
+    $count = count($options);
+    // The easiest case first: more then one option: always show form.
+    if ($count > 1) {
+      return TRUE;
     }
-    if ($user->uid == 1 || $force) {
-      // Superuser is special. And Force allows Rules to cause transition.
+    // #2226451: Even in Creation state, we must have 2 visible states to show the widget.
+    // // Only when in creation phase, one option is sufficient,
+    // // since the '(creation)' option is not included in $options.
+    // // When in creation state,
+    // if ($this->isCreationState()) {
+    // return TRUE;
+    // }
+    return FALSE;
+  }
+
+  /**
+   * Returns the allowed transitions for the current state.
+   *
+   * @param string $entity_type
+   *   The type of the entity at hand.
+   * @param object $entity
+   *   The entity at hand. May be NULL (E.g., on a Field settings page).
+   *
+   * @return array
+   *   An array of tid=>transition pairs with allowed transitions for State.
+   */
+  public function getTransitions($entity_type = '', $entity = NULL, $field_name = '', $user = NULL, $force = FALSE) {
+    $transitions = array();
+
+    $current_sid = $this->sid;
+    $current_state = $this;
+
+    if (!$workflow = $this->getWorkflow()) {
+      // No workflow, no options ;-)
+      return $transitions;
+    }
+
+    // Get the role IDs of the user, to get the proper permissions.
+    $roles = $user ? array_keys($user->roles) : array();
+
+    // Some entities (e.g., taxonomy_term) do not have a uid.
+    $entity_uid = isset($entity->uid) ? $entity->uid : 0;
+
+    if ($force || ($user && $user->uid == 1)) {
+      // Superuser is special. And $force allows Rules to cause transition.
       $roles = 'ALL';
     }
+    elseif ($entity && (!empty($entity->is_new) || empty($entity_id))) {
+      // Add 'author' role to user, if this is a new entity.
+      // - $entity can be NULL (E.g., on a Field settings page).
+      // - on display of new entity, $entity_id and $is_new are not set.
+      // - on submit of new entity, $entity_id and $is_new are both set.
+      $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
+    }
+    elseif (($entity_uid > 0) && ($user->uid > 0) && ($entity_uid == $user->uid)) {
+      // Add 'author' role to user, if user is author of this entity.
+      // - Some entities (e.g, taxonomy_term) do not have a uid.
+      // - If 'anonymous' is the author, don't allow access to History Tab,
+      //   since anyone can access it, and it will be published in Search engines.
+      $roles = array_merge(array(WORKFLOW_ROLE_AUTHOR_RID), $roles);
+    }
 
-    // Workflow_allowable_transitions() does not return the entire transition row. Would like it to, but doesn't.
-    // Instead it returns just the allowable data as:
-    // [tid] => 1 [state_id] => 1 [state_name] => (creation) [state_weight] => -50
-    $transitions = workflow_allowable_transitions($sid, 'to', $roles);
+    // Set up an array with states - they are already properly sorted.
+    // Unfortunately, the config_transitions are not sorted.
+    // Also, $transitions does not contain the 'stay on current state' transition.
+    // The allowed objects will be replaced with names.
+    $transitions = $workflow->getTransitionsBySid($current_sid, $roles);
 
-    // Include current state if it is not the (creation) state.
+    // Let custom code add/remove/alter the available transitions.
+    // Using the new drupal_alter.
+    // Modules may veto a choice by removing a transition from the list.
+    $context = array(
+      'entity_type' => $entity_type,
+      'entity' => $entity,
+      'field_name' => $field_name,
+      'force' => $force,
+      'workflow' => $workflow,
+      'state' => $current_state,
+      'user' => $user,
+      'user_roles' => $roles, // @todo: can be removed in D8, since $user is in.
+    );
+    // @todo D8: rename to 'workflow_permitted_transitions'.
+    drupal_alter('workflow_permitted_state_transitions', $transitions, $context);
+
+    // Let custom code change the options, using old_style hook.
+    // @todo D8: delete below foreach/hook for better performance and flexibility.
+    // Above drupal_alter() calls hook_workflow_permitted_state_transitions_alter() only once.
     foreach ($transitions as $transition) {
-      if ($transition->sysid != WORKFLOW_CREATION && !$force) {
-        // Invoke a callback indicating that we are collecting state choices. Modules
-        // may veto a choice by returning FALSE. In this case, the choice is
-        // never presented to the user.
-        // @todo: for better performance, call a hook only once: can we find a way to pass all transitions at once
-        $result = module_invoke_all('workflow', 'transition permitted', $sid, $transition->state_id, $entity, $field_name = '');
-        // Did anybody veto this choice?
-        if (!in_array(FALSE, $result)) {
-          // If not vetoed, add to list.
-          $choices[$transition->state_id] = check_plain(t($transition->state_name));
-        }
+      $new_sid = $transition->target_sid;
+      $permitted = array();
+
+      // We now have a list of config_transitions. Check each against the Entity.
+      // Invoke a callback indicating that we are collecting state choices.
+      // Modules may veto a choice by returning FALSE.
+      // In this case, the choice is never presented to the user.
+      if ($roles != 'ALL') {
+        $permitted = module_invoke_all('workflow', 'transition permitted', $current_sid, $new_sid, $entity, $force, $entity_type, $field_name, $transition, $user);
+      }
+
+      // If vetoed by a module, remove from list.
+      if (in_array(FALSE, $permitted, TRUE)) {
+        unset($transitions[$transition->tid]);
       }
     }
 
-    // Save to entity-specific cache.
-    $cache[$entity_type][$entity_id][$force][$sid] = $choices;
+    return $transitions;
   }
 
-  return $choices;
+  /**
+   * Returns the allowed values for the current state.
+   *
+   * @param string $entity_type
+   *   The type of the entity at hand.
+   * @param object $entity
+   *   The entity at hand. May be NULL (E.g., on a Field settings page).
+   *
+   * @return array
+   *   An array of sid=>label pairs.
+   *   If $this->sid is set, returns the allowed transitions from this state.
+   *   If $this->sid is 0 or FALSE, then labels of ALL states of the State's
+   *   Workflow are returned.
+   *
+   * @deprecated workflow_field_choices() --> WorkflowState->getOptions()
+   */
+  public function getOptions($entity_type, $entity, $field_name, $user, $force = FALSE) {
+    // Define an Entity-specific cache per page load.
+    static $cache = array();
+
+    $options = array();
+
+    $entity_id = ($entity) ? entity_id($entity_type, $entity) : '';
+    $current_sid = $this->sid;
+
+    // Get options from page cache, using a non-empty index (just to be sure).
+    $entity_index = (!$entity) ? 'x' : $entity_id;
+    if (isset($cache[$entity_type][$entity_index][$force][$current_sid])) {
+      $options = $cache[$entity_type][$entity_index][$force][$current_sid];
+      return $options;
+    }
+
+    $workflow = $this->getWorkflow();
+    if (!$workflow) {
+      // No workflow, no options ;-)
+    }
+    elseif (!$current_sid) {
+      // If no State ID is given, we return all states.
+      // We cannot use getTransitions, since there are no ConfigTransitions
+      // from State with ID 0, and we do not want to repeat States.
+      foreach ($workflow->getStates() as $state) {
+        $options[$state->value()] = check_plain(t($state->label()));
+      }
+    }
+    else {
+      $transitions = $this->getTransitions($entity_type, $entity, $field_name, $user, $force);
+      foreach ($transitions as $transition) {
+        // Get the label of the transition, and if empty of the target state.
+        // Beware: the target state may not exist, since it can be invented
+        // by custom code in the above drupal_alter() hook.
+        if (!$label = $transition->label()) {
+          $target_state = $transition->getNewState();
+          $label = $target_state ? $target_state->label() : '';
+        }
+        $new_sid = $transition->target_sid;
+        $options[$new_sid] = check_plain(t($label));
+      }
+
+      // Include current state for same-state transitions, except when $sid = 0.
+      // Caveat: this unnecessary since 7.x-2.3 (where stay-on-state transitions are saved, too.)
+      // but only if the transitions have been saved at least one time.
+      if ($current_sid && ($current_sid != $workflow->getCreationSid())) {
+        if (!isset($options[$current_sid])) {
+          $options[$current_sid] = check_plain(t($this->label()));
+        }
+      }
+
+      // Save to entity-specific cache.
+      $cache[$entity_type][$entity_index][$force][$current_sid] = $options;
+    }
+
+    return $options;
+  }
+
+  /**
+   * Returns the number of entities with this state.
+   *
+   * @return int
+   *   Counted number.
+   *
+   * @todo: add $options to select on entity type, etc.
+   */
+  public function count() {
+    $sid = $this->sid;
+    // Get the numbers for Workflow Node.
+    $result = db_select('workflow_node', 'wn')
+      ->fields('wn')
+      ->condition('sid', $sid, '=')
+      ->execute();
+    $count = $result->rowCount();
+
+    // Get the numbers for Workflow Field.
+    $fields = _workflow_info_fields();
+    foreach ($fields as $field_name => $field_map) {
+      if ($field_map['type'] == 'workflow') {
+        $query = new EntityFieldQuery();
+        $query
+          ->fieldCondition($field_name, 'value', $sid, '=')
+          // ->entityCondition('bundle', 'article')
+          // ->addMetaData('account', user_load(1)) // Run the query as user 1.
+          ->count(); // We only need the count.
+
+        $result = $query->execute();
+        $count += $result;
+      }
+    }
+
+    return $count;
   }
 
   /**
    * Mimics Entity API functions.
    */
-  function label($langcode = NULL) {
-    return t($this->state, $args = array(), $options = array('langcode' => $langcode));
-  }
-  function getName() {
+  protected function defaultLabel() {
     return $this->state;
   }
-  function setName($name) {
-    return $this->state = $name;
+
+  public function getName() {
+    return isset($this->name) ? $this->name : '';
   }
-  function value() {
+  public function setName($name) {
+    return $this->name = $name;
+  }
+  public function value() {
     return $this->sid;
   }
 

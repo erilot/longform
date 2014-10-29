@@ -1,0 +1,176 @@
+From dda8b14dc50f44ac4246fbd378a0b392bfca859b Mon Sep 17 00:00:00 2001
+From: Jim Bo <jim@elephantventures.com>
+Date: Fri, 17 Oct 2014 12:43:24 -0500
+Subject: [PATCH] patching to remove references to deleted content
+
+---
+ entityreference.module | 142 +++++++++++++++++++++++++++++++++++++++++++++++++
+ 1 file changed, 142 insertions(+)
+
+diff --git a/entityreference.module b/entityreference.module
+index bdcb562..d777833 100644
+--- a/entityreference.module
++++ b/entityreference.module
+@@ -348,6 +348,61 @@ function entityreference_entity_update($entity, $entity_type) {
+  * Implements hook_entity_delete().
+  */
+ function entityreference_entity_delete($entity, $entity_type) {
++  // Get id of entity.
++  list($entity_id, $revision_id, $bundle) = entity_extract_ids($entity_type, $entity);
++  // Get list of bundles for this entity.
++  $entity_info = entity_get_info($entity_type);
++  $entity_bundles = array_keys($entity_info['bundles']);
++
++  // Retrieve info for all entityreference fields.
++  $conditions = array('type' => 'entityreference');
++  $include_additional = array('include_inactive' => TRUE);
++  $fields = field_read_fields($conditions, $include_additional);
++  $references = array();
++
++  // Loop through all entity reference fields.
++  foreach ($fields as $field) {
++    // Determine the target type of the field.
++    $target_type = $field['settings']['target_type'];
++    $target_bundles = !empty($field['settings']['handler_settings']['target_bundles']) ? array_keys($field['settings']['handler_settings']['target_bundles']) : $entity_bundles;
++    $cleanup_enabled = (isset($field['settings']['dereference_on_delete']) && $field['settings']['dereference_on_delete']);
++
++    // Check if cleanup is enabled and the field references the same type as the referenced entity.
++    if ($cleanup_enabled && $target_type == $entity_type && in_array($bundle, $target_bundles)) {
++
++      // Select on the entity id in the target_id column.
++      $query = new EntityFieldQuery();
++      $query->fieldCondition($field, 'target_id', $entity_id);
++      $results = $query->execute();
++
++      // Loop through the found entity types and ids.
++      foreach ($results as $referencing_type => $entities) {
++        if (!isset($references[$referencing_type]['ids'])) {
++          $references[$referencing_type]['ids'] = array();
++        }
++        $references[$referencing_type]['fields'][$field['field_name']] = $field['field_name'];
++        $references[$referencing_type]['ids'] += array_keys($entities);
++      }
++
++      // Mark the field values as deleted in the database. They will be properly deleted
++      // later for hooks to react and rules to process etc. But this will be fast and should
++      // prevent usage of the now invalid references.
++      if ($field['storage']['type'] == 'field_sql_storage') {
++        $target_colname = _field_sql_storage_columnname($field['field_name'], 'target_id');
++        $table = _field_sql_storage_tablename($field);
++
++       db_update($table)
++        ->condition($target_colname, $entity_id)
++        ->fields(array('deleted' => 1))
++        ->execute();
++      }
++    }
++  }
++
++  // Remove references from each entity type.
++  foreach ($references as $referencing_type => $data) {
++    entityreference_dereference($entity_id, $referencing_type, $data['ids'], $data['fields'], 40);
++  }
+   entityreference_entity_crud($entity, $entity_type, 'entityPostDelete');
+ }
+ 
+@@ -425,6 +480,26 @@ function _entityreference_field_settings_process($form, $form_state) {
+     '#limit_validation_errors' => array(),
+   );
+ 
++  // Option to remove field values when the entity they reference is deleted.
++  $cleanup_options = array(
++    0 => t('Leave invalid references around when entities are deleted.'),
++    1 => t('Delete references in this field when a referenced entity is deleted.'),
++    );
++  $form['dereference_on_delete'] = array(
++    '#type' => 'radios',
++    '#title' => t('Cleanup'),
++    '#title_display' => 'before',
++    '#description' => t('What to do when a referenced entity is deleted. Note that the second option may cause timeouts or memory issues when deleting large amounts of entities or references.'),
++    '#options' => $cleanup_options,
++    '#default_value' => isset($field['settings']['dereference_on_delete']) ? $field['settings']['dereference_on_delete'] : 0,
++    '#ajax' => array(
++      'callback' => 'entityreference_settings_ajax',
++      'wrapper' => $form['#id'],
++      'element' => $form['#array_parents'],
++    ),
++    '#limit_validation_errors' => array(),
++  );
++
+   ctools_include('plugins');
+   $handlers = ctools_get_plugins('entityreference', 'selection');
+   uasort($handlers, 'ctools_plugin_sort');
+@@ -1292,3 +1367,70 @@ function entityreference_views_api() {
+     'path' => drupal_get_path('module', 'entityreference') . '/views',
+   );
+ }
++
++/**
++ * Remove references to an entity from specific fields on specific entities.
++ * @param int $entity_id Id of entity to dereference.
++ * @param string $entity_type What type of entity to remove references from.
++ * @param array $ids Ids of the entities to process.
++ * @param array $fields Names of fields that should be processed.
++ * @return number of processed entities.
++ */
++function entityreference_dereference($entity_id, $entity_type, $ids, $fields, $threshold = NULL) {
++  if (!empty($ids)) {
++    $threshold = $threshold ? $threshold : variable_get('queue_bulk_threshold', 20);
++
++    // Split large datasets into smaller subsets for processing.
++    if (count($ids) > $threshold) {
++      $subsets = array_chunk($ids, $threshold);
++      $ids = array_shift($subsets);
++      foreach ($subsets as $subset) {
++        DrupalQueue::get('entityreference_workers', TRUE)
++          ->createItem(array('callback' => 'entityreference_dereference', 'arguments' => array($entity_id, $entity_type, $subset, $fields)));
++      }
++    }
++
++    // Load referencing entities of this type.
++    $referencing_entities = entity_load($entity_type, $ids);
++    foreach ($referencing_entities as $referencing_entity) {
++      // Loop through the fields for which references were found.
++      foreach ($fields as $field_name) {
++        // Get all the values in the field.
++        foreach ($referencing_entity->{$field_name} as $language => $items) {
++          // Loop through them to delete the specific value of the field that references the deleted entity.
++          foreach($items as $delta => $value) {
++            if ($value['target_id'] == $entity_id) {
++              unset($referencing_entity->{$field_name}[$language][$delta]);
++            }
++          }
++        }
++      }
++      // Store the modified entity. This should take care of all modules wanting to know about
++      // the changes and of flushing the relevant caches.
++      entity_save($entity_type, $referencing_entity);
++    }
++    // Return the number of entities from which the references have been removed.
++    return count($ids);
++  }
++  // No entities were passed to dereference from.
++  return 0;
++}
++
++/**
++ * Runs a simple job queue worker.
++ */
++function entityreference_queue_worker($data) {
++  return call_user_func_array($data['callback'], $data['arguments']);
++}
++
++/**
++ * Implements hook_cron_queue_info().
++ */
++function entityreference_cron_queue_info() {
++  $queues['entityreference_workers'] = array(
++    'worker callback' => 'entityreference_queue_worker',
++    'time' => 30,
++    'reliable' => TRUE,
++  );
++  return $queues;
++}
+-- 
+1.8.5.2 (Apple Git-48)
+

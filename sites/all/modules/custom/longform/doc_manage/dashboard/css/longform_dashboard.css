@@ -1,0 +1,35 @@
+/**
+ * Dashboard style overrides
+ */
+
+.nav li>h4 {
+		background: rgba(0,0,0,.1);
+  text-align: center;
+		font-size: 1.2em;
+  font-weight: bold;
+		padding: 0.2em 0.2em;
+  margin-bottom: 0;
+}
+
+.alert h3 {
+  margin: 0;
+}
+
+.col-md-10.tab-content{
+    min-height: 400px;
+}
+
+.placeholder {
+  background: url('images/branding/title-background.png') right center no-repeat #fff;
+  height: 400px;
+}
+
+.placeholder-content {
+  padding: .2em;
+  border-radius: 4px;
+  margin-top: 4em;
+}
+
+.left-rule {
+    border-left: 4px solid #eee;
+}

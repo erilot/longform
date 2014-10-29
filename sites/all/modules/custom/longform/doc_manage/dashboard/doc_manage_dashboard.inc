@@ -5,17 +5,21 @@
  *
  */
 
-/**
- * Implements hook_menu()
- *
- * Adds JSON output location for simple rendered views
- */
-
 
 /**
  * Render the main site dashboard.
  *
  * Add or subtract elements here, based on user role.
+ *
+ * Other modules can add dashboards by invoking hook_dashboard_create() and returning
+ * an associative array including:
+ *  - 'id' => The css ID to use as the tab trigger. This is not checked for uniqueness!
+ *  - 'show' => Whether or not the content should default to visible. Boolean. May be overridden.
+ *  - 'title' => The title to show in the tab (not the pane title, which is provided by the pane itself)
+ *  - 'content' => The render array containing the tab structure, provided by _get_tab_pair().
+ *
+ * @return array
+ *  A render array containing the dashboard with all panels and tabs.
  */
 function longform_site_dashboard() {
 
@@ -32,24 +36,9 @@ function longform_site_dashboard() {
   $out = array(
     '#type' => 'container',
     '#attributes' => array(
-      'class' => array('row', 'technet-dashboard-wrapper'),
+      'class' => array('row', 'longform-dashboard-wrapper'),
     ),
   );
-
-  // This alert is temporary -- remove it after changes have settled in!
-  // =================
-  $out['alert'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('alert', 'alert-info'),
-    ),
-  );
-  $out['alert']['content'] = array(
-    '#markup' => '<label>New Technet Dashboards</label><br/>
-				Dashboards are being added to the LSG front page to make your Technet work easier to manage.<br/>
-				<b>Important</b>: These dashboards don\'t change your import procedures or workflows; they are just here for easy tracking and follow-up! If you think of a way to make this more useful, or if something important is missing, please pass your feedback on to <a href="mailto:eric.lotze@polycom.com">Eric</a> or <a href="mailto:megg.morin@polycom.com">Megg</a>.',
-  );
-  // =================
 
   $out['bar'] = array(
     '#type' => 'container',
@@ -84,6 +73,18 @@ function longform_site_dashboard() {
     $out['panes'][$safe_role]['content'] = $function($role . ' Dashboard');
   }
 
+  // Add hooked dashboards
+  // @todo: allow these to be weighted?
+
+  foreach (module_implements('dashboard_create') as $module) {
+    $hook_dash = module_invoke($module, 'dashboard_create');
+    $temp = _get_tab_pair($hook_dash['id'], $hook_dash['show'], 'tab', $hook_dash['title']);
+    $tabs[] = $temp['tab'];
+    $panes[] = $hook_dash['id'];
+    $out['panes'] += $temp['wrapper'];
+    $out['panes'][$hook_dash['id']]['content'] = $hook_dash['content'];
+  }
+
   $tab_list = array(
     '#theme' => 'item_list',
     '#type' => 'ul',
@@ -113,7 +114,7 @@ function longform_dashboard_publisher($title) {
   global $user;
   //$opts['title'] = $title;
   $opts['intro']['content'] = array(
-    '#markup' => '<b>Welcome to the Technet Publisher dashboard</b>!<br/>This tab provides you with several views for keeping track of your HTML documents. If there\'s something additional you\'d like to see here, please <a href="mailto:eric.lotze@polycom.com">let me know</a>.',
+    '#markup' => '<b>Welcome to the Longform Publisher dashboard</b>!<br/>This tab provides you with several views for keeping track of your HTML documents. If there\'s something additional you\'d like to see here, please <a href="mailto:eric.lotze@polycom.com">let me know</a>.',
   );
   $opts['panes'] = array(
     'tab-publisher-title' => array(
@@ -165,7 +166,7 @@ function longform_dashboard_editor($title) {
   //$opts['title'] = $title;
 
   $opts['intro']['content'] = array(
-    '#markup' => '<b>Welcome to the Technet editor dashboard</b>!<br/>This tab provides you with several global-scope views for tracking all site content. If there\'s something additional you\'d like to see here, please <a href="mailto:eric.lotze@polycom.com">let me know</a>.',
+    '#markup' => '<b>Welcome to the Longform editor dashboard</b>!<br/>This tab provides you with several global-scope views for tracking all site content. If there\'s something additional you\'d like to see here, please <a href="mailto:eric.lotze@polycom.com">let me know</a>.',
   );
   $opts['panes'] = array(
     'tab-editor-title' => array('type' => 'title', 'title' => 'All Documents'),
@@ -207,12 +208,17 @@ function longform_dashboard_editor($title) {
 /**
  * Get the editor dashboard.
  *
+ * @param $title
+ *  String to use as the panel title
+ *
+ * @return
+ *  HTML Render array containing the tech support panel
  */
 function longform_dashboard_technical_support($title) {
   global $user;
   //$opts['title'] = $title;
   $opts['intro']['content'] = array(
-    '#markup' => '<b>Welcome to the Technet technical support dashboard</b>!<br/>This tab shows tech support views for following up on HTML Help flags (for now). If there\'s something additional you\'d like to see here, please <a href="mailto:eric.lotze@polycom.com">let me know</a>.',
+    '#markup' => '<b>Welcome to the Longform technical support dashboard</b>!<br/>This tab shows tech support views for following up on HTML Help flags (for now). If there\'s something additional you\'d like to see here, please <a href="mailto:eric.lotze@polycom.com">let me know</a>.',
   );
   $opts['panes'] = array(
     'tab-support-title' => array('type' => 'title', 'title' => 'HTML Flags'),
@@ -242,11 +248,15 @@ function longform_dashboard_technical_support($title) {
  *
  * If the role exists but the module is disabled, return an empty array.
  *
+ * @param $title
+ *  String to use as the panel title
+ *
+ * @return
+ *  HTML Render array containing the translation manager panel
  */
-function longform_dashboard_translation_manager($title) {
+function longform_dashboard_translation_manager_old($title) {
   if (module_exists('longform_translation')) {
     module_load_include('inc', 'longform_translation', 'longform_translation_dashboard');
-
     return longform_translation_dashboard($title);
   }
 }
@@ -256,7 +266,7 @@ function longform_dashboard_translation_manager($title) {
  */
 function longform_dashboard_add_js($title, $opts) {
   foreach ($opts['panes'] as $id => $pane) {
-    if ($pane['divider']) {
+    if (isset ($pane['divider']) && $pane['divider'] == TRUE){
       continue;
     }
     $js['longformDashboard'][$id] = array(
@@ -277,8 +287,6 @@ function longform_dashboard_add_js($title, $opts) {
  * Get the content publisher dashboard.
  *
  */
-
-
 function longform_dashboard_pane_create($opts) {
 
   $out['wrap'] = array(
@@ -358,7 +366,7 @@ function longform_dashboard_pane_create($opts) {
     // Check to see if the view returned is empty (contains "class='view-empty'").
     // Wait for the first one that is NOT empty, and flag it as active. Note the ID to preset the tab, too.
     if (strpos($contents['wrap']['markup']['#markup'], 'class="view-empty"') === FALSE && !isset($active_pane)) {
-      $active_pane = current(array_keys($panel['wrapper']));
+      //$active_pane = current(array_keys($panel['wrapper']));
       $panel['wrapper'][$id]['#attributes']['class'][] = 'active in';
     }
     else {
@@ -374,7 +382,7 @@ function longform_dashboard_pane_create($opts) {
   }
   else {
     //$tabs[$first_pane]['class'][] = 'active';
-    $out['wrap']['contents'][$id]['#attributes']['class'][] = 'active in';
+    //$out['wrap']['contents'][$id]['#attributes']['class'][] = 'active in';
   }
 
   // Fill in tabs when we're done
@@ -386,7 +394,6 @@ function longform_dashboard_pane_create($opts) {
       'class' => array('nav', 'nav-pills', 'nav-stacked'),
     ),
   );
-
   return ($out);
 
 }
@@ -424,7 +431,7 @@ function longform_dashboard_placeholder_pane() {
     ),
   );
   $out['inner']['contents'] = array(
-    '#markup' => '<h5 class="text-muted"><span class="glyphicon glyphicon-arrow-left"></span> To get started, click one of these tabs.</h5>',
+    '#markup' => '<h5 class="text-info"><span class="glyphicon glyphicon-arrow-left"></span>To get started, click one of these tabs.</h5>',
   );
 
   return $out;
