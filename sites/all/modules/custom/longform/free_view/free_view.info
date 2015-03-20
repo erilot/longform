@@ -1,0 +1,6 @@
+name = Document Free View
+description = Provides a taxonomy-based method for viewing documents, with infinite scroll
+core = 7.x
+dependencies[] = ctools
+dependencies[] = taxonomy
+package = Technet

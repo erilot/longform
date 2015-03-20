@@ -63,6 +63,28 @@ function longform_core_block_view($delta){
 }
 
 /**
+ * Implements hook_libraries_info().
+ */
+function longform_core_libraries_info() {
+  $libraries = array();
+  $libraries['underscore'] = array(
+    'name' => 'Underscore',
+    'vendor url' => 'https://github.com/jashkenas/underscore/',
+    'download url' => 'https://github.com/jashkenas/underscore/archive/master.zip',
+    'version arguments' => array(
+      'file' => 'underscore-min.js',
+      'pattern' => '/Underscore.js\s(\d+\.+\d+\.+\d+)/',
+    ),
+    'files' => array(
+      'js' => array(
+        'underscore-min.js',
+      ),
+    ),
+  );
+
+  return $libraries;
+}
+/**
  * Generate Longform header, with logo and main menu options
  *
  */

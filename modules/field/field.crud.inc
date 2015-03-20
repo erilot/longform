@@ -471,6 +471,7 @@ function field_delete_field($field_name) {
  * See: @link field Field API data structures @endlink.
  */
 function field_create_instance($instance) {
+  dpm($instance['field_name'],'field name');
   $field = field_read_field($instance['field_name']);
   if (empty($field)) {
     throw new FieldException(t("Attempt to create an instance of a field @field_name that doesn't exist or is currently inactive.", array('@field_name' => $instance['field_name'])));

@@ -197,7 +197,7 @@ function longform_displaysuite_ds_layout_settings_info() {
         13 => 'field_imported_html_master',
         14 => 'field_authoring_tool',
         16 => 'field_toc_array',
-        21 => 'field_document_archive',
+        21 => 'field_document_source',
         22 => 'upload',
         26 => 'group_left_col',
         27 => 'group_basic_info_tab',

@@ -15,7 +15,7 @@
      return ((elemBottom <= docViewBottom) && (elemTop >= docViewTop));
 }
 
-  Drupal.behaviors.technet = {
+  Drupal.behaviors.longform = {
   attach: function(context,settings){
 
   
@@ -168,11 +168,14 @@
           var switchTrigger = 'click';
       }
 
-      $('.build-container').prepend('<ul class="build-container-list nav nav-pills"></ul>');
+      current = $();
       // General switcher
-      $('.taxonomy-switcher>li a').on(switchTrigger, function(event){
-
+      $('.taxonomy-switcher>li>a').on(switchTrigger, function(event){
+          if ($(this).is(current)) {
+              return;
+          }
           var term = $(this);
+          current = term;
           var target = term.attr('data-selector');
           var thisCol = term.parents('.switcher-column');
           var thisColNum = thisCol.attr('data-column');
@@ -197,58 +200,6 @@
           $(target).addClass('reveal').stop(true,true).fadeIn(200);
           $(target).parent().addClass('reveal');
       });
-
-      $('.taxonomy-switcher>li a.invalid').on('click', function(event) {
-          event.preventDefault();
-      });
-
-      $('.taxonomy-switcher>li a.valid').on('click', function(event) {
-          tid = $(this).attr('data-tid');
-          console.log('tid: ' + tid);
-          dataStore = $('#data-store');
-          if (dataStore.attr('value') == '') {
-              dataStore.attr('value', tid);
-          }
-          else {
-              tidArray = dataStore.attr('value').split(',');
-              tidArray.push(tid);
-              dataStore.attr('value', tidArray.join(','))
-          }
-          $('#add-ticket-submit').removeClass('disabled');
-
-          $(this).parents('li').removeClass('active').addClass('bg-success').addClass('disabled');
-          $('.build-container-list')
-              .append('<li class="list-item bg-success"><a href="#" class="click-remove" data-tid="'
-              + $(this).attr('data-tid') + '">'
-              + $(this).attr('data-term')
-              + ' <span class="glyphicon glyphicon-remove-circle"></span></a></li>');
-
-          $('.build-container-list').find('li:last-child > a').on('click', function(event){
-              killTerm = $(this).attr('data-tid');
-              killTarget = $('.taxonomy-switcher [data-tid="' + $(this).attr('data-tid') + '"]').parents('li');
-              killTarget.removeClass('bg-success').removeClass('disabled');
-              tidArray = dataStore.attr('value').split(',').filter(function(element){
-                  return element != killTerm;
-              });
-              if (tidArray.length == 0) {
-                  $('#add-ticket-submit').addClass('disabled');
-              }
-              dataStore.attr('value', tidArray.join(','));
-              $(this).remove();
-          })
-      });
-
-      $('.build-container-list .click-remove').on('click', function(event) {
-          $(this).addClass('danger').removeClass('success');
-      })
-
-      $('.ticket-add-cancel').on('click', function(event) {
-          modalContent = $(this).parents('.modal-content');
-          modalContent.find('.bg-success.disabled').removeClass('bg-success').removeClass('disabled');
-          modalContent.find('.data-store').attr('value', null);
-          modalContent.find('.build-container-list').contents().remove();
-          $('#add-ticket-submit:not(.disabled)').addClass('disabled');
-      })
 
   } //--attach behaviors
   }

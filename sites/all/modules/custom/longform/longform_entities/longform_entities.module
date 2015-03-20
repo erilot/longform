@@ -113,6 +113,12 @@ function longform_entities_entity_property_info() {
     'type' => 'boolean',
     'schema field' => 'restrictions',
   );
+  $properties['type'] = array(
+    'label' => 'Type',
+    'description' => 'The ticket type',
+    'type' => 'text',
+    'schema field' => 'type',
+  );
 
   $info['longform_set']['properties'] = array(
     'sid' => array(
@@ -145,6 +151,12 @@ function longform_entities_entity_property_info() {
       'description' => 'Internal use only - contains in-progress set building information',
       'type' => 'struct',
     ),
+    'type' => array(
+      'label' => 'Type',
+      'description' => 'The set type',
+      'type' => 'text',
+      'schema field' => 'type',
+    ),
   );
   return $info;
 }
@@ -174,14 +186,22 @@ function longform_entities_field_extra_fields() {
 }
 
 /**
+ *  Implements hook_init().
+ */
+function longform_entities_init() {
+  // For now, add includes here.
+  // @todo: If it turns out they really are global, move them to .info.
+  module_load_include('inc', 'longform_entities', 'longform_entities.relation');
+}
+
+/**
  * Get the currently loaded longform entity. Equivalent to menu_get_object().
  *
  */
 function longform_entities_get_entity() {
   $menu_item = menu_get_item();
-  dpm($menu_item,'menu item');
   $set = $menu_item['map'][1]->data;
-
+  return $set;
 }
 
 /**
@@ -199,6 +219,19 @@ function longform_entities_forms($form_id, $args) {
     $forms[$form_id] = array('callback' => 'longform_entities_ticket_title_edit_form');
   }
   return $forms;
+}
+
+/**
+ * Implementation of custom panels panes
+ */
+
+/**
+ * Implements hook_ctools_plugin_directory().
+ */
+function longform_entities_ctools_plugin_directory($owner, $plugin_type) {
+  if ($owner == 'ctools' && $plugin_type == 'content_types') {
+    return 'plugins/' . $plugin_type;
+  }
 }
 
 
@@ -230,7 +263,7 @@ function longform_entities_field_formatter_info() {
  *
  */
 function longform_entities_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  return (array(0 => longform_administer_tickets($entity, $items)));
+  return false;//(array(0 => longform_administer_tickets($entity, $items)));
 }
 
 /**
@@ -247,122 +280,359 @@ function longform_entities_field_formatter_view($entity_type, $entity, $field, $
  *  An array of items, passed in from hook_field_formatter_view()
  *
  */
-function longform_administer_tickets($set, $items) {
 
-  // Clean up and remove broken entity references. These occur when a referenced entity is deleted,
-  // since entity reference fields are not cleaned up automatically.
-  // This is (for now) the only place references will be accessed, so it makes sense to do it here on demand
-  // instead of globally. This may change if the entityreferences get used elsewhere!
-  longform_set_clean_entityreferences($set);
 
-  global $user;
-  $user_is_admin = user_access('administer_tickets', $user) ? TRUE : FALSE;
 
-  $header = array(
-    array('data' => 'Type', 'class' => array('col-md-1')),
-    array('data' => 'Title', 'class' => array('col-md-3')),
-    array('data' => 'Owned by', 'class' => array('col-md-1')),
+/**
+ * Provides an edit field for the ticket title, if the user is allowed to change ticket titles
+ *
+ * @param $ticket
+ *  The ticket object passed in from the form constructor functions
+ *
+ * @return array
+ */
+function longform_entities_ticket_title_edit_form($form, &$form_state, $ticket) {
+  $form_state['longform']['longform_ticket'] = $ticket;
+  $form_state['longform']['tid'] = $ticket->tid->value();
+  $form = array(
+    '#prefix' => '<div id="ajax-replace-' . $ticket->tid->value() . '">',
+    '#suffix' => '</div>',
   );
-  if ($user_is_admin) {
-    $header[] = array('data' => 'Admin', 'class' => array('col-md-1'));
-  }
-  $rows = array();
-  foreach ($items as $label => $item) {
-    $ticket = entity_metadata_wrapper('longform_ticket', reset($item));
-    try {
-      $title = $ticket->title->value();
-
-    } catch (Exception $e) {
-      continue;
-    }
-
-    // Build the row of cells.
-    // Administrators will get extra forms and options here, depending on their permissions settings.
-    // Note: Fields that are generated multiple times must be called with the form name and a "_uniqueID" suffix,
-    // such as an ID. Example: drupal_get_form('longform_entities_ticket_title_edit_form_' . $tid).
-    $cells = array(
-      array('data' => '<b>' . longform_ticket_get_doctypes($ticket) . '</b>'),
-      array('data' => user_is_administrator() ? drupal_get_form('longform_entities_ticket_title_edit_form_' . $ticket->tid->value(), $ticket) : $ticket->title->value()),
-      array('data' => l($ticket->uid->value()->name, 'user/' . $ticket->uid->value()->uid, array('attributes' => array('class' => array('btn', 'btn-default'))))),
-    );
-    if ($user_is_admin) {
-      $button_opts = array(
-        'attributes' => array(
-          'class' => array('btn', 'btn-default', 'text-danger'),
-        ),
-        'html' => TRUE,
-        'query' => array('destination' => current_path()),
-      );
-      $cells[]['data'] = array(
-        'group' => array(
-          '#type' => 'container',
-          '#attributes' => array(
-            'class' => 'btn-group',
-          ),
-          'edit' => array(
-            '#markup' => l('<span class="glyphicon glyphicon-edit"></span>', 'admin/longform/ticket/manage/' . $ticket->tid->value(), $button_opts),
-          ),
-          'delete' => array(
-            '#markup' => l('<span class="glyphicon glyphicon-remove text-danger"></span>', 'admin/longform/ticket/manage/' . $ticket->tid->value() . '/delete', $button_opts),
-          ),
-        ),
-      );
-    }
-    $rows[] = $cells;
-  }
-
-  if (count($rows) == 0) {
-    $rows[]['data'][] = array(
-      'data' => array('#markup' => '<label class="text-warning">None yet!</label>'),
-      'colspan' => count($header),
-      'class' => array('warning'),
-    );
-  }
-
-  if ($user_is_admin) {
-
-    $modal_trigger = array(
-      '#markup' => '<a class="btn btn-warning" data-toggle="modal" data-target="#add-ticket-modal">' . t('Add new items') . '</a>'
-    );
-
-    $rows[]['data'] = array(
-      array(
-        'data' => $modal_trigger,
-        'colspan' => count($header),
-      ),
-    );
-  }
-
-  $table = array(
-    '#theme' => 'table',
-    '#header' => $header,
-    '#rows' => $rows,
+  $form['wrap'] = array(
+    '#type' => 'container',
     '#attributes' => array(
-      'class' => array('table', 'table-condensed'),
+      'class' => array('input-group', 'col-sm-12', 'title-wrapper-' . $ticket->tid->value()),
+    ),
+  );
+  if (!isset($form_state['input']['field']) || $form_state['input']['field'] === $form_state['values']['field']) {
+    $title_value = isset($form_state['values']['field']) ? $form_state['values']['field'] : $ticket->title->value();
+  }
+  else {
+    $title_value = $form_state['input']['field'];
+  }
+  $form['wrap']['raw'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('raw-title'),
+    ),
+  );
+  $form['wrap']['raw']['title'] = array(
+    '#markup' => '<div class="title">' . $title_value . '<a class="btn btn-default pull-right" data-toggle="collapse" data-target="#title-edit-' . $ticket->tid->value() . '">&nbsp;<span class="glyphicon glyphicon-edit"></span></a></div>',
+  );
+  $form['wrap']['collapser'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('collapse'),
+      'id' => 'title-edit-' . $ticket->tid->value(),
+    ),
+  );
+  $form['wrap']['collapser']['edit'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('edit-title', 'input-group'),
+      'id' => 'title-edit-' . $ticket->tid->value(),
+    ),
+  );
+  $form['wrap']['collapser']['edit']['field'] = array(
+    '#type' => 'textfield',
+    '#value' => $ticket->title->value(),
+    '#attributes' => array(
+      'class' => array('form-control'),
+    ),
+  );
+  $form['wrap']['collapser']['edit']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => '<span class="glyphicon glyphicon-ok"></span>', //t('Update'),
+    '#attributes' => array(
+      'class' => array('btn-success'),
+    ),
+    '#prefix' => '<span class="input-group-btn">',
+    '#suffix' => '</span>',
+    '#ajax' => array(
+      'callback' => 'longform_entities_ticket_title_edit_form_callback',
+      'wrapper' => 'ajax-replace-' . $ticket->tid->value(),
+      'method' => 'replace',
+      'effect' => 'fade',
     ),
   );
 
-  $out = array();
-  $out['title'] = array(
-    '#markup' => '<h3>' . t('Tickets in this set') . '</h3>',
-  );
-  $out['table'] = $table;
-  if (user_access('administer_tickets', $user)) {
-    $out['modal'] = drupal_get_form('longform_set_add_ticket_form', $set, $items);
-  }
-  return ($out);
+  return $form;
 }
 
-function longform_set_add_ticket_form($form, &$form_state, $set, $items) {
+//function longform_entities_ticket_title_edit_form_validate($form, &$form_state) {
+//
+//}
 
-  $form_state['longform_set'] = $set;
+function longform_entities_ticket_title_edit_form_callback($form, &$form_state) {
+  $tid = $form_state['longform']['tid'];
+  $form_state['rebuild'] = TRUE;
+  if ($form_state['input']['field'] === $form_state['values']['field']) {
+    // Nothing changed.
+    return $form;
+  }
 
+  // The value was changed -- update the ticket.
+  $ticket = entity_metadata_wrapper('longform_ticket', $tid);
+  $ticket->title = $form_state['input']['field'];
+  $ticket->save();
+  return drupal_rebuild_form($form_state['build_info']['form_id'], $form_state);
+}
+
+
+/**
+ * Provides an edit field for the ticket title, if the user is allowed to change ticket titles
+ *
+ * @param $ticket
+ *  The ticket object passed in from the form constructor functions
+ *
+ * @return array
+ */
+function longform_entities_manage_release_edit_form($form, &$form_state, $set) {
+  $entity = $set;
+  $set = entity_metadata_wrapper($set->type, $set);
+
+  $form_state['longform']['longform_set'] = $set;
+  $form_state['longform']['sid'] = $set->sid->value();
+  if (!isset($form_state['input']['releasefield'])) {
+    $field_value = isset($form_state['values']['releasefield']) ? $form_state['values']['releasefield'] : $set->field_software_release->value()->name;
+  }
+  else {
+    $field_value = $form_state['input']['releasefield'];
+  }
+  $form = array(
+    '#prefix' => '<div id="ajax-replace-release">',
+    '#suffix' => '</div>',
+  );
+
+  $form['wrap'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('release-wrapper-' . $set->sid->value()),
+    ),
+  );
+
+  $form['wrap']['edit-trigger'] = array(
+    '#markup' => '<h2>' . $field_value . '</h2>',
+  );
+
+  $form['wrap']['form-wrap'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('form-hide-wrapper', 'collapse'),
+      'id' => 'edit-release-form',
+    ),
+  );
+
+  $form['wrap']['form-wrap']['fieldgroup'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('input-group'),
+    ),
+  );
+  $form['wrap']['form-wrap']['fieldgroup']['releasefield'] = array(
+    '#type' => 'textfield',
+    '#value' => $field_value,
+    '#attributes' => array(
+      'class' => array('form-control'),
+    ),
+  );
+  $form['wrap']['form-wrap']['fieldgroup']['submit'] = array(
+    '#type' => 'submit',
+    '#value' => t('Update'),
+    '#prefix' => '<span class="input-group-btn">',
+    '#suffix' => '</span>',
+    '#ajax' => array(
+      'callback' => 'longform_entities_manage_release_edit_form_callback',
+      'wrapper' => 'ajax-replace-release',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  return $form;
+}
+
+function longform_entities_manage_release_edit_form_callback($form, &$form_state) {
+
+  $sid = $form_state['longform']['sid'];
+
+  if ($form_state['input']['releasefield'] === $form_state['values']['releasefield']) {
+    // Nothing changed.
+    return $form;
+  }
+
+  // The value was changed -- update the set.
+  $set = entity_metadata_wrapper('longform_set', $sid);
+  // Attempt to load the term provided
+  $vocab = taxonomy_vocabulary_machine_name_load('software_release');
+  $input_term = $form_state['input']['releasefield'];
+  $loaded_term = reset(taxonomy_get_term_by_name($input_term, $vocab->machine_name));
+  if(!empty($loaded_term)) {
+    $set->field_software_release->set($loaded_term->tid);
+    $set->save();
+  }
+  else {
+    // New term, add it to the list and rebuild
+
+    // Create the new term
+    $term = new stdClass();
+    $term->vid = $vocab->vid;
+    $term->name = $input_term;
+    $term->parent = 0;
+    taxonomy_term_save($term);
+
+    // Update the current set
+    $set->field_software_release->set($term->tid);
+    $set->save();
+  }
+  $form_state['rebuild'] = TRUE;
+  return drupal_rebuild_form($form_state['build_info']['form_id'], $form_state);
+}
+
+/**
+ * Provides an edit field for the ticket title, if the user is allowed to change ticket titles
+ *
+ * @param $ticket
+ *  The ticket object passed in from the form constructor functions
+ *
+ * @return array
+ */
+function longform_entities_manage_publish_date_edit_form($form, &$form_state, $set) {
+  $entity = $set;
+  $set = entity_metadata_wrapper($set->type, $set);
+
+  $form_state['longform']['longform_set'] = $set;
+  $form_state['longform']['sid'] = $set->sid->value();
+
+  if (!isset($form_state['input']['publish_date_field'])) {
+    $field_value = isset($form_state['values']['publish_date_field']) ? strtotime(reset($form_state['values']['publish_date_field'])) : $set->field_publish_date->value();
+  }
+  else {
+    $field_value = strtotime(reset($form_state['input']['publish_date_field']));
+  }
+
+  $date_formatted = date('M. d, Y', $field_value);
+  $form = array(
+    '#prefix' => '<div id="ajax-replace-publish-date">',
+    '#suffix' => '</div>',
+  );
+
+  $form['wrap'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('publish-date-wrapper-' . $set->sid->value()),
+    ),
+  );
+
+  $form['wrap']['edit-trigger'] = array(
+    '#markup' => '<h2>' . $date_formatted . '</h2>',
+  );
+
+  $form['wrap']['form-wrap'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('form-hide-wrapper', 'collapse'),
+      'id' => 'edit-publish-date-form',
+    ),
+  );
+
+  $form['wrap']['form-wrap']['fieldgroup'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('input-group'),
+    ),
+  );
+
+  $form['wrap']['form-wrap']['fieldgroup']['publish_date_field'] = array(
+    '#type' => 'date_popup', // types 'date_text' and 'date_timezone' are also supported. See .inc file.
+    '#title' => t('Select a new publish date'),
+    '#default_value' => $date_formatted,
+    '#date_format' => 'M. d, Y',
+    '#date_label_position' => 'within',
+  );
+  $form['wrap']['form-wrap']['fieldgroup']['submit'] = array(
+    '#type' => 'submit',
+    '#attributes' => array(
+      'class' => array('btn-success')
+    ),
+    '#value' => '<span class="glyphicon glyphicon-ok"></span>',
+    '#prefix' => '<span class="input-group-btn">',
+    '#suffix' => '</span>',
+    '#ajax' => array(
+      'callback' => 'longform_entities_manage_publish_date_edit_form_callback',
+      'wrapper' => 'ajax-replace-publish-date',
+      'method' => 'replace',
+      'effect' => 'fade',
+    ),
+  );
+  return $form;
+}
+
+function longform_entities_manage_publish_date_edit_form_callback($form, &$form_state) {
+
+  $sid = $form_state['longform']['sid'];
+
+  if ($form_state['input']['publish_date_field'] === $form_state['values']['publish_date_field']) {
+    // Nothing changed.
+    drupal_set_message('nothing changed.');
+    return $form;
+  }
+
+  // Convert the entered time back into a timestamp.
+  // Uses strtotime(), because month is formatted as a string and not a number and is not ambiguous,
+  // @todo: but should still probably be strptime() to be safe!
+  $input_value = reset($form_state['input']['publish_date_field']);
+  $input_value = strtotime($input_value);
+
+  // The value was changed -- update the set.
+  $set = entity_metadata_wrapper('longform_set', $sid);
+
+    $set->field_publish_date->set($input_value);
+    $set->save();
+
+  $form_state['rebuild'] = TRUE;
+  return drupal_rebuild_form($form_state['build_info']['form_id'], $form_state);
+}
+
+function longform_entities_manage_products_form($form, &$form_state, $set) {
+
+  $wrap = entity_metadata_wrapper($set->type, $set);
+  $current_products = array();
+  foreach($wrap->field_product->getIterator() as $product) {
+    $current_products[$product->value()->tid] = $product->value()->name;
+  }
+  $form_state['longform']['longform_set'] = $set;
+  $form_state['longform']['current_products'] = $current_products;
+  $form_id = $form_state['build_info']['form_id'];
+  $data_store_element = 'data-store-' . $form_id;
+
+  // Include the current tags as a JS setting. JS will pre-fill the form appropriately.
+  $settings = array(
+    'longformEntities' => array(
+       $form_id => array(
+          'minimumSelectionCount' => 1,
+          'maximumSelectionCount' => NULL,
+          'allowMultipleInstances' => FALSE,
+          'selectDeepestOnly' => FALSE,
+          'existingTerms' => $current_products,
+          'dataStoreElement' => 'data-store-' . $form_id,
+      ),
+    ),
+  );
+  drupal_add_js($settings, 'setting');
+
+  // Build the form.
   $form = array(
     '#type' => 'container',
     '#attributes' => array(
-      'class' => array('modal', 'fade'),
-      'id' => 'add-ticket-modal',
+      'class' => array('modal', 'fade', 'multiselect'),
+      'id' => 'edit-products-modal',
     ),
+    '#attached' => array(
+      'js' => array(drupal_get_path('module', 'longform_entities') . '/js/term-multiselect.js',),
+      'css' => array(drupal_get_path('module', 'longform_entities') . '/css/term-multiselect.style.css',),
+    ),
+    '#prefix' => '<div class="ajax-update-products">',
+    '#suffix' => '</div>',
   );
   $form['dialog'] = array(
     '#type' => 'container',
@@ -386,7 +656,7 @@ function longform_set_add_ticket_form($form, &$form_state, $set, $items) {
   $form['dialog']['modal-content']['modal-header']['content'] = array(
     '#markup' =>
       '<button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
-        <h4 class="modal-title">' . t('Add new documents') . '</h4>',
+        <h4 class="modal-title">' . t('Change product assigments for this set') . '</h4>',
   );
   $form['dialog']['modal-content']['modal-body'] = array(
     '#type' => 'container',
@@ -396,18 +666,33 @@ function longform_set_add_ticket_form($form, &$form_state, $set, $items) {
   );
   $form['dialog']['modal-content']['modal-body']['content'] = array(
     'switcher' => array(
-      '#markup' => book_nav_vocab_nav_block('document_types', 'term'),
-    ),
-    'build_container' => array(
       '#type' => 'container',
       '#attributes' => array(
-        'class' => array('panel', 'build-container'),
+        'class' => array('panel'),
       ),
-      'container-inner' => array(
+      'selector' => array(
         '#type' => 'container',
         '#attributes' => array(
-          'class' => array('panel-body', 'build-container-inner'),
+          'class' => array('panel-body'),
         ),
+        'build_container' => array(
+          '#type' => 'container',
+          '#attributes' => array(
+            'class' => array('build-container'),
+          ),
+          'title' => array(
+            '#markup' => '<h4>Selected products</h4>',
+          ),
+          'container-inner' => array(
+            '#type' => 'container',
+            '#attributes' => array(
+              'class' => array('build-container-inner'),
+            ),
+            'build-list' => array('#markup' => '<ul class="build-container-list nav nav-pills"></ul>'),
+          ),
+        ),
+
+        'contents' => array('#markup' => book_nav_vocab_nav_block('product','term'))
       ),
     ),
     'term_selection' => array(
@@ -415,7 +700,7 @@ function longform_set_add_ticket_form($form, &$form_state, $set, $items) {
       '#value' => '',
       '#attributes' => array(
         'class' => array('data-store'),
-        'id' => 'data-store',
+        'id' => $data_store_element,
       ),
     )
   );
@@ -426,156 +711,80 @@ function longform_set_add_ticket_form($form, &$form_state, $set, $items) {
       'class' => array('modal-footer'),
     ),
   );
+  $form['dialog']['modal-content']['modal-footer']['message'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('col-md-9', 'message-container'),
+    ),
+  );
+
   $form['dialog']['modal-content']['modal-footer']['cancel'] = array(
     '#markup' => '<button type="button" class="btn btn-default ticket-add-cancel" data-dismiss="modal">' . t('Cancel') . '</button>',
   );
+
   $form['dialog']['modal-content']['modal-footer']['submit'] = array(
     '#type' => 'submit',
-    '#id' => 'add-ticket-submit',
-    '#submit' => array('longform_add_ticket'),
-    '#value' => t('Add tickets'),
+    '#id' => 'update-products-submit',
+    '#submit' => array('longform_entities_manage_products_callback'),
+    '#value' => t('Update Products'),
     '#attributes' => array(
       'class' => array('disabled'),
     ),
+//    '#ajax' => array(
+//      'callback' => 'longform_entities_manage_products_callback',
+//      'wrapper' => 'ajax-update-products',
+//      'method' => 'replace',
+//      'effect' => 'fade',
+//    ),
+
   );
 
   return $form;
 
-}
-
-
-/**
- * Provides an edit field for the ticket title, if the user is allowed to change ticket titles
- *
- * @param $ticket
- *  The ticket object passed in from the form constructor functions
- *
- * @return array
- */
-function longform_entities_ticket_title_edit_form($form, &$form_state, $ticket) {
-  $form_state['longform']['longform_ticket'] = $ticket;
-  $form_state['longform']['tid'] = $ticket->tid->value();
-  $form = array(
-    '#prefix' => '<div id="ajax-replace-' . $ticket->tid->value() . '">',
-    '#suffix' => '</div>',
-  );
-  $form['wrap'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('input-group', 'title-wrapper-' . $ticket->tid->value()),
-//      'id' => 'title-form-' . $ticket->tid->value(),
-    ),
-  );
-  $form['wrap']['field'] = array(
-    '#type' => 'textfield',
-    '#value' => $ticket->title->value(),
-    '#attributes' => array(
-      'class' => array('form-control'),
-    ),
-  );
-  $form['wrap']['submit'] = array(
-    '#type' => 'submit',
-//    '#id' => 'ticket-edit-submit-' . $ticket->tid->value(),
-    '#value' => t('Update'),
-    '#prefix' => '<span class="input-group-btn">',
-    '#suffix' => '</span>',
-//    '#submit' => array('longform_entities_ticket_title_edit_form_callback'),
-    '#ajax' => array(
-      'callback' => 'longform_entities_ticket_title_edit_form_callback',
-      'wrapper' => 'ajax-replace-' . $ticket->tid->value(),
-      'method' => 'replace',
-      'effect' => 'fade',
-    ),
-  );
-  return $form;
-}
-
-//function longform_entities_ticket_title_edit_form_validate($form, &$form_state) {
-//
-//}
-
-function longform_entities_ticket_title_edit_form_callback($form, &$form_state) {
-  dpm($form_state,'form state');
-  $tid = $form_state['longform']['tid'];
-  if ($form_state['input']['field'] === $form_state['values']['field']) {
-    // Nothing changed.
-    drupal_set_message('nothing changed.');
-    return $form;
-  }
-
-  // The value was changed -- update the ticket.
-  $ticket = entity_metadata_wrapper('longform_ticket', $tid);
-  $ticket->title = $form_state['input']['field'];
-  $ticket->save();
-//  return $ticket->title->value();
-  return $form;
 }
 
 /**
- * Submit function for longform_administer_ticket_form(): add tickets
+ * Submit function for longform_entities_manage_products_form(): add tickets
  *
  * @param $form
  * @param $form_state
  */
-function longform_add_ticket($form, &$form_state) {
-  $set = $form_state['longform_set'];
+function longform_entities_manage_products_callback($form, &$form_state) {
+  $set = $form_state['longform']['longform_set'];
   $set_wrap = entity_metadata_wrapper('longform_set', $set->sid);
   $terms_to_add = explode(',', $form_state['input']['term_selection']);
-  if (count($terms_to_add) === 0) {
-    drupal_set_message('No terms were added.', 'error');
-    return FALSE;
+  $added = '';
+
+  $sid = $set->sid;
+
+  if ($form_state['input']['term_selection'] === $form_state['values']['term_selection']) {
+    // Nothing changed.
+    return $form;
   }
-  $common_fields = longform_get_common_fields('longform_ticket', 'longform_ticket', 'longform_set', 'longform_set');
-  global $user;
-  foreach($terms_to_add as $term) {
 
-    // Build title elements
-    // Releases
-    $releases = $set_wrap->field_software_release->value();
+  // The value was changed -- update the set.
+  if(!empty($terms_to_add)) {
+    $set_wrap->field_product->set($terms_to_add);
+    $set_wrap->save();
+    drupal_set_message(t('Document set products were updated.'));
 
-    $rels = array();
-    foreach ($releases as $rel) {
-      $rels[] = $rel->name;
+    $tickets = longform_relation_get_tickets_in_set($set);
+    foreach ($tickets as $ticket) {
+      $ticket = reset($ticket);
+      $ticket->field_product = $set->field_product;
+      entity_save($ticket->type, $ticket);
+      $updated[] = $ticket->title;
+    }
+    if (!empty($updated)) {
+      drupal_set_message('Updated product information in these tickets:<ul><li>' . implode('</li><li>', $updated) . '</li></ul>');
     }
 
-    // Products
-    $products = $set_wrap->field_products->value();
-    $prods = array();
-    foreach ($products as $prod) {
-      $prods[] = $prod->name;
-    }
-
-    $properties = array(
-      'uid' => $user->uid,
-      'title' => taxonomy_term_load($term)->name . ' ' . t('for') . ' ' . implode(', ', $prods) . ': ' . (count($rels) == 1 ? t('Version') : t('Versions')) . ' ' . implode(', ', $rels),
-    );
-    $ticket = entity_create('longform_ticket', $properties);
-
-    // Field values are inherited from the parent docset
-    foreach($common_fields as $field) {
-      $ticket->$field = $set->$field;
-    }
-    $ticket = entity_metadata_wrapper('longform_ticket', $ticket);
-    $ticket->field_document_type->set(array($term));
-    $ticket->save();
-    $tickets[] = $ticket->tid->value();
   }
-
-  // Add entity reference fields to the docset
-  $current_refs = $set_wrap->field_set_ticket->value();
-  if (!$current_refs) {
-    $current_refs = array();
-  }
-
-  // This seems hacky, but if I don't iterate through this array I end up with a mix of objects and tids.
-  $refs = array();
-  foreach ($current_refs as $c) {
-    $refs[] = $c->tid;
-  }
-  $refs = array_merge($refs, $tickets);
-  $set_wrap->field_set_ticket->set($refs);
-  $set_wrap->save();
+  // AJAX version doesn't work nicely with modals... so this is stashed until I figure out how to do it:
+  //  $form_state['rebuild'] = TRUE;
+  //  return drupal_rebuild_form($form_state['build_info']['form_id'], $form_state);
 }
+
 
 /**
  * Returns an array of fields found in both provided entities.
@@ -828,7 +1037,8 @@ class LongformSetController extends EntityAPIController {
 
   public function save($entity, DatabaseTransaction $transaction = NULL) {
     global $user;
-    if($entity->is_new == TRUE) {
+
+    if(isset($entity->is_new) && $entity->is_new == TRUE) {
       $entity->created = REQUEST_TIME;
     }
     $entity->uid = $user->uid;
@@ -931,20 +1141,189 @@ function longform_entities_demo_page() {
  *  Library functions
  */
 
-function longform_set_clean_entityreferences($set) {
-  $wrap = entity_metadata_wrapper('longform_set', $set);
-  $changed = array();
-  foreach ($wrap->field_set_ticket->getIterator() as $ref) {
-    try {
-      $refs[] = $ref->tid->raw();
-    }
-    catch (Exception $e) {
-      $changed[] = $ref->raw();
-      $ref->set(NULL);
+
+/**
+ * Workflow implementation
+ */
+
+
+/**
+ * Get the current workflow state of the passed-in entity.
+ *
+ * @param $entity
+ *  A loaded entity.
+ *
+ * @return mixed
+ *  The loaded workflow state object
+ */
+function longform_get_current_workflow_state($entity) {
+  $field_name = longform_workflow_field_name($entity);
+  $state = isset($field_name) ? workflow_node_current_state($entity, $entity->type == 'book' || $entity->type == 'topic' ? 'node' : $entity->type, $field_name) : FALSE;
+  return workflow_state_load($state);
+}
+
+/**
+ * Get a list of valid workflow states for a given entity.
+ *
+ * Assumes one workflow per entity.
+ *
+ * @param $entity
+ *  The loaded entity object.
+ *
+ * @return array
+ *  An array of valid workflow state names, keyed by sid.
+ */
+function longform_workflow_get_states($entity) {
+  $field_name = longform_workflow_field_name($entity);
+  return workflowfield_options_list($entity->$field_name, NULL, $entity->type, $entity);
+}
+/**
+ * Set the workflow field name per entity.
+ *
+ * @todo: find a way to automatically determine this?
+ *
+ * @var $entity
+ *  The loaded entity
+ *
+ */
+function longform_workflow_field_name($entity) {
+  switch ($entity->type) {
+    case 'longform_ticket':
+      return 'field_ticket_publishing_workflow';
+      break;
+    case 'longform_set':
+      return 'field_set_publishing_workflow';
+      break;
+    case 'book':
+      return 'field_page_publishing_workflow';
+    default:
+      return '';
+  }
+}
+
+/**
+ * Set a new workflow state on an entity.
+ *
+ * @param $entity
+ *  The loaded entity object
+ *
+ * @param $id_property
+ *  the primary ID key for this entity type, e.g. 'tid', 'sid', 'nid', etc.
+ *
+ * @param $new_state
+ *  Either the numeric state ID to set, or a state object, or a string representing the state name.
+ *
+ * @param $user_reassign
+ *  A user object to attribute the state change to. Optional. Defaults to the current user.
+ *
+ * @param $comment
+ *  (optional). A comment string to attach to the transition. May be left blank.
+ *
+ */
+function longform_workflow_set_state($entity, $id_property, $new_state, $user_reassign = NULL, $comment = '') {
+  global $user;
+  $uid = (isset($user_reassign) && is_object($user_reassign)) ? $user_reassign->uid : $user->uid;
+
+  $entity_type = $entity->type;
+  $field_name = longform_workflow_field_name($entity);
+  $old_state = longform_get_current_workflow_state($entity);
+  $old_sid = $old_state->sid;
+  switch (gettype($new_state)) {
+    case 'string':
+      $new_state = longform_workflow_find_state_by_name($old_state->getStates(), $new_state);
+      break;
+    case 'integer':
+      $new_state = workflow_state_load($new_state);
+      break;
+  }
+
+  if ($new_state->sid == $old_state->sid) {
+    //drupal_set_message('Entity "' . $entity->title . '" is already in workflow state "' . $new_state->state . '". Cannot execute transition.', 'warning');
+    return FALSE;
+  }
+  // Set up transition, execute, and save. Reset entity cache so the new value shows up immediately.
+  $transition = new WorkflowTransition();
+  $transition->setValues($entity_type, $entity, $field_name, $old_sid, $new_state->sid, $uid, REQUEST_TIME, $comment);
+  $new_sid = $transition->execute(TRUE);
+
+  $wrap = entity_metadata_wrapper($entity->type == 'book' || $entity->type == 'topic' ? 'node' : $entity->type, $entity);
+  $wrap->$field_name->set($new_sid);
+  $wrap->save();
+  return $new_sid;
+}
+
+/**
+ * Given an array of state objects, looks for one with a "name" property matching $search.
+ *
+ * If found, returns the state object. If not found, returns FALSE.
+ *
+ * @param $states
+ *  array of state objects
+ * @param $search
+ *  A string to search for among the "name" properties.
+ *
+ * @return
+ *  a matching state object if found, otherwise FALSE
+ */
+function longform_workflow_find_state_by_name($states, $search) {
+  foreach ($states as $state) {
+    if ($state->name == $search) {
+      return $state;
     }
   }
-  if (count($changed) > 0) {
-    drupal_set_message ('<b>Notice</b>: Cleaned up ' . count($changed) . ' broken entityreference(s).');
-    $wrap->save();
+  return FALSE;
+}
+
+/**
+ * Show a bootstrap progress bar for a workflow path.
+ *
+ * @param $entity
+ *  The loaded entity
+ * @param bool $show_percent
+ *  Show the percentage value of completion in the progress bar
+ * @param string $class
+ *  One of the bootstrap contextual classes. Defaults to "info".
+ *
+ * return
+ *  A render array for the object.
+ */
+function longform_workflow_progress_bar($entity, $class = '') {
+  $state = longform_get_current_workflow_state($entity);
+  $states = $state->getStates();
+  $state_pos = array_search($state->sid, array_keys($states));
+
+  $percent = round($state_pos / count($states) * 100, 0);
+
+  if ($percent <= 20) {
+    $bar_class = 'danger';
   }
+  if ($percent > 20) {
+    $bar_class = 'warning';
+    $text_class = 'warning';
+  }
+  if ($percent > 80) {
+    $bar_class = 'info';
+  }
+  if ($percent > 99) {
+    $bar_class = 'success';
+  }
+  $out = array();
+  $out['wrap'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('progress'),
+    ),
+  );
+  $out['wrap']['progress'] = array(
+    '#type' => 'container',
+    '#attributes' => array(
+      'class' => array('progress-bar' , (isset($bar_class) ? 'progress-bar-' . $bar_class : ''), ),
+      'style' => 'width: ' . $percent . '%',
+    ),
+  );
+  $out['wrap']['progress']['state'] = array(
+    '#markup' => '<span' . (isset($text_class) ? ' class="text-' . $text_class . '"' : '') . '>' . $state->state . '</span>',
+  );
+
+  return $out;
 }

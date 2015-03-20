@@ -33,6 +33,13 @@ function longform_entities_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'type' => array(
+        'description' => 'The type of ticket. Hardcoded for now, will ultimately come from {longform_ticket_types}.',
+        'type' => 'varchar',
+        'length' => 30,
+        'not null' => TRUE,
+        'default' => 'longform_ticket',
+      ),
       'uid' => array(
         'description' => 'The {users}.uid that owns this ticket; initially, this is the user that created it.',
         'type' => 'int',
@@ -85,6 +92,13 @@ function longform_entities_schema() {
         'not null' => TRUE,
         'default' => '',
       ),
+      'type' => array(
+        'description' => 'The type of set. Hardcoded for now, will ultimately come from {longform_set_types}.',
+        'type' => 'varchar',
+        'length' => 30,
+        'not null' => TRUE,
+        'default' => 'longform_set',
+      ),
       'uid' => array(
         'description' => 'The {users}.uid that owns this set; initially, this is the user that created it.',
         'type' => 'int',
@@ -114,4 +128,176 @@ function longform_entities_schema() {
     'primary key' => array('sid'),
   );
   return $schema;
+}
+
+
+/**
+ * Implements hook_install().
+ *
+ */
+function longform_entities_install(){
+
+  // Add taxonomy vocabulary configurations located in the /taxonomy directory
+  $vocabs = longform_entities_add_vocabularies();
+
+  // Add fields, starting with term reference fields for everything just created
+  $fields = longform_entities_add_fields($vocabs);
+
+}
+
+/**
+ *  Scan and implement vocabulary configurations
+ *
+ *  All vocabulary configurations must be in the /taxonomy directory in the
+ *  Longform Entities module. Each one must follow a strict naming structure:
+ *    - filename namespaced with "longform_entities_vocabulary_"
+ *    - The implementation function must have the same name as the file.
+ *      Example:
+ *        filename: longform_entities/taxonomy/longform_entities_vocabulary_doctype.inc
+ *        function: function longform_entities_vocabulary_doctype()
+ *
+ *    The function in the file should:
+ *      - Define and create the vocabulary,
+ *      - Define the terms to be seeded in an associative array keyed by term (using child term arrays as values),
+ *      - Pass the created vocabulary and the seed term array to longform_entities_add_terms($vocab, $terms).
+ *
+ * @return
+ *  An array of added vocabulary objects.
+ *
+ */
+function longform_entities_add_vocabularies() {
+  $vocabs = array();
+  $dir = drupal_get_path('module', 'longform_entities') . '/taxonomy/';
+  $contents = scandir(DRUPAL_ROOT . '/' . $dir);
+  foreach ($contents as $file) {
+    if ($file == '.' || $file == '..' || strpos($file, 'longform_entities_vocabulary_') === FALSE) {
+      continue;
+    }
+    require_once DRUPAL_ROOT . '/' . $dir . $file;
+    $function = (string)reset(explode('.', $file));
+    if (function_exists($function)) {
+      $config = $function();
+      $vocab = longform_entities_add_vocabulary($config['vocab']);
+      if (isset($config['terms'])) {
+        longform_entities_add_terms($vocab, $config['terms']);
+        drupal_set_message('Vocabulary "' . $vocab->name. '" was added, and seed terms were inserted');
+      }
+      else {
+        drupal_set_message('Vocabulary "' . $vocab->name . '" was added, with no terms.');
+      }
+      $vocabs[] = array('vocab' => $vocab, 'config' => $config);
+    }
+    else {
+      dpm('While building the longform taxonomy system: can\'t find a function named ' . $function . ' in ' . $file, 'error');
+    }
+  }
+  return $vocabs;
+}
+
+/**
+ *
+ * Spin an associative array of terms into term objects.
+ *
+ * @param $vocab
+ *  The loaded vocabulary object to create the terms in
+ *
+ * @param $terms
+ *  An associative array of terms, keyed by term name, with children terms
+ *  included as an array in the value, like this:
+ *    array('parent_term' => array(
+ *      'child_term_1' => ''  // no children
+ *      'child_term_2' => array(
+ *        'grandchild_term_1' => ''
+ *      ),
+ *    ),
+ *    ...
+ *
+ * @param $parent
+ *  Used internally.
+ *
+ */
+function longform_entities_add_terms($vocab, $terms, $parent = 0) {
+  foreach ($terms as $name => $children) {
+    $term = new stdClass();
+    $term->vid = $vocab->vid;
+    $term->name = $name;
+    $term->parent = $parent;
+    taxonomy_term_save($term);
+    if (!empty($children)) {
+      longform_entities_add_terms($vocab, $children, $term->tid);
+    }
+  }
+}
+
+function longform_entities_add_vocabulary($config) {
+  // Create the vocabulary.
+  // Mercilessly wipes out any existing vocabulary with the same machine name!
+  $existing_vocab = taxonomy_vocabulary_machine_name_load($config['machine_name']);
+  if ($existing_vocab !== FALSE && $config['replace_if_exists'] == TRUE) {
+    taxonomy_vocabulary_delete($existing_vocab->vid);
+  }
+  else if ($existing_vocab !== FALSE) {
+    return FALSE;
+  }
+
+  $vocab = new stdClass();
+  $vocab->name = $config['name'];
+  $vocab->machine_name = $config['machine_name'];
+  taxonomy_vocabulary_save($vocab);
+
+  return $vocab;
+}
+
+/**
+ * Add field definitions. Do this automatically for vocabularies that were created already,
+ * then append manually defined ones.
+ *
+ * @param $vocabs
+ *  An array of vocabulary objects
+ *
+ * $return
+ *  An array of created fields
+ */
+function longform_entities_add_fields($vocabs) {
+
+  field_cache_clear();
+
+  foreach ($vocabs as $vocab) {
+    $field = $vocab['config']['field'];
+    $instances = $vocab['config']['instances'];
+
+    //Implement base fields
+    if(isset($vocab['config']['field'])) {
+      if (isset(field_info_field($field['field_name'])['id'])) {
+        drupal_set_message('Deleting existing vocabulary: ' . $field['field_name'], 'warning');
+        field_delete_field($field['field_name']);
+        field_purge_batch(100);
+      }
+      try {
+        $newfield = field_create_field($field);
+        drupal_set_message('Created field: [' . $newfield['id'] . '] ' . $newfield['field_name'], 'status');
+        field_cache_clear();
+      }
+      catch (Exception $e) {
+        drupal_set_message($e->getMessage(),'error');
+      }
+    }
+    else {
+      drupal_set_message('No field definition found for vocabulary "' . $vocab['config']['vocab']['name'] . '"','warning');
+      continue;
+    }
+
+    // Implement instances
+    foreach($instances as $instance) {
+      try {
+        $new_instance = field_create_instance($instance);
+        drupal_set_message('Created instance: ' . $new_instance['bundle'], 'status');
+      }
+      catch (Exception $e) {
+        drupal_set_message($e->getMessage(),'error');
+        continue;
+      }
+    }
+  }
+
 }

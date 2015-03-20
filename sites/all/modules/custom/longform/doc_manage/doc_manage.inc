@@ -1,32 +1,6 @@
 <?php
 
 /**
- * WORKFLOW DEFINITIONS
- *
- * These constants define the various workflow state IDs for different content
- * types. Hardcoding them as constants here is required since labels are
- * unpredictable and can be changed post-launch.
- *
- * These must be redefined here for every launched distribution, until a more
- * flexible solution is found.
- */
-define('WORKFLOW_PAGE_CREATED_STATE', 1);
-define('WORKFLOW_PAGE_REVIEW_STATE', 2);
-define('WORKFLOW_PAGE_SUBMITTED_STATE', 3);
-define('WORKFLOW_PAGE_APPROVED_STATE', 4);
-define('WORKFLOW_PAGE_PUBLISHED_STATE', 5);
-
-define('WORKFLOW_TICKET_CREATED_STATE', 7);
-define('WORKFLOW_TICKET_IMPORTING_STATE', 8);
-define('WORKFLOW_TICKET_REVIEW_STATE', 9);
-define('WORKFLOW_TICKET_PUBLISHED_STATE', 11);
-
-define('WORKFLOW_TOPIC_REVIEW_STATE', 13);
-define('WORKFLOW_TOPIC_SUBMITTED_STATE', 14);
-define('WORKFLOW_TOPIC_APPROVED_STATE', 15);
-define('WORKFLOW_TOPIC_PUBLISHED_STATE', 16);
-
-/**
  * Display and control main ticket nav
  */
 function doc_manage_render_main_nav($ticket = NULL, $opts = NULL) {
@@ -50,47 +24,42 @@ function doc_manage_render_main_nav($ticket = NULL, $opts = NULL) {
   if (!user_is_logged_in()) {
     return;
   }
-
-  if (!$ticket) {
-    $ticket = menu_get_object();
-  }
-  // Insert status summary bar at top
-
-  $bar['summary'] = doc_manage_render_manage_toolbar($ticket);
-  $import_states = _doc_manage_get_all_accordion_states($ticket);
-  $ticket_state = workflow_node_current_state($ticket, 'node');
+  $ticket = longform_entities_get_entity();
+    $ticket_state = longform_get_current_workflow_state($ticket);
+    $import_state = $ticket_state->name;
+    $published = $ticket_state->name == 'published';
 
   // Define panes that will be included
   $panes = array(
     'import' => array(
       'id' => 'tab-import',
-      'label' => ($ticket_state == 6 ? 'Publication Tasks' : array_search(TRUE, $import_states)),
+      'label' => ($published ? 'Publication Tasks' : $import_state),
       'function' => 'doc_manage_render_workflow'
     ),
-    'document' => array(
-      'id' => 'tab-document',
-      'label' => 'Document',
-      'function' => 'doc_manage_render_document_pane'
-    ),
-    'metadata' => array(
-      'id' => 'tab-metadata',
-      'label' => 'Metadata',
-      'function' => 'doc_manage_metadata_table'
-    ),
-    'links' => array(
-      'id' => 'tab-links',
-      'label' => 'Links',
-      'function' => 'doc_manage_display_adaptive_links'
-    ),
-    'pdf-reactor' => array(
-      'id' => 'tab-pdf-reactor',
-      'label' => 'PDF Reactor',
-      'function' => 'doc_manage_render_pdf_options'
-    ),
+//    'document' => array(
+//      'id' => 'tab-document',
+//      'label' => 'Document',
+//      'function' => 'doc_manage_render_document_pane'
+//    ),
+//    'metadata' => array(
+//      'id' => 'tab-metadata',
+//      'label' => 'Metadata',
+//      'function' => 'doc_manage_metadata_table'
+//    ),
+//    'links' => array(
+//      'id' => 'tab-links',
+//      'label' => 'Links',
+//      'function' => 'doc_manage_display_adaptive_links'
+//    ),
+//    'pdf-reactor' => array(
+//      'id' => 'tab-pdf-reactor',
+//      'label' => 'PDF Reactor',
+//      'function' => 'doc_manage_render_pdf_options'
+//    ),
   );
 
   // Remove pre-import panes
-  if ($import_states['Import']) {
+  if (!in_array($import_state, array('published', 'in_review'))) {
     unset($panes['document']);
   }
 
@@ -124,7 +93,7 @@ function doc_manage_render_main_nav($ticket = NULL, $opts = NULL) {
   // Set active pane
   // If the document is published, default to "Document" tab.
 
-  if (workflow_node_current_state($ticket) == 6) {
+  if ($published) {
     $bar['bar']['#items']['document']['class'] = array('active');
     $bar['container']['document']['tab-document']['#attributes']['class'][] = 'in active';
     $bar['bar']['#items']['import']['class'] = array('pull-right');
@@ -306,7 +275,7 @@ function doc_manage_metadata_table($ticket = NULL, $options = NULL) {
   $files[] = array(
     'label' => t('Document archive'),
     'type' => 'file',
-    'machine_name' => 'field_document_archive',
+    'machine_name' => 'field_document_source',
     'missing_tooltip' => 'The archive used to create HTML pages',
     'present_tooltip' => 'The archive used to create HTML pages',
     'importance' => 'required',
@@ -511,92 +480,6 @@ function _doc_manage_build_report_row($ticket, $vars) {
     'class' => isset($row_class) ? array($row_class) : NULL,
   );
 
-  // *** Work in progress ***
-  //
-  // For authorized users, present an "edit" button in a third table cell. Clicking the button AJAX-loads the field form and displays it
-  // either in a dropdown or a modal.
-  //
-  // Challenges:
-  //  	* Some fields use Hierarchical Select, which is itself AJAXified, and JS must be manually fired for it
-  //    * Demand-loading forms and triggering modals at the same time is tricky
-  //    * Could load all forms at once (this has been tried successfully), but Hierarchical Select has difficulty if more than one instance
-  //      is on the page at the same time. Figuring this out may be easier than figuring out the rest.
-
-//  // If alterations are allowed, add form element
-//  if ($editable) {
-//    //$change_form = drupal_get_form('doc_manage_generic_field_form_' . $field_machine_name, $field_machine_name, $ticket);
-//    $change_form = drupal_get_form('doc_manage_fetch_field_form_' . $field_machine_name, $field_machine_name, $ticket);
-//    
-//    $insert['data']['change'] = array(
-//      '#type' => 'container',
-//      '#attributes' => array(
-//	'class' => array('row-form'),
-//      ),
-//    );
-//    
-//    $insert['data']['change']['trigger'] = array(
-//      '#type' => 'submit',
-//      '#attributes' => array(
-//	'class' => array('btn', 'btn-sm', 'btn-default'),
-//	'data-toggle' => 'modal',
-//	'data-target' => '#modal-' . $field_machine_name,
-//      ),
-//      '#value' => t('Change'),
-//      '#ajax' => array(
-//	'callback' => array('doc_manage_fetch_field_return'),
-//      ),
-//    );
-//    
-//    $insert['data']['change']['modal'] = array(
-//      '#type' => 'container',
-//      '#attributes' => array(
-//	'class' => array('modal', 'fade'),
-//	'tabindex' => -1,
-//	'role' => 'dialog',
-//	'aria-hidden' => 'true',
-//	'id' => 'modal-' . $field_machine_name,
-//      ),
-//    );
-//    $insert['data']['change']['modal']['dialog'] = array(
-//      '#type' => 'container',
-//      '#attributes' => array(
-//	'class' => array('modal-dialog'),
-//      ),
-//    );
-//    $insert['data']['change']['modal']['dialog']['content'] = array(
-//      '#type' => 'container',
-//      '#attributes' => array(
-//	'class' => array('modal-content'),
-//      ),
-//    );
-//    $insert['data']['change']['modal']['dialog']['content']['head'] = array(
-//      '#type' => 'container',
-//      '#attributes' => array(
-//	'class' => array('modal-header'),
-//      ),
-//    );
-//    $insert['data']['change']['modal']['dialog']['content']['head']['content'] = array(
-//      '#markup' => '<h4 class="modal-title">Edit ' . $label . '</h4>',
-//    );
-//    
-//    $insert['data']['change']['modal']['dialog']['content']['body'] = array(
-//      '#type' => 'container',
-//      '#attributes' => array(
-//	'class' => array('modal-body'),
-//      ),
-//    );
-//   $insert['data']['change']['modal']['dialog']['content']['body']['content'] = $change_form;
-//  }
-//  else {
-//    $insert['data'] = array(
-//      '#markup' => '<span class="text-danger btn btn-sm disabled">Locked</button>',
-//    );
-//  }
-//  
-//    
-//  //$insert['data']['change']['dropdown_container']['form'] = $change_form;
-//  
-//  $row['data'][] = $insert;
 
   // If tooltip is present, tack on the bootstrap options
   if ($tooltip) {
@@ -693,7 +576,7 @@ function doc_manage_generic_field_form($form, &$form_state, $field_machine_name,
     $form_state);
 
   // Remove description
-  //unset ($form['field_document_archive'][LANGUAGE_NONE][0]['#description']);
+  //unset ($form['field_document_source'][LANGUAGE_NONE][0]['#description']);
 
   // Add required includes
   if (empty($form_state['build_info']['files']) || !in_array('modules/node/node.pages.inc', $form_state['build_info']['files'])) {
@@ -746,13 +629,13 @@ function _doc_manage_generic_field_submit($form, &$form_state, $ticket = NULL, $
 
   return $form;
 
-  $new_fid = $form_state['values']['field_document_archive'][LANGUAGE_NONE][0]['fid'];
+  $new_fid = $form_state['values']['field_document_source'][LANGUAGE_NONE][0]['fid'];
 
   $node = $form_state['sandbox']['node'];
 
   $wrapper = entity_metadata_wrapper('node', $node);
 
-  $original_file = $wrapper->field_document_archive;
+  $original_file = $wrapper->field_document_source;
   $file = $original_file->value();
   $old_fid = $file['fid'];
 
@@ -766,7 +649,7 @@ function _doc_manage_generic_field_submit($form, &$form_state, $ticket = NULL, $
 
     // Remove the file.
     file_delete(file_load($old_fid));
-    $wrapper->field_document_archive->set(NULL);
+    $wrapper->field_document_source->set(NULL);
     $wrapper->save(TRUE);
     field_attach_update('node', $node);
     $message .= '<li>The existing file attachment has been deleted.</li>';
@@ -778,7 +661,7 @@ function _doc_manage_generic_field_submit($form, &$form_state, $ticket = NULL, $
 
     if ($old_fid != 0) {
       // First, remove the old one
-      $wrapper->field_document_archive->set(NULL);
+      $wrapper->field_document_source->set(NULL);
       file_delete(file_load($old_fid));
       $wrapper->save(TRUE);
       field_attach_update('node', $node);
@@ -794,7 +677,7 @@ function _doc_manage_generic_field_submit($form, &$form_state, $ticket = NULL, $
     file_usage_add($new_file, 'doc_manage', 'node', $node->nid);
     $new_file_array = array('fid' => $new_fid, 'display' => TRUE);
     // Now add the file to the archive field
-    $wrapper->field_document_archive->set($new_file_array);
+    $wrapper->field_document_source->set($new_file_array);
     $wrapper->save(TRUE);
     field_attach_update('node', $node);
     $message .= '<li>The new file attachment has been saved.</li>';
@@ -945,36 +828,14 @@ function doc_manage_display_adaptive_links($ticket) {
 }
 
 /**
- * NEW
  * Build and render importing workflow panels, with associated forms.
  *
  * Renders as tabbed nav panels.
  *
  */
-function doc_manage_render_workflow($ticket = NULL) {
+function doc_manage_render_workflow($ticket) {
 
-  if (!$ticket) {
-    $ticket = menu_get_object();
-  }
-  if (!$ticket) {
-    return;
-  }
-
-  $states = _doc_manage_get_import_state($ticket);
-
-  // Check to see if we're ready to move on to publishing. To move forward, all book pages must be in either state 14 (approved) or 36 (published).
-  $counts = doc_manage_workflow_entity_counts($ticket, 'book');
-  if (!isset($counts[WORKFLOW_PAGE_APPROVED_STATE])) {
-    $counts[WORKFLOW_PAGE_APPROVED_STATE] = 0;
-  }
-  if (!isset($counts[WORKFLOW_PAGE_PUBLISHED_STATE])) {
-    $counts[WORKFLOW_PAGE_PUBLISHED_STATE] = 0;
-  }
-
-  $ready_to_publish = ($counts[WORKFLOW_PAGE_APPROVED_STATE] + $counts[WORKFLOW_PAGE_PUBLISHED_STATE] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;
-
-  // The document may already be published; set a flag if it is
-  $published = workflow_node_current_state($ticket) == WORKFLOW_TICKET_PUBLISHED_STATE ? TRUE : FALSE;
+  $state = longform_get_current_workflow_state($ticket);
 
   // Build HTML render arrays
 
@@ -989,14 +850,11 @@ function doc_manage_render_workflow($ticket = NULL) {
   $out['head']['title'] = array(
     '#markup' => '<h2>Import, Review, and Publish</h2>',
   );
-  if ($published) {
+  if ($state->name == 'published') {
     $out['head']['alert'] = array(
       '#type' => 'container',
       '#attributes' => array(
-        'class' => array(
-          'alert',
-          ($published ? 'alert-success' : 'alert-info')
-        ),
+        'class' => array('alert', 'alert-success'),
       ),
     );
 
@@ -1019,21 +877,21 @@ function doc_manage_render_workflow($ticket = NULL) {
     ),
   );
 
-  $import_tab_pair = _get_tab_pair('tab-task-import', _doc_manage_accordion_state(1, $states, $ready_to_publish) ? TRUE : FALSE, 'pill', 'Import');
+  $import_tab_pair = _get_tab_pair('tab-task-import', _doc_manage_current_import_tab($state) == 'import', 'pill', 'Import');
   $tabs['tab-task-import'] = $import_tab_pair['tab'];
   $out['contents']['import'] = $import_tab_pair['wrapper'];
-  $out['contents']['import']['tab-task-import']['contents'] = _doc_manage_render_import_panel($ticket, $states, $counts, $ready_to_publish, $published);
+  $out['contents']['import']['tab-task-import']['contents'] = _doc_manage_render_import_panel($ticket, $state);
 
-  $review_tab_pair = _get_tab_pair('tab-task-review', _doc_manage_accordion_state(2, $states, $ready_to_publish) ? TRUE : FALSE, 'pill', 'Review');
+  $review_tab_pair = _get_tab_pair('tab-task-review', _doc_manage_current_import_tab($state) == 'review', 'pill', 'Review');
   $tabs['tab-task-review'] = $review_tab_pair['tab'];
   $out['contents']['review'] = $review_tab_pair['wrapper'];
-  $out['contents']['review']['tab-task-review']['contents'] = _doc_manage_render_review_panel($ticket, $states, $counts, $ready_to_publish, $published);
+  $out['contents']['review']['tab-task-review']['contents'] = _doc_manage_render_review_panel($ticket);
 
-  $publish_tab_pair = _get_tab_pair('tab-task-publish', _doc_manage_accordion_state(3, $states, $ready_to_publish) ? TRUE : FALSE, 'pill', 'Publish');
-  $tabs['tab-task-publish'] = $publish_tab_pair['tab'];
-  $out['contents']['publish'] = $publish_tab_pair['wrapper'];
-  $out['contents']['publish']['tab-task-publish']['contents'] = _doc_manage_render_publish_panel($ticket, $states, $counts, $ready_to_publish, $published);
-
+//  $publish_tab_pair = _get_tab_pair('tab-task-publish', _doc_manage_current_import_tab($state) == 'publish', 'pill', 'Publish');
+//  $tabs['tab-task-publish'] = $publish_tab_pair['tab'];
+//  $out['contents']['publish'] = $publish_tab_pair['wrapper'];
+//  $out['contents']['publish']['tab-task-publish']['contents'] = _doc_manage_render_publish_panel($ticket, $states, $counts, $ready_to_publish, $published);
+//
 
   // Fill in tabs when we're done
   $out['bar']['panel']['body']['tabs'] = array(
@@ -1046,13 +904,49 @@ function doc_manage_render_workflow($ticket = NULL) {
   );
 
   // Find the current task and add the "active" class to its list element
-  $active = strtolower(array_search(TRUE, _doc_manage_get_all_accordion_states($ticket)));
+//  $active = strtolower(array_search(TRUE, _doc_manage_get_all_accordion_states($ticket)));
 
-  $out['bar']['panel']['body']['tabs']['#items']['tab-task-' . $active]['class'] = array('active');
+  $out['bar']['panel']['body']['tabs']['#items']['tab-task-' . _doc_manage_current_import_tab($state)]['class'] = array('active');
 
   return $out;
 
 }
+
+/**
+ *
+ * Helper function that sets the active import tab.
+ *
+ * @param $state
+ *  The loaded workflow state object
+ *
+ * @return string
+ *  The active pane
+ */
+function _doc_manage_current_import_tab($state) {
+
+  switch ($state->name) {
+    case 'unpack':
+    case 'import':
+    case 'convert':
+    case 'output':
+    case 'postprocess':
+      $tab = 'import';
+      break;
+
+    case 'review':
+      $tab = 'review';
+      break;
+
+    case 'approve':
+      $tab = 'publish';
+      break;
+
+    default:
+      $tab = 'import';
+  }
+  return $tab;
+}
+
 
 /**
  * Helper function that provides a matched tab and pane element.
@@ -1223,8 +1117,10 @@ function _doc_manage_metadata_warnings($ticket) {
   return $warns;
 }
 
-function _doc_manage_render_review_panel($ticket, $states, $counts, $ready_to_publish, $published) {
+function _doc_manage_render_review_panel($ticket) {
   // *** Review panel ***
+
+  $state = longform_get_current_workflow_state($ticket);
 
   // Render panel content. If postprocessing is not done, show a placeholder message instead of the full content.
 
@@ -1239,10 +1135,12 @@ function _doc_manage_render_review_panel($ticket, $states, $counts, $ready_to_pu
     '#markup' => '<h3>Review Pages</h3>',
   );
 
-  switch ($states['post']) {
+  switch ($state->name) {
 
     // Postprocessing is done; display the review forms and tables.
-    case 'finished':
+    case 'review':
+    case 'approved':
+    case 'publish':
 
       // Set up region wrappers
       $review_panel['panel']['row']['left'] = array(
@@ -1258,11 +1156,8 @@ function _doc_manage_render_review_panel($ticket, $states, $counts, $ready_to_pu
         ),
       );
 
-      // Add the workflow actions form
-      $review_panel['panel']['row']['right']['form'] = drupal_get_form('doc_manage_bulk_workflow_actions');
-
       // Display a context-aware help message telling the user where they are and what to do next.
-      if (!$ready_to_publish) {
+      if ($state->name == 'review') {
         $review_panel['panel']['row']['left']['alert'] = array(
           '#type' => 'container',
           '#attributes' => array(
@@ -1325,13 +1220,12 @@ function _doc_manage_render_review_panel($ticket, $states, $counts, $ready_to_pu
 
 }
 
-function _doc_manage_render_import_panel($ticket, $states, $counts, $ready_to_publish, $published) {
-
+function _doc_manage_render_import_panel($ticket, $state) {
   // Import settings subpanel
   $import_settings = array(
     '#type' => 'container',
     '#attributes' => array(
-      'class' => array('col-xs-3', 'right-col', /*'well', 'well-sm'*/),
+      'class' => array('col-xs-3', 'right-col'),
     ),
   );
 
@@ -1352,7 +1246,16 @@ function _doc_manage_render_import_panel($ticket, $states, $counts, $ready_to_pu
     ),
   );
 
-  $archive_upload_form = ($states['unpack'] == 'pending' || $states['unpack'] == 'next') ? drupal_get_form('_doc_manage_upload_archive_form') : array('#markup' => '<label>Document Archive</label><br/><div class="alert alert-warning">The uploaded archive is now unpacked and cannot be changed.</div>');
+  if (longform_ticket_source_is_attached($ticket)) {
+    $archive_upload_form = drupal_get_form('_doc_manage_upload_archive_form');
+  }
+  else {
+    $archive_upload_form = array(
+      '#markup' =>
+        '<label>Document Archive</label><br/>
+        <div class="alert alert-warning">The uploaded archive is now unpacked and cannot be changed.</div>'
+    );
+  }
   $import_settings['upload']['upload-form'] = $archive_upload_form;
 
   // Import settings: doc split form
@@ -1368,26 +1271,10 @@ function _doc_manage_render_import_panel($ticket, $states, $counts, $ready_to_pu
     ),
   );
 
-  // Include split level form if the document hasn't been split yet. If it has, include a status message instead.
-  if ($states['save'] == 'pending' || $states['save'] == 'next') {
-    $heading_split_form = drupal_get_form('_doc_manage_heading_split_form');
-  }
-  else {
-    $level = $ticket->field_granularity[LANGUAGE_NONE][0];
-
-    $heading_split_form = array(
-      '#markup' => '<label>Heading Split Level</label><br/>
-		    <div class="alert alert-warning">The document has already been split at <b>' . $level->name . '</b>.</div>',
-    );
-  }
-
-  $import_settings['split']['split-form'] = $heading_split_form;
 
   // Assemble import panel  
 
   $import_panel = doc_manage_render_import_actions_panel($ticket);
-
-  //$import_panel['panel']['row']['right'] = $import_settings;
 
   return $import_panel;
 }
@@ -1773,452 +1660,6 @@ function doc_manage_render_document_status($ticket) {
 }
 
 
-/**
- * Display a document status summary bar.
- *
- * @param $ticket
- *  The ticket object. If not supplied, the current object is loaded.
- *
- * @return HTML render array
- */
-function doc_manage_render_manage_toolbar($ticket = NULL) {
-  module_load_include('inc', 'doc_manage');
-  module_load_include('inc', 'doc_manage', 'doc_manage.relation');
-
-  // @TODO: Make this access check dependent on group membership, not just a plain logged-in check
-  if (!user_is_logged_in()) {
-    return;
-  }
-
-  if (!$ticket) {
-    $ticket = menu_get_object();
-  }
-  $type = $ticket->type;
-
-  if ($type != 'import_ticket' && $type != 'book') {
-    return FALSE;
-  }
-
-  $wrap = entity_metadata_wrapper('node', $ticket);
-
-  $render = array(
-    '#type' => 'container',
-    '#prefix' => '<nav class="navbar navbar-default" role="navigation" id="doc-manage-toolbar">',
-    '#suffix' => '</nav>',
-    '#attributes' => array(
-      'class' => 'container-fluid',
-    ),
-  );
-
-  //$render['context'] = array(
-  // '#markup' => '<span class="navbar-brand">Manage</span>',
-  // );
-
-  $render['opts'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('collapse', 'navbar-collapse'),
-      'id' => 'doc-manage-toolbar',
-    ),
-  );
-
-  $items[] = _doc_manage_toolbar_button_jump_to($ticket); // "jump to" button
-
-  $items[] = _doc_manage_toolbar_button_edit($ticket);  // "edit" button
-
-  $items[] = _doc_manage_toolbar_button_flag_html($ticket); // "html flag" button
-
-  $items[] = _doc_manage_toolbar_button_approve($ticket);  // "approve" form
-
-  $render['opts']['list'] = array(
-    '#theme' => 'item_list',
-    '#items' => $items,
-    '#attributes' => array(
-      'class' => array('nav', 'navbar-nav'),
-    ),
-  );
-
-  $render['opts']['status'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('btn-toolbar', 'navbar-btn', 'navbar-right'),
-    ),
-  );
-
-  $render['opts']['status']['pdf_status'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('btn-group'),
-    ),
-  );
-
-  $render['opts']['status']['pdf_status']['content']['label'] = array(
-    '#type' => 'button',
-    '#value' => t('PDF available'),
-    '#attributes' => array(
-      'class' => array('btn', 'btn-default', 'disabled'),
-    ),
-  );
-
-  // PDF Status
-  $pdf_ok = (isset($wrap->field_manual_pdf) && count($wrap->field_manual_pdf) > 0) || (isset($wrap->field_auto_pdf) && count($wrap->field_auto_pdf) > 0);
-
-  $render['opts']['status']['pdf_status']['content']['value'] = array(
-    '#type' => 'button',
-    '#value' => $pdf_ok ? t('Yes') : t('No'),
-    '#attributes' => array(
-      'class' => array(
-        'btn',
-        'disabled',
-        $pdf_ok ? 'btn-success' : 'btn-danger'
-      ),
-    ),
-  );
-
-  // Publish status
-
-  // Get status of page
-  $wf_state = workflow_node_current_state($ticket);
-  $publish_mode = $wf_state == WORKFLOW_PAGE_PUBLISHED_STATE || $wf_state == WORKFLOW_TICKET_PUBLISHED_STATE ? 'btn-success' : 'btn-danger';
-  $publish_label = $wf_state == WORKFLOW_PAGE_PUBLISHED_STATE || $wf_state == WORKFLOW_TICKET_PUBLISHED_STATE ? 'Published' : 'Unpublished';
-
-  $render['opts']['status']['publish_status'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('btn-group'),
-    ),
-  );
-
-  $render['opts']['status']['publish_status']['content']['label'] = array(
-    '#type' => 'button',
-    '#value' => t('Publication status'),
-    '#attributes' => array(
-      'class' => array('btn', 'btn-default', 'disabled'),
-    ),
-  );
-
-  $render['opts']['status']['publish_status']['content']['value'] = array(
-    '#type' => 'button',
-    '#value' => $publish_label,
-    '#attributes' => array(
-      'class' => array('btn', 'disabled', $publish_mode),
-    ),
-  );
-
-  return $render;
-
-}
-
-function _doc_manage_toolbar_button_jump_to($node) {
-
-  $wrap = entity_metadata_wrapper('node', $node);
-
-  // Go to Book/Return to ticket icon
-  switch ($node->type) {
-
-    case 'import_ticket':
-
-      // For import tickets, this icon links to the cover page of the document. It's only available after postprocessing.
-      $endpoints = doc_manage_relation_query('ticket_contains_book_pages', $node);
-      if (!empty($endpoints)) {
-        array_shift($endpoints);
-        $cover = reset($endpoints);
-        $stages = _doc_manage_get_all_accordion_states($node);
-        $tooltip = array(
-          'data-toggle' => 'tooltip',
-          'data-trigger' => 'hover',
-          'data-placement' => 'top',
-          'title' => !isset($stages['Import']) ? t('Go to the document') : t('Document pages haven\'t been created yet'),
-        );
-
-        $button = array(
-            'data' => l('<span class="glyphicon glyphicon-arrow-right"></span>Cover page', (isset($cover['entity_id']) ? 'node/' . $cover['entity_id'] : ''), array(
-                'html' => TRUE,
-                'attributes' => array(
-                  'class' => array($stages['Import'] ? 'disabled' : 'enabled'),
-                )
-              )),
-          ) + $tooltip;
-      }
-      else {
-        return FALSE;
-      }
-      break;
-
-    case 'book':
-
-      // For books, this icon sends users back to the import ticket.
-      $ticket = doc_manage_relation_get_ticket($node);
-      $button = l('<span class="glyphicon glyphicon-arrow-left"></span>' . t('Ticket'), 'node/' . $ticket, array(
-          'html' => TRUE,
-          'attributes' => array(
-            'class' => array(),
-            'data-toggle' => 'tooltip',
-            'data-trigger' => 'hover',
-            'data-placement' => 'top',
-            'title' => t('Return to ticket'),
-          )
-        ));
-      break;
-  }
-
-  return $button;
-}
-
-function _doc_manage_toolbar_button_edit($node) {
-  $button = l('<span class="glyphicon glyphicon-edit"></span>' . ($node->type == 'book' ? t('Edit this page') : t('Edit Metadata')), 'node/' . $node->nid . '/edit', array(
-      'html' => TRUE,
-      'attributes' => array(
-        'class' => array(),
-        'data-toggle' => 'tooltip',
-        'data-trigger' => 'hover',
-        'data-placement' => 'top',
-        'title' => t('Edit this page'),
-      )
-    ));
-
-  return $button;
-}
-
-function _doc_manage_toolbar_button_flag_html($node) {
-  switch ($node->type) {
-
-    case 'book':
-
-      // HTML Help Flag
-      $help_flag = flag_get_flag('html_problem_alert');
-      $help_status_class = $help_flag->is_flagged($node->nid) ? ' text-danger' : '';
-
-      $flag = array(
-        '#type' => 'container',
-        '#attributes' => array(
-          'class' => array('dropdown-menu', 'prevent-close'),
-        ),
-      );
-      $flag['flag']['alert'] = array(
-        '#type' => 'container',
-        '#attributes' => array(
-          'class' => array(),
-        ),
-      );
-      $flag['flag']['alert']['message'] = array(
-        '#markup' => 'If there is an HTML problem on this page, click this button to set an alert.<br/><br/>',
-      );
-      $flag['flag']['help'] = array(
-        '#markup' => flag_create_link('html_problem_alert', $node->nid),
-      );
-
-      $button = array(
-        'data' => '<a href="#" class="dropdown-toggle' . $help_status_class . '" data-toggle="dropdown"><span class="glyphicon glyphicon-flag"></span>Flag HTML</a>' . render($flag),
-        'class' => array('flag-set', 'keep-alive'),
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'top',
-        'data-trigger' => 'hover',
-        'title' => t('Flag an HTML problem on this page'),
-      );
-      break;
-  }
-
-  return isset($button) ? $button : FALSE;
-
-}
-
-function _doc_manage_toolbar_button_approve($node) {
-  // Approval button
-
-  $approved = FALSE;
-  switch ($node->type) {
-    case 'book':
-      $wf_choices = workflow_field_choices($node);
-      $wf_state = workflow_node_current_state($node);
-      $wf_label = $wf_choices[$wf_state];
-      $states = _doc_manage_get_import_state($node);
-
-      $published_state = $node->type == 'import_ticket' ? WORKFLOW_TICKET_PUBLISHED_STATE : WORKFLOW_PAGE_PUBLISHED_STATE;
-
-      // Get highest state the current user can move to
-      $state = workflow_get_workflow_node_by_nid($node->nid);
-      if (array_key_exists(36, $wf_choices)) {
-        array_pop($wf_choices);
-      }
-
-      end($wf_choices);
-      $highest_workflow_shift = key($wf_choices);
-
-      $label = array(
-        WORKFLOW_PAGE_APPROVED_STATE => t('Approve'),
-        WORKFLOW_PAGE_SUBMITTED_STATE => t('Submit'),
-        WORKFLOW_PAGE_PUBLISHED_STATE => t('Publish'),
-      );
-
-      $approve = array(
-        '#type' => 'container',
-        '#attributes' => array(
-          'class' => array('dropdown-menu', 'prevent-close'),
-        ),
-      );
-      $approve['approve']['alert'] = array(
-        '#type' => 'container',
-        '#attributes' => array(
-          'class' => array(),
-        ),
-      );
-      if ($state->sid != WORKFLOW_PAGE_APPROVED_STATE && $state->sid != WORKFLOW_PAGE_PUBLISHED_STATE) {
-        $approve['approve']['alert']['message'] = array(
-          '#markup' => '<p>To ' . strtolower($label[$highest_workflow_shift]) . ' this content, click
-	    <button class="btn btn-sm disabled"><span class="glyphicon glyphicon-ok"></span></button>.
-	    To approve and jump to the next unapproved page, click
-	    <button class="btn btn-sm disabled"><span class="glyphicon glyphicon-ok"></span>& <span class="glyphicon glyphicon-arrow-right"></span></button>.
-	    </p><br/>', //' . $label[$highest_workflow_shift] . '
-        );
-        $approve['approve']['form'] = drupal_get_form('doc_manage_approve_content_form', $node, $label[$highest_workflow_shift], $highest_workflow_shift);
-      }
-      else {
-        $approved = TRUE;
-        $approve['approve']['alert']['message'] = array(
-          '#markup' => 'This content has been ' . strtolower($wf_choices[$highest_workflow_shift]) . ', and the workflow state can no longer be changed.',
-        );
-      }
-      $button = array(
-        'data' => '<a href="#" class="dropdown-toggle' . ($approved ? ' text-success' : '') . '" data-toggle="dropdown"><span class="glyphicon glyphicon-ok"></span>' . ($approved ? t('Approved') : t('Approve')) . '</a>' . render($approve),
-        'class' => array('flag-set', 'keep-alive'),
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'top',
-        'data-trigger' => 'hover',
-        'title' => $approved ? t('This content has already been approved') : t('Approve this content for publication'),
-      );
-      break;
-  }
-
-  return isset($button) ? $button : FALSE;
-}
-
-function doc_manage_approve_content_form($form, &$form_state, $node, $label, $target) {
-  $next = doc_manage_get_next_unapproved_page($node);
-  $form = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array(''),
-    ),
-  );
-
-  $form['comment'] = array(
-    '#type' => 'textarea',
-    '#title' => t('Enter a comment (optional)'),
-  );
-  $form['nid'] = array(
-    '#type' => 'hidden',
-    '#name' => 'nid',
-    '#value' => $node->nid,
-  );
-  $form['target'] = array(
-    '#type' => 'hidden',
-    '#name' => 'target',
-    '#value' => $target,
-  );
-  $form['next'] = array(
-    '#type' => 'hidden',
-    '#name' => 'target',
-    '#value' => $next,
-  );
-  $form['approve_container'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('btn-group', 'pull-right'),
-    ),
-  );
-  $form['approve_container']['approve'] = array(
-    '#type' => 'submit',
-    '#value' => '<span class="glyphicon glyphicon-ok"></span>'/*<br/>Approve'*/,
-    '#attributes' => array(
-      'class' => array('btn-success'),
-      'data-toggle' => 'tooltip',
-      'data-placement' => 'bottom auto',
-      'data-trigger' => 'hover',
-      'title' => 'Approve and stay on this page',
-    ),
-    '#submit' => array('doc_manage_approve_content_submit'),
-  );
-  if ($next) {
-    $form['approve_container']['approve_next'] = array(
-      '#type' => 'submit',
-      '#value' => '<span class="glyphicon glyphicon-ok"></span> & <span class="glyphicon glyphicon-arrow-right"></span>'
-      /*<br/>Approve & next'*/,
-      '#attributes' => array(
-        'class' => array('btn-success'),
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'bottom auto',
-        'data-trigger' => 'hover',
-        'title' => 'Approve and jump to the next unapproved page',
-      ),
-      '#submit' => array('doc_manage_approve_content_submit_next'),
-    );
-  }
-  else {
-    $form['approve_container']['approve_ticket'] = array(
-      '#type' => 'submit',
-      '#value' => '<span class="glyphicon glyphicon-ok"></span> & <span class="glyphicon glyphicon-arrow-left"></span>'
-      /*<br/>Approve & return'*/,
-      '#attributes' => array(
-        'class' => array('btn-success'),
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'bottom auto',
-        'data-trigger' => 'hover',
-        'title' => 'Approve and jump back to the import ticket (this is the last unapproved page)',
-      ),
-      '#submit' => array('doc_manage_approve_content_submit_return'),
-    );
-
-  }
-
-  return $form;
-}
-
-function doc_manage_approve_content_submit_return($form, &$form_state, $opts) {
-  $opts['return'] = TRUE;
-  doc_manage_approve_content_submit($form, $form_state, $opts);
-}
-
-function doc_manage_approve_content_submit_next($form, &$form_state, $opts) {
-  $opts['next'] = TRUE;
-  doc_manage_approve_content_submit($form, $form_state, $opts);
-}
-
-function doc_manage_approve_content_submit($form, &$form_state, $opts) {
-
-  $target = $form_state['values']['target'];
-  $label = $form_state['values']['label'];
-  $comment = $form_state['values']['comment'];
-  $node = node_load($form_state['values']['nid']);
-  $next = $form_state['values']['next'];
-
-  workflow_transition($node, WORKFLOW_PAGE_APPROVED_STATE, TRUE);
-
-  drupal_set_message('Workflow state updated.');
-
-  // Approving a page approves all included topics.
-
-  doc_manage_approve_topics($node);
-
-  if (!$opts) {
-    return $form;
-  }
-  else {
-    if ($opts['next']) {
-      drupal_goto('node/' . $next);
-    }
-    else {
-      if ($opts['return']) {
-        drupal_goto('node/' . doc_manage_get_ticket_from_page($node));
-      }
-    }
-  }
-
-  //development
-  $commands[] = ajax_command_replace('#doc-manage-toolbar', doc_manage_render_manage_toolbar($node));
-
-  return array('#type' => 'ajax', '#commands' => $commands);
-}
 
 
 /**
@@ -2475,7 +1916,7 @@ function doc_manage_render_pdf_options($ticket) {
  */
 function doc_manage_render_import_actions_panel($ticket) {
 
-  $states = _doc_manage_get_import_state($ticket);
+  $state = longform_get_current_workflow_state($ticket);
   $import_steps_info = array(
     '#type' => 'container',
     '#attributes' => array(
@@ -2486,7 +1927,7 @@ function doc_manage_render_import_actions_panel($ticket) {
   $import_steps_info['head'] = array(
     '#markup' => '<h3>Document Import</h3>'
   );
-  if ($states['post'] == 'finished') {
+  if ($state->name == 'review' || $state->name == 'publish') {
     // all done
     $import_steps_info['wrapper'] = array(
       '#type' => 'container',
@@ -2499,7 +1940,7 @@ function doc_manage_render_import_actions_panel($ticket) {
     );
   }
   else {
-    if ($states['unpack'] == 'pending') {
+    if ($state->name == 'unpack' && !longform_ticket_source_is_attached($ticket)) {
 
       // No archive has been uploaded yet. Provide instructions on what to do next.
 
@@ -2543,158 +1984,11 @@ function doc_manage_render_import_actions_panel($ticket) {
     }
   }
 
-  $import_steps_info['form'] = ($states['unpack'] == 'pending' ? '' : drupal_get_form('_doc_manage_import_steps_form', $ticket));
+  $import_steps_info['form'] = !longform_ticket_source_is_attached($ticket) ? '' : drupal_get_form('_doc_manage_import_steps_form', $ticket);
 
   return $import_steps_info;
 }
 
-
-/**
- * Helper function that determines which accordion panels are open on page
- * display
- *
- * @param $step
- *  The numeric step in the publishing process. 1=Import, 2=Review, 3=Publish.
- *
- * @param $states
- *  The importing states report array
- *
- * @param $ready_to_publish
- *  Boolean value: can publishing proceed?
- *
- * @return
- *  Returns TRUE if the panel should be open.
- *
- */
-function _doc_manage_accordion_state($step, $states, $ready_to_publish = FALSE) {
-
-  $ticket_state = workflow_node_current_state(menu_get_object());
-  // Get importing status
-
-
-  switch ($step) {
-    case 1:
-      return $states['post'] != 'finished' ? TRUE : FALSE;
-      break;
-
-    case 2:
-      return $states['post'] == 'finished' && !$ready_to_publish ? TRUE : FALSE;
-      break;
-
-    case 3:
-      return ($states['post'] == 'finished' && $ready_to_publish  /*&& $ticket_state != 6*/) ? TRUE : FALSE;
-      break;
-  }
-
-  return $return;
-}
-
-/**
- * Helper function that returns an array of all publication task states.
- */
-function _doc_manage_get_all_accordion_states($ticket) {
-  module_load_include('inc', 'doc_manage', 'doc_manage.workflow');
-  $states = _doc_manage_get_import_state($ticket);
-  $counts = doc_manage_workflow_entity_counts($ticket, 'book');
-  if (!isset($counts[WORKFLOW_PAGE_APPROVED_STATE])) {
-    $counts[WORKFLOW_PAGE_APPROVED_STATE] = 0;
-  }
-  if (!isset($counts[WORKFLOW_PAGE_PUBLISHED_STATE])) {
-    $counts[WORKFLOW_PAGE_PUBLISHED_STATE] = 0;
-  }
-
-  $ready_to_publish = ($counts[WORKFLOW_PAGE_APPROVED_STATE] + $counts[WORKFLOW_PAGE_PUBLISHED_STATE] == $counts['total'] && $states['post'] == 'finished') ? TRUE : FALSE;
-
-  $stages = array(
-    1 => array('label' => t('Import')),
-    2 => array('label' => t('Review')),
-    3 => array('label' => t('Publish'))
-  );
-
-  $return = array();
-
-  foreach ($stages as $key => $stage) {
-    $return[$stage['label']] = _doc_manage_accordion_state($key, $states, $ready_to_publish);
-  }
-
-  return $return;
-}
-
-
-/**
- * Provide bulk workflow state change buttons.
- */
-function doc_manage_bulk_workflow_actions($form, &$form_state) {
-  $node = menu_get_object();
-
-  $workflow = workflow_get_workflow_type_map_by_type('book');
-  $choices = workflow_field_choices($node);
-  $workflow = workflow_get_workflows_by_wid($workflow->wid);
-  $states = workflow_get_workflow_states_by_wid($workflow->wid);
-  $current = workflow_node_current_state($node);
-
-  $in_review = 13;
-  $submitted = 16;
-  $approved = 14;
-  $published = 36;
-
-  global $user;
-
-  if (array_key_exists(3, $user->roles) || array_key_exists(16, $user->roles)) {
-
-    $form['preface'] = array(
-      '#type' => 'markup',
-      '#markup' => '<div class="alert alert-warning"><label>Bulk Assign States</label><br/><p>You can force all pages to any available state by clicking a button below.</p></div>',
-    );
-
-    foreach ($states as $sid => $state) {
-
-      // If the SID maps to "created", ignore it.
-      if ($sid == WORKFLOW_PAGE_CREATED_STATE) {
-        continue;
-      }
-      $form['buttons'][$sid] = array(
-        '#type' => 'markup',
-        '#prefix' => '<div>',
-        '#suffix' => '</div>',
-      );
-
-      $form['buttons'][$sid]['target'] = array(
-        '#type' => 'hidden',
-        '#value' => $sid,
-        '#name' => 'target-' . $sid,
-      );
-
-      $form['buttons'][$sid]['button'] = array(
-        '#type' => 'submit',
-        '#submit' => array('_doc_manage_bulk_shift_workflows'),
-        '#attributes' => array(
-          'class' => array('btn-default', 'btn-block'),
-          'data-target' => $sid,
-        ),
-        '#value' => $state->state,
-        '#id' => 'bulk-workflow-to-' . $sid,
-      );
-
-      if ($sid == $current) {
-        $form['buttons'][$sid]['#attributes']['class'][] = 'disabled';
-      }
-    }
-  }
-
-  return $form;
-}
-
-function _doc_manage_bulk_shift_workflows($form, &$form_state) {
-
-  $target = $form_state['clicked_button']['#attributes']['data-target'];
-
-  $ticket = menu_get_object();
-  $book_pages = doc_manage_get_book_pages($ticket);
-  doc_manage_bulk_publish($ticket, $target);
-  drupal_set_message('Page states have been reset.');
-
-}
 
 /**
  * Provide pubish/unpublish button.
@@ -2837,19 +2131,28 @@ function _doc_manage_unpublish_submit($form, &$form_state) {
 function _doc_manage_upload_archive_form($form, &$form_state) {
 
 //dpm($form_state,'file form state');
-  if (isset($form_state['sandbox']) && $form_state['sandbox']['node']) {
-    $node = $form_state['sandbox']['node'];
+  if (isset($form_state['sandbox']) && $form_state['sandbox']['entity']) {
+    $entity = $form_state['sandbox']['entity'];
   }
   else {
-    $node = menu_get_object();
-    $form_state['sandbox']['node'] = $node;
+    $entity = longform_entities_get_entity();
+    $form_state['sandbox']['entity'] = $entity;
   }
   // field_default_form($entity_type, $entity, $field, $instance, $langcode, $items, &$form, &$form_state, $get_delta = NULL)
 
-  $form = field_default_form('node', $node, field_info_field('field_document_archive'), field_info_instance('node', 'field_document_archive', 'import_ticket'), LANGUAGE_NONE, field_get_items('node', $node, 'field_document_archive'), $form, $form_state);
+  $form = field_default_form(
+    $entity->type,
+    $entity,
+    field_info_field('field_document_source'),
+    field_info_instance('longform_ticket', 'field_document_source', 'longform_ticket'),
+    LANGUAGE_NONE,
+    field_get_items('longform_ticket', $entity, 'field_document_source'),
+    $form,
+    $form_state
+  );
 
   // Remove description 
-  unset ($form['field_document_archive'][LANGUAGE_NONE][0]['#description']);
+  unset ($form['field_document_source'][LANGUAGE_NONE][0]['#description']);
 
   // Add required includes
   if (empty($form_state['build_info']['files']) || !in_array('modules/node/node.pages.inc', $form_state['build_info']['files'])) {
@@ -2857,25 +2160,20 @@ function _doc_manage_upload_archive_form($form, &$form_state) {
     form_load_include($form_state, 'inc', 'doc_manage', 'doc_manage');
   }
 
-  $form['field_document_archive']['submit'] = array(
+  $form['field_document_source']['submit'] = array(
     '#type' => 'submit',
-    //'#ajax' => array(
-    //  'callback' => '_doc_manage_upload_archive_submit'
-    //  ),
     '#submit' => array('_doc_manage_upload_archive_submit'),
     '#value' => 'Apply',
-    '#attributes' => array(//'class' => array('invisible',)
-    ),
   );
 
-  $form['field_document_archive']['description'] = array(
+  $form['field_document_source']['description'] = array(
     '#type' => 'markup',
     '#markup' => 'Upload (or remove) the prepared archive.',
     '#prefix' => '<br/><br/><div class="alert alert-info">',
     '#suffix' => '</div>',
   );
 
-  $form['field_document_archive']['feedback'] = array(
+  $form['field_document_source']['feedback'] = array(
     '#type' => 'markup',
     '#markup' => '<div id="upload-feedback"></div>',
   );
@@ -2890,29 +2188,27 @@ function _doc_manage_upload_archive_form($form, &$form_state) {
  */
 function _doc_manage_upload_archive_submit($form, &$form_state) {
 
-  $new_fid = $form_state['values']['field_document_archive'][LANGUAGE_NONE][0]['fid'];
+  $new_fid = $form_state['values']['field_document_source'][LANGUAGE_NONE][0]['fid'];
 
-  $node = $form_state['sandbox']['node'];
+  $entity = $form_state['sandbox']['entity'];
 
-  $wrapper = entity_metadata_wrapper('node', $node);
-  $original_file = $wrapper->field_document_archive;
-  $file = $original_file->value();
+  $wrapper = entity_metadata_wrapper($entity->type, $entity);
+  $file = $wrapper->field_document_source->value();
   $old_fid = $file['fid'];
 
-  if ($new_fid == 0 & !isset($file)) {
+  if ($new_fid == 0 && !isset($file)) {
     drupal_set_message('No file was uploaded.', 'error');
-
     return FALSE;
   }
+
 
   if ($new_fid == 0 && isset($file)) {
 
     // Remove the file.
     file_delete(file_load($old_fid));
-    $wrapper->field_document_archive->set(NULL);
+    $wrapper->field_document_source->set(NULL);
     $wrapper->save(TRUE);
-    field_attach_update('node', $node);
-    $message .= '<li>The existing file attachment has been deleted.</li>';
+    field_attach_update($entity->type, $entity);
 
   }
   else {
@@ -2921,118 +2217,29 @@ function _doc_manage_upload_archive_submit($form, &$form_state) {
 
     if ($old_fid != 0) {
       // First, remove the old one
-      $wrapper->field_document_archive->set(NULL);
+      $wrapper->field_document_source->set(NULL);
       file_delete(file_load($old_fid));
       $wrapper->save(TRUE);
-      field_attach_update('node', $node);
-      $message .= '<li>The existing file attachment has been deleted.</li>';
+      field_attach_update($entity->type, $entity);
     }
 
     // Add/save the new one
 
-    // First, set the new file entry to permanent and indicate we're using it:
+    // Filesystem housekeeping
     $new_file = file_load($new_fid);
     $new_file->status = FILE_STATUS_PERMANENT;
     file_save($new_file);
-    file_usage_add($new_file, 'doc_manage', 'node', $node->nid);
+    file_usage_add($new_file, 'doc_manage', $wrapper->type->value(), $wrapper->getIdentifier());
     $new_file_array = array('fid' => $new_fid, 'display' => TRUE);
-    // Now add the file to the archive field
-    $wrapper->field_document_archive->set($new_file_array);
+
+    // Update the file field
+    $wrapper->field_document_source->set($new_file_array);
     $wrapper->save(TRUE);
-    field_attach_update('node', $node);
-    $message .= '<li>The new file attachment has been saved.</li>';
+    field_attach_update($entity->type, $entity);
 
   }
-  //$commands[] = ajax_command_replace('#status-summary', doc_manage_status_summary($node));
-  //$commands[] = ajax_command_replace('#importing-steps-container', doc_manage_render_import_actions_panel ($node));
-  //$commands[] = ajax_command_replace('#upload-feedback', '<div class="alert alert-info"><ul>' . $message . '</ul></div>');
-  //return array('#type' => 'ajax', '#commands' => $commands);
-
 }
 
-/**
- * Generate heading split level form.
- */
-function _doc_manage_heading_split_form($form, &$form_state) {
-  $node = menu_get_object();
-
-  if (isset($form_state['sandbox']) && $form_state['sandbox']['node']) {
-    $node = $form_state['sandbox']['node'];
-  }
-  else {
-    $node = menu_get_object();
-    $form_state['sandbox']['node'] = $node;
-  }
-
-  $form['wrap'] = array(
-    '#type' => 'container',
-    '#attributes' => array(
-      'class' => array('ajax-split-level'),
-    ),
-  );
-
-  $form['wrap']['field'] = field_default_form('node', $node, field_info_field('field_granularity'), field_info_instance('node', 'field_granularity', 'import_ticket'), LANGUAGE_NONE, field_get_items('node', $node, 'field_granularity'), $form, $form_state);
-
-  // Drop description
-  unset ($form['wrap']['field']['field_granularity'][LANGUAGE_NONE]['#description']);
-
-  // Drop Heading 3 option
-  unset ($form['wrap']['field']['field_granularity'][LANGUAGE_NONE]['#options'][1108]);
-
-  if (empty($form_state['build_info']['files']) || !in_array('modules/node/node.pages.inc', $form_state['build_info']['files'])) {
-    form_load_include($form_state, 'inc', 'node', 'node.pages');
-    form_load_include($form_state, 'inc', 'doc_manage', 'doc_manage');
-  }
-
-  $form['wrap']['field']['field_granularity']['und']['#ajax'] = array(
-    'callback' => '_doc_manage_heading_split_submit',
-  );
-  $form['wrap']['description'] = array(
-    '#type' => 'markup',
-    '#markup' => t('Set the split level to use when building your pages.'),
-    '#prefix' => '<div class="alert alert-info">',
-    '#suffix' => '</div>',
-  );
-
-  $form['feedback'] = array(
-    '#type' => 'markup',
-    '#markup' => '',
-    '#prefix' => '<div id="ajax-split-feedback">',
-    '#suffix' => '</div>',
-  );
-
-  global $base_path;
-
-  if (empty($form_state['build_info']['files']) || !in_array('modules/node/node.pages.inc', $form_state['build_info']['files'])) {
-    form_load_include($form_state, 'inc', 'node', 'node.pages');
-    form_load_include($form_state, 'inc', 'doc_manage', 'doc_manage');
-  }
-
-  return $form;
-}
-
-function _doc_manage_heading_split_submit($form, &$form_state) {
-
-  $included_node = $form_state['sandbox']['node'];
-  $ticket = node_load($included_node->nid);
-
-  $wrapper = entity_metadata_wrapper('node', $ticket);
-  $raw_level = $wrapper->field_granularity->value();
-  $input_level = $form_state['values']['field_granularity'][LANGUAGE_NONE][0]['tid'];
-
-  // If the received value is different than the old one, update it.
-  // use field_attach_update() instead of node_save() to avoid bumping timestamps, etc.
-  if ($input_level != $raw_level->tid) {
-    $wrapper->field_granularity->set($input_level);
-    $wrapper->save(TRUE);
-    field_attach_update('node', $ticket);
-  }
-
-  $commands[] = ajax_command_replace('#ajax-split-level', drupal_render($form));
-  $commands[] = ajax_command_replace('#ajax-split-feedback', '<p class="alert alert-info">Heading state changed to <b>' . $wrapper->field_granularity->value()->name . '</b>.</p>');
-
-  return array('#type' => 'ajax', '#commands' => $commands);
-}
 
 /**
  * generate node import action form
@@ -3132,6 +2339,9 @@ function _publishing_actions_publish($node) {
   return $form;
 }
 
+function doc_mandage_unpack($form,&$form_state) {
+  dpm('yes');
+}
 /**
  * Helper function that supplies the steps for importing a document.
  */
@@ -3139,48 +2349,32 @@ function _publishing_actions_import($node, &$form_state) {
 
   $options_array = array();
 
-  // possible states are: pending, next, finished, locked
-
-  $states = _doc_manage_get_import_state($node);
-  if (isset($states['finished']) && $states['finished'] && !doc_manage_core_check_admin()) {
-    return;
-  }
+  $entity = longform_entities_get_entity();
+  $state = longform_get_current_workflow_state($entity);
 
   // Build command render array.
 
-  $classes = array(
-    'locked' => array('btn-default', 'col-md-2', 'disabled'),
-    'finished' => array('btn-default', 'col-md-2'),
-    'next' => array('btn-success', 'col-md-2'),
-    'pending' => array('btn-warning', 'col-md-2', 'disabled'),
-    'undo' => array('btn-danger', 'col-md-2'),
+  $button_class_base = array('btn-block', 'col-md-2');
+  $button_classes = array(
+    'locked' => array('btn-default'),
+    'finished' => array('btn-default'),
+    'current' => array('btn-success'),
+    'undo' => array('btn-danger'),
   );
 
   $options_array['unpack'] = array(
     'title' => 'Unpack',
     'description' => '<p>Unpack the document archive.</p>',
-    'note' => '<p></p>',
-    'state' => $states['unpack'],
     'include' => array('unpack'),
     'submit' => array(
       '#type' => 'submit',
       '#id' => 'unpack-submit',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'Expand the uploaded archive and perform preliminary processing. This will save all image and HTML files on the server. The original archive is kept intact.',
-      ),
       '#value' => 'Unpack',
       '#submit' => array('doc_manage_unpack'),
     ),
     'undo' => array(
       '#type' => 'submit',
       '#id' => 'unpack-undo',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'Destroys all content extracted from the document archive, and removes any generated HTML files. This does not remove the uploaded archive.',
-      ),
       '#value' => 'Undo Unpack',
       '#submit' => array('doc_manage_undo_unpack'),
     ),
@@ -3189,28 +2383,16 @@ function _publishing_actions_import($node, &$form_state) {
   $options_array['split'] = array(
     'title' => 'Split',
     'description' => '<p>Splits the document into topics and saves them in the database.</p>',
-    'note' => '<p></p>',
-    'state' => $states['split'],
     'include' => array('split'),
     'submit' => array(
       '#type' => 'submit',
       '#id' => 'split-submit',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'Scans the imported HTML file for topics, splits them apart, and saves them as unique nodes in the database. They will be reassembled later into an HTML document.',
-      ),
       '#value' => 'Split',
       '#submit' => array('doc_import_split'),
     ),
     'undo' => array(
       '#type' => 'submit',
       '#id' => 'split-undo',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'Delete all topic nodes generated by the "Split" action, and remove all database relations. This does not delete file resources like images, and does not touch the archive or the HTML generated from it.',
-      ),
       '#value' => 'Undo Split',
       '#submit' => array('doc_manage_undo_split'),
     ),
@@ -3219,29 +2401,16 @@ function _publishing_actions_import($node, &$form_state) {
   $options_array['convert'] = array(
     'title' => 'Convert',
     'description' => '<p>Convert the raw HTML to Technet-o-riffic HTML. </p>',
-    'note' => '<p></p>',
-    'state' => $states['convert'],
     'include' => array('convert'),
     'submit' => array(
       '#type' => 'submit',
       '#id' => 'convert-submit',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'This converts all tags to Technet styles and applies special processing to tables and lists.',
-      ),
       '#value' => 'Convert',
       '#submit' => array('doc_import_convert'),
     ),
     'undo' => array(
       '#type' => 'submit',
       '#id' => 'convert-undo',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'data-title' => 'Undo Convert',
-        'title' => 'Remove converted HTML from all topics. The original unconverted topics will be left intact.',
-      ),
       '#value' => 'Undo Convert',
       '#submit' => array('doc_manage_undo_convert'),
     ),
@@ -3249,28 +2418,16 @@ function _publishing_actions_import($node, &$form_state) {
   $options_array['save'] = array(
     'title' => 'Save',
     'description' => '<p>Assemble topics into pages. A new page will start at each heading specified as your split level.</p>',
-    'note' => '<p>If you have already saved book nodes, this will create a duplicate set.</p>',
-    'state' => $states['save'],
     'include' => array('save'),
     'submit' => array(
       '#type' => 'submit',
       '#id' => 'save-submit',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'Generate a linked set of document pages from the converted topics. Topics will be grouped according to the heading level you specified.',
-      ),
       '#value' => 'Save',
       '#submit' => array('doc_manage_save_nodes'),
     ),
     'undo' => array(
       '#type' => 'submit',
       '#id' => 'save-undo',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'This will delete all document pages and remove all page relations from the database. It does not delete source topics or undo content conversion. YOU WILL NOT BE ASKED TO CONFIRM, so be sure you mean to do this!',
-      ),
       '#value' => 'Undo Save',
       '#submit' => array('doc_manage_undo_save'),
     ),
@@ -3279,41 +2436,27 @@ function _publishing_actions_import($node, &$form_state) {
   $options_array['post'] = array(
     'title' => 'Postprocess',
     'description' => '<p>Rebuild cross-references, add page links, and other pre-publication tasks.</p>',
-    'note' => '<p><ul><li>Cross References must be rebuilt.</li>
-						      <li>In-page links must be inserted.</li></ul></p>',
-    'state' => $states['post'],
     'include' => array('postprocess'),
     'submit' => array(
       '#type' => 'submit',
       '#id' => 'repair-xref-submit',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'Postprocessing re-connects all cross-reference links, generates "on this page" content, and other important pre-publication tasks.',
-      ),
       '#value' => 'Postprocess',
       '#submit' => array('doc_import_postprocess'),
     ),
     'undo' => array(
       '#type' => 'submit',
       '#id' => 'postprocess-undo',
-      '#attributes' => array(
-        'data-toggle' => 'tooltip',
-        'data-placement' => 'right auto',
-        'title' => 'This unwinds the postprocessing function. Added links are removed, and the "on this page" section is deleted.',
-      ),
       '#value' => 'Undo Post',
       '#submit' => array('doc_manage_undo_postprocess'),
     ),
   );
 
-  $form['import'] = array();
-  $form['import']['content'] = array(
-    '#type' => 'markup',
-    '#prefix' => '<div id="import-actions-content">',
-    '#suffix' => '</div>',
+  $table = array();
+  $table['head'] = array(
+//    array('data' => 'Step'),
+    array('data' => 'Action'),
+    array('data' => 'Description'),
   );
-
 
   $i = 0;
   foreach ($options_array as $name => $option) {
@@ -3324,46 +2467,10 @@ function _publishing_actions_import($node, &$form_state) {
       form_load_include($form_state, 'inc', 'doc_import', "doc_import.$include");
     }
 
-    //submit buttons are only enabled if they are in the next step
-    $disabled = FALSE;
-
-    if (!isset($option['status'])) {
-      $option['status'] = FALSE;
-    }
-
-    $disabled = $option['state'] != 'next' ? TRUE : FALSE;
-    $undo_enabled = $option['state'] == 'finished' ? TRUE : FALSE;
-
-    $form['import']['content'][$name] = array(
-      '#prefix' => '<div class="import-commands row ' . $option['state'] . ' ' . $option['status'] . '">',
-      '#suffix' => '</div>',
-    );
-    $form['import']['content'][$name]['status'] = array(
-      '#type' => 'markup',
-      '#title' => $option['title'],
-      '#markup' => '<div class="option-state col-sm-1 ' . $option['state'] . '"><span class="image">&nbsp</span></div>',
-    );
-
-    $form['import']['content'][$name]['number'] = array(
-      '#type' => 'markup',
-      '#title' => 'Step',
-      '#markup' => "<h4 class=\"step col-sm-1\"> " . $i . "</h4>",
-    );
-
-    $option['submit']['#attributes']['class'] = $classes[$option['state']];
-
-
-    if ($option['status'] == 'disabled') {
-      $option['submit']['#attributes']['class'][] = 'disabled';
-    }
-
-    $form['import']['content'][$name]['submit'] = $option['submit'];
-
-    $form['import']['content'][$name]['about'] = array(
-      '#type' => 'markup',
-      '#prefix' => '<div class="import-commands-about col-sm-7 hidden-xs">',
-      '#suffix' => '</div>',
-    );
+    $step = $i;
+    $submit = $option['submit'];
+    $status = $state->name == $name ? 'current' : 'locked';
+    $submit['#attributes']['class'] = array_merge($button_class_base, $button_classes[$status]);
 
     // Check for potential issues prior to saving content.
     if ($option['title'] == 'Save' && $option['state'] == 'next') {
@@ -3379,24 +2486,26 @@ function _publishing_actions_import($node, &$form_state) {
       }
     }
 
-    $form['import']['content'][$name]['about']['description'] = array(
+    $description = array(
       '#type' => 'markup',
       '#title' => $option['title'],
       '#markup' => '<div class="description">' . (isset($warnings) ? render($warnings) : $option['description']) . '</div>',
     );
-    unset($warnings);
-    $form['import']['content'][$name]['about']['note'] = array(
-      '#type' => 'markup',
-      '#title' => $option['title'],
-      '#markup' => '<div class="note">' . $option['note'] . '</div>',
+
+    $buttons[] = $submit;
+    $table['rows'][] = array(
+//      array('data' => '<h2>' . $step . '</h2>'),
+      array('data' => $submit),
+      array('data' => $description),
     );
-
-    if ($undo_enabled) {
-      $option['undo']['#attributes']['class'] = $classes['undo'];
-      $form['import']['content'][$name]['submit'] = $option['undo'];
-    }
   }
+  return $buttons;
 
+  $form = array(
+    '#theme' => 'table',
+    '#header' => $table['head'],
+    '#rows' => $table['rows'],
+  );
   return $form;
 }
 
@@ -3449,7 +2558,7 @@ function _doc_manage_get_import_state($ticket = NULL) {
         //unpacking will be the next step if there is no controller directory.
         if (!isset($ticket->field_raw_html_master[LANGUAGE_NONE][0])) {
           // "Unpack" will be active if there is an archive attached. If there is not, it will be pending (along with everything else).
-          if (!empty($ticket->field_document_archive) && $ticket->field_document_archive[LANGUAGE_NONE][0]['fid']) {
+          if (!empty($ticket->field_document_source) && $ticket->field_document_source[LANGUAGE_NONE][0]['fid']) {
             $states[$type] = 'next';
           }
           else {
@@ -3901,7 +3010,7 @@ function display_book_relations($ticket) {
   $element = array();
   global $base_path;
 
-  $book_pages = doc_manage_get_book_pages($ticket);
+  $book_pages = longform_relation_get_other_endpoint_ticket_page($ticket, TRUE);
   foreach ($book_pages as $endpoint) {
 
     $flag = flag_get_flag('html_problem_alert');
@@ -3909,20 +3018,19 @@ function display_book_relations($ticket) {
 
     $flag_cell = $flagged ? '<div class="flag-error"><span class="glyphicon glyphicon-exclamation-sign"></span></div>' : '<div class="flag-ok"><span class="glyphicon glyphicon-ok-sign"></span></div>';
 
-    $node = node_load($endpoint);
+    $wrap = entity_metadata_wrapper('node', $endpoint);
 
-    $cell['related-node']['href'] = 'node/' . $node->nid;
-    $cell['related-node']['title'] = (reset($book_pages) == $endpoint) ? $node->title . ' [Cover page automatically approved]' : $node->title;
+    $cell['related-node']['href'] = 'node/' . $wrap->getIdentifier();
+    $cell['related-node']['title'] = (reset($book_pages) == $endpoint) ? $wrap->title_field->value() . ' [Cover page automatically approved]' : $wrap->title_field->value();
 
-
-    $depth = "book-depth-" . $node->book['depth'];
+    $depth = "book-depth-" . $endpoint->book['depth'];
     $attributes = array(
       'html' => TRUE,
       'class' => array('links', 'inline', $depth, $flagged ? 'flag-error' : '')
     );
 
     unset ($cell['path'], $cell['options']);
-    $workflow_cell = get_node_workflow($node);
+    $workflow_cell = longform_get_current_workflow_state($endpoint)->state;
 
     $rendered_cell = theme('links', array(
       'links' => $cell,
@@ -3932,7 +3040,10 @@ function display_book_relations($ticket) {
     $columns[] = array(
       'column-first' => $rendered_cell,
       /*'column-second' => theme_links($action_links),*/
-      'column-third' => $workflow_cell,
+      'column-third' => array(
+        'data' => $workflow_cell,
+        'class' => $workflow_cell == 'Approved' ? array('success') : array('warning'),
+      ),
       'column-fourth' => $flag_cell
     );
   }
@@ -4041,3 +3152,16 @@ function doc_manage_pdfreactor_button_callback($form, &$form_state, $source = NU
   pdfreactor_import_ticket_generate($source);
 }
 
+
+/**
+ * Check to see if a source document has been uploaded.
+ *
+ * @param $ticket
+ *  The loaded ticket object
+ *
+ * @return bool
+ *  TRUE if the archive is present, FALSE otherwise
+ */
+function longform_ticket_source_is_attached($ticket) {
+  return !(!isset($ticket->field_document_source) || empty($ticket->field_document_source));
+}

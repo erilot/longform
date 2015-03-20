@@ -68,7 +68,7 @@ function doc_import_rules_action_info() {
  * Only fires if the archive URI exists and the HTML raw master file does NOT exist.
  */
 function doc_import_action_unpack_archive($node) {
-  if($node->field_document_archive[LANGUAGE_NONE][0]['uri'] && !$node->field_raw_html_master){
+  if($node->field_document_source[LANGUAGE_NONE][0]['uri'] && !$node->field_raw_html_master){
     doc_import_process_book_background($node);    
   }
 }

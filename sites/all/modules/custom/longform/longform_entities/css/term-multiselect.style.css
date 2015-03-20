@@ -1,0 +1,15 @@
+/**
+ * Multiselect style settings
+ */
+
+.multiselect .form-group {
+    margin-bottom: 0;
+}
+
+.multiselect .nav > li:not(.disabled) > a.valid:hover {
+    background-color: #e6f7e1;
+}
+
+.multiselect a.invalid:hover {
+    cursor: not-allowed;
+}
